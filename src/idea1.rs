@@ -1,7 +1,5 @@
 use std::marker::PhantomData;
 
-pub mod general;
-
 pub trait Boundary: std::ops::Deref<Target = Self::Scalar> {
     type Scalar: Copy + Ord;
     fn val(&self) -> Self::Scalar;
