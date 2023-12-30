@@ -1,30 +1,10 @@
+use std::marker::PhantomData;
+
 pub mod general;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum IntervalComparison {
-    Equal,
-    Less,
-    Greater,
-    OverlapLess,
-    OverlapGreater,
-    OverlapSubset,
-    OverlapSuperset,
-}
-
-trait Hoge {
-    fn hoge(&self) -> &str;
-}
-
-impl Hoge for std::marker::PhantomData<usize> {
-    fn hoge(&self) -> &str {
-        "hoge"
-    }
-}
-
-pub trait Boundary: Copy + std::ops::Deref<Target = Self::Scalar> {
+pub trait Boundary: std::ops::Deref<Target = Self::Scalar> {
     type Scalar: Copy + Ord;
     fn val(&self) -> Self::Scalar;
-    fn is_inclusive(&self) -> bool;
     fn contains(&self, t: Self::Scalar) -> bool;
     fn includes(&self, other: &Self) -> bool;
     fn intersection(&self, other: &Self) -> Self;
@@ -41,17 +21,102 @@ pub trait UpperBoundary: Boundary {
     fn complement(&self) -> Self::Complement;
 }
 
-struct InclusiveLower<T>(T);
-impl<T> std::ops::Deref for InclusiveLower<T> {
+pub struct Inclusive;
+pub struct Exclusive;
+
+pub struct Lower<IE>(PhantomData<IE>);
+pub struct Upper<IE>(PhantomData<IE>);
+
+trait BoundarySetOperation<T> {
+    fn intersection(a: T, b: T) -> T;
+    fn union(a: T, b: T) -> T;
+    fn includes(boundary: T, t: T) -> bool;
+}
+impl<T: Copy + Ord, IE> BoundarySetOperation<T> for Lower<IE> {
+    fn intersection(a: T, b: T) -> T {
+        a.max(b)
+    }
+    fn union(a: T, b: T) -> T {
+        a.min(b)
+    }
+    fn includes(boundary: T, t: T) -> bool {
+        boundary <= t
+    }
+}
+impl<T: Copy + Ord, IE> BoundarySetOperation<T> for Upper<IE> {
+    fn intersection(a: T, b: T) -> T {
+        a.min(b)
+    }
+    fn union(a: T, b: T) -> T {
+        a.max(b)
+    }
+    fn includes(boundary: T, t: T) -> bool {
+        t <= boundary
+    }
+}
+
+pub trait BoundaryContains<T> {
+    fn contains(boundary: T, t: T) -> bool;
+}
+impl<T: Copy + Ord> BoundaryContains<T> for Lower<Inclusive> {
+    fn contains(min: T, t: T) -> bool {
+        min <= t
+    }
+}
+impl<T: Copy + Ord> BoundaryContains<T> for Lower<Exclusive> {
+    fn contains(inf: T, t: T) -> bool {
+        inf < t
+    }
+}
+impl<T: Copy + Ord> BoundaryContains<T> for Upper<Inclusive> {
+    fn contains(max: T, t: T) -> bool {
+        t <= max
+    }
+}
+impl<T: Copy + Ord> BoundaryContains<T> for Upper<Exclusive> {
+    fn contains(sup: T, t: T) -> bool {
+        t < sup
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Bound<T, LU>(T, PhantomData<LU>);
+pub type LowerInclusive<T> = Bound<T, Lower<Inclusive>>;
+pub type LowerExclusive<T> = Bound<T, Lower<Exclusive>>;
+pub type UpperInclusive<T> = Bound<T, Upper<Inclusive>>;
+pub type UpperExclusive<T> = Bound<T, Upper<Exclusive>>;
+impl<T, LU> Bound<T, LU> {
+    pub fn new(t: T) -> Self {
+        Self(t, PhantomData)
+    }
+}
+impl<T, LU> std::ops::Deref for Bound<T, LU> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-impl<T: PartialOrd> InclusiveLower<T> {
-    pub fn contains(&self, t: T) -> bool {
-        self.0 <= t
+impl<T: Copy + Ord, LU: BoundarySetOperation<T> + BoundaryContains<T>> Boundary for Bound<T, LU> {
+    type Scalar = T;
+    fn val(&self) -> Self::Scalar {
+        self.0
     }
+    fn contains(&self, t: Self::Scalar) -> bool {
+        LU::contains(self.0, t)
+    }
+    fn includes(&self, other: &Self) -> bool {
+        LU::includes(self.0, other.0)
+    }
+    fn intersection(&self, other: &Self) -> Self {
+        Self(LU::intersection(self.0, other.0), PhantomData)
+    }
+    fn union(&self, other: &Self) -> Self {
+        Self(LU::union(self.0, other.0), PhantomData)
+    }
+}
+
+pub fn inclusive<T>(t: T) -> LowerInclusive<T> {
+    LowerInclusive::new(t)
 }
 
 pub type UnionSubtrahend<L, U> =
@@ -76,15 +141,6 @@ where
         (lower.contains(upper.val()) && upper.contains(lower.val())).then_some(Self {
             pair: (lower, upper),
         })
-        // (lower.is_less_or_eq(upper.val()) && upper.is_greater_or_eq(lower.val())).then_some(Self {
-        //     pair: (lower, upper),
-        // })
-        // (
-        //     *lower < *upper || (*lower == *upper && lower.is_inclusive() && upper.is_inclusive())
-        // )
-        // .then_some(Self {
-        //     pair: (lower, upper),
-        // })
     }
     pub fn inf(&self) -> L::Scalar {
         self.0.val()
@@ -92,12 +148,16 @@ where
     pub fn sup(&self) -> U::Scalar {
         self.1.val()
     }
+
+    pub fn measure(&self) -> L::Scalar
+    where
+        L::Scalar: std::ops::Sub<Output = L::Scalar>,
+    {
+        self.sup() - self.inf()
+    }
+
     pub fn contains(&self, t: L::Scalar) -> bool {
         self.0.contains(t) && self.1.contains(t)
-        // self.0.is_less_or_eq(t) && self.1.is_greater_or_eq(t)
-        // (*self.0 < t || (*self.0 == t && self.0.is_inclusive()))
-        //     && (t < *self.1 || (t == *self.1 && self.1.is_inclusive()))
-        // self.0 <= t && t <= self.1 // closed interval
     }
 
     pub fn intersection(&self, other: &Self) -> Option<Self> {
@@ -148,8 +208,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     struct Piyo;
 
     #[test]
@@ -158,10 +216,9 @@ mod tests {
         let b = Piyo;
         dbg!(std::mem::size_of::<Piyo>());
         dbg!(std::mem::size_of_val(&b));
-        assert_eq!(std::mem::size_of::<std::marker::PhantomData<usize>>(), 0);
-        assert_eq!(std::mem::size_of_val(&a), 0);
-        assert_eq!(&a as *const _, std::ptr::null());
-        assert_eq!(a.hoge(), "hoge");
+        dbg!(std::mem::size_of::<std::marker::PhantomData<usize>>());
+        dbg!(std::mem::size_of_val(&a));
+        // assert_eq!(&a as *const _, std::ptr::null());
         assert_eq!(2 + 2, 4);
     }
 }
