@@ -23,16 +23,31 @@ pub trait UpperBoundary: Boundary {
 
 pub struct Inclusive;
 pub struct Exclusive;
+pub struct Lower;
+pub struct Upper;
 
-pub struct Lower<IE>(PhantomData<IE>);
-pub struct Upper<IE>(PhantomData<IE>);
+pub trait Opposite {
+    type Opposite: Opposite<Opposite = Self>;
+}
+impl Opposite for Inclusive {
+    type Opposite = Exclusive;
+}
+impl Opposite for Exclusive {
+    type Opposite = Inclusive;
+}
+impl Opposite for Lower {
+    type Opposite = Upper;
+}
+impl Opposite for Upper {
+    type Opposite = Lower;
+}
 
 trait BoundarySetOperation<T> {
     fn intersection(a: T, b: T) -> T;
     fn union(a: T, b: T) -> T;
     fn includes(boundary: T, t: T) -> bool;
 }
-impl<T: Copy + Ord, IE> BoundarySetOperation<T> for Lower<IE> {
+impl<T: Copy + Ord> BoundarySetOperation<T> for Lower {
     fn intersection(a: T, b: T) -> T {
         a.max(b)
     }
@@ -43,7 +58,7 @@ impl<T: Copy + Ord, IE> BoundarySetOperation<T> for Lower<IE> {
         boundary <= t
     }
 }
-impl<T: Copy + Ord, IE> BoundarySetOperation<T> for Upper<IE> {
+impl<T: Copy + Ord> BoundarySetOperation<T> for Upper {
     fn intersection(a: T, b: T) -> T {
         a.min(b)
     }
@@ -58,65 +73,94 @@ impl<T: Copy + Ord, IE> BoundarySetOperation<T> for Upper<IE> {
 pub trait BoundaryContains<T> {
     fn contains(boundary: T, t: T) -> bool;
 }
-impl<T: Copy + Ord> BoundaryContains<T> for Lower<Inclusive> {
+impl<T: Copy + Ord> BoundaryContains<T> for (Lower, Inclusive) {
     fn contains(min: T, t: T) -> bool {
         min <= t
     }
 }
-impl<T: Copy + Ord> BoundaryContains<T> for Lower<Exclusive> {
+impl<T: Copy + Ord> BoundaryContains<T> for (Lower, Exclusive) {
     fn contains(inf: T, t: T) -> bool {
         inf < t
     }
 }
-impl<T: Copy + Ord> BoundaryContains<T> for Upper<Inclusive> {
+impl<T: Copy + Ord> BoundaryContains<T> for (Upper, Inclusive) {
     fn contains(max: T, t: T) -> bool {
         t <= max
     }
 }
-impl<T: Copy + Ord> BoundaryContains<T> for Upper<Exclusive> {
+impl<T: Copy + Ord> BoundaryContains<T> for (Upper, Exclusive) {
     fn contains(sup: T, t: T) -> bool {
         t < sup
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Bound<T, LU>(T, PhantomData<LU>);
-pub type LowerInclusive<T> = Bound<T, Lower<Inclusive>>;
-pub type LowerExclusive<T> = Bound<T, Lower<Exclusive>>;
-pub type UpperInclusive<T> = Bound<T, Upper<Inclusive>>;
-pub type UpperExclusive<T> = Bound<T, Upper<Exclusive>>;
-impl<T, LU> Bound<T, LU> {
+pub struct Bound<T, LU, IE>(T, PhantomData<LU>, PhantomData<IE>);
+pub type LowerInclusive<T> = Bound<T, Lower, Inclusive>;
+pub type LowerExclusive<T> = Bound<T, Lower, Exclusive>;
+pub type UpperInclusive<T> = Bound<T, Upper, Inclusive>;
+pub type UpperExclusive<T> = Bound<T, Upper, Exclusive>;
+impl<T, LU, IE> Bound<T, LU, IE> {
     pub fn new(t: T) -> Self {
-        Self(t, PhantomData)
+        Self(t, PhantomData, PhantomData)
     }
 }
-impl<T, LU> std::ops::Deref for Bound<T, LU> {
+impl<T, LU, IE> std::ops::Deref for Bound<T, LU, IE> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-impl<T: Copy + Ord, LU: BoundarySetOperation<T> + BoundaryContains<T>> Boundary for Bound<T, LU> {
+impl<T: Copy + Ord, LU, IE> Boundary for Bound<T, LU, IE>
+where
+    LU: BoundarySetOperation<T>,
+    (LU, IE): BoundaryContains<T>,
+{
     type Scalar = T;
     fn val(&self) -> Self::Scalar {
         self.0
     }
     fn contains(&self, t: Self::Scalar) -> bool {
-        LU::contains(self.0, t)
+        <(LU, IE) as BoundaryContains<T>>::contains(self.0, t)
     }
     fn includes(&self, other: &Self) -> bool {
         LU::includes(self.0, other.0)
     }
     fn intersection(&self, other: &Self) -> Self {
-        Self(LU::intersection(self.0, other.0), PhantomData)
+        Self(LU::intersection(self.0, other.0), PhantomData, PhantomData)
     }
     fn union(&self, other: &Self) -> Self {
-        Self(LU::union(self.0, other.0), PhantomData)
+        Self(LU::union(self.0, other.0), PhantomData, PhantomData)
     }
 }
 
-pub fn inclusive<T>(t: T) -> LowerInclusive<T> {
-    LowerInclusive::new(t)
+impl<T: Copy + Ord, IE: Opposite> LowerBoundary for Bound<T, Lower, IE>
+where
+    (Lower, IE): BoundaryContains<T>,
+    (Upper, IE::Opposite): BoundaryContains<T>,
+{
+    type Complement = Bound<Self::Scalar, Upper, IE::Opposite>;
+    fn complement(&self) -> Self::Complement {
+        Bound::new(self.0)
+    }
+}
+impl<T: Copy + Ord, IE: Opposite> UpperBoundary for Bound<T, Upper, IE>
+where
+    (Upper, IE): BoundaryContains<T>,
+    (Lower, IE::Opposite): BoundaryContains<T>,
+{
+    type Complement = Bound<Self::Scalar, Lower, IE::Opposite>;
+    fn complement(&self) -> Self::Complement {
+        Bound::new(self.0)
+    }
+}
+
+pub fn inclusive<T, LU>(t: T) -> Bound<T, LU, Inclusive> {
+    Bound::new(t)
+}
+
+pub fn exclusive<T, LU>(t: T) -> Bound<T, LU, Exclusive> {
+    Bound::new(t)
 }
 
 pub type UnionSubtrahend<L, U> =
@@ -208,10 +252,19 @@ where
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     struct Piyo;
 
     #[test]
     fn it_works() {
+        let i = Interval::new(inclusive(0), exclusive(3)).unwrap();
+        assert!(i.contains(0));
+        assert!(i.contains(1));
+        assert!(i.contains(2));
+        assert!(!i.contains(3));
+        assert!(!i.contains(-1));
+
         let a = std::marker::PhantomData::<usize>;
         let b = Piyo;
         dbg!(std::mem::size_of::<Piyo>());
