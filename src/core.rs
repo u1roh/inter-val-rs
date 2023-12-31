@@ -1,14 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Inclusive<T>(pub T);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Exclusive<T>(pub T);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum VariantBoundary<T> {
-    Inclusive(T),
-    Exclusive(T),
-}
+use crate::{Exclusive, Inclusive};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Lower<T>(pub T);
@@ -42,7 +32,7 @@ impl<T: Copy + Ord> Boundary for Exclusive<T> {
         Inclusive(self.0)
     }
 }
-impl<T: Copy + Ord> Boundary for VariantBoundary<T> {
+impl<T: Copy + Ord> Boundary for crate::Boundary<T> {
     type Val = T;
     type Fellow = Self;
     fn val(&self) -> T {
@@ -59,12 +49,12 @@ impl<T: Copy + Ord> Boundary for VariantBoundary<T> {
     }
 }
 
-impl<T> From<Inclusive<T>> for VariantBoundary<T> {
+impl<T> From<Inclusive<T>> for crate::Boundary<T> {
     fn from(b: Inclusive<T>) -> Self {
         Self::Inclusive(b.0)
     }
 }
-impl<T> From<Exclusive<T>> for VariantBoundary<T> {
+impl<T> From<Exclusive<T>> for crate::Boundary<T> {
     fn from(b: Exclusive<T>) -> Self {
         Self::Exclusive(b.0)
     }
@@ -205,10 +195,6 @@ where
         self.intersection(other).is_some()
     }
 }
-
-pub type ClosedInterval<T> = Interval<Inclusive<T>, Inclusive<T>>;
-pub type OpenInterval<T> = Interval<Exclusive<T>, Exclusive<T>>;
-pub type VariantInterval<T> = Interval<VariantBoundary<T>, VariantBoundary<T>>;
 
 // pub trait IntervalSet<T>: std::ops::Deref<Target = [Self::Interval]> {
 //     type Interval: Interval<T>;
