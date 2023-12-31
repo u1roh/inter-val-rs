@@ -5,6 +5,12 @@ pub struct Inclusive<T>(pub T);
 pub struct Exclusive<T>(pub T);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum VariantBoundary<T> {
+    Inclusive(T),
+    Exclusive(T),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Lower<T>(pub T);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -12,28 +18,55 @@ pub struct Upper<T>(pub T);
 
 pub trait Boundary: Ord + Copy {
     type Val: Ord + Copy;
-    type Opposite: Boundary<Val = Self::Val, Opposite = Self>;
+    type Fellow: Boundary<Val = Self::Val, Fellow = Self>;
     fn val(&self) -> Self::Val;
-    fn opposite(&self) -> Self::Opposite;
+    fn fellow(&self) -> Self::Fellow;
 }
 impl<T: Copy + Ord> Boundary for Inclusive<T> {
     type Val = T;
-    type Opposite = Exclusive<T>;
+    type Fellow = Exclusive<T>;
     fn val(&self) -> T {
         self.0
     }
-    fn opposite(&self) -> Self::Opposite {
+    fn fellow(&self) -> Self::Fellow {
         Exclusive(self.0)
     }
 }
 impl<T: Copy + Ord> Boundary for Exclusive<T> {
     type Val = T;
-    type Opposite = Inclusive<T>;
+    type Fellow = Inclusive<T>;
     fn val(&self) -> T {
         self.0
     }
-    fn opposite(&self) -> Self::Opposite {
+    fn fellow(&self) -> Self::Fellow {
         Inclusive(self.0)
+    }
+}
+impl<T: Copy + Ord> Boundary for VariantBoundary<T> {
+    type Val = T;
+    type Fellow = Self;
+    fn val(&self) -> T {
+        match self {
+            Self::Inclusive(t) => *t,
+            Self::Exclusive(t) => *t,
+        }
+    }
+    fn fellow(&self) -> Self {
+        match self {
+            Self::Inclusive(t) => Self::Exclusive(*t),
+            Self::Exclusive(t) => Self::Inclusive(*t),
+        }
+    }
+}
+
+impl<T> From<Inclusive<T>> for VariantBoundary<T> {
+    fn from(b: Inclusive<T>) -> Self {
+        Self::Inclusive(b.0)
+    }
+}
+impl<T> From<Exclusive<T>> for VariantBoundary<T> {
+    fn from(b: Exclusive<T>) -> Self {
+        Self::Exclusive(b.0)
     }
 }
 
@@ -50,8 +83,8 @@ impl<B: Boundary> Lower<B> {
     fn union(&self, other: &Self) -> Self {
         Self(self.0.min(other.0))
     }
-    pub fn complement(&self) -> Upper<B::Opposite> {
-        Upper(self.0.opposite())
+    pub fn complement(&self) -> Upper<B::Fellow> {
+        Upper(self.0.fellow())
     }
 }
 
@@ -68,8 +101,8 @@ impl<B: Boundary> Upper<B> {
     fn union(&self, other: &Self) -> Self {
         Self(self.0.max(other.0))
     }
-    pub fn complement(&self) -> Lower<B::Opposite> {
-        Lower(self.0.opposite())
+    pub fn complement(&self) -> Lower<B::Fellow> {
+        Lower(self.0.fellow())
     }
 }
 
@@ -97,7 +130,7 @@ impl<T: Copy + Ord> Contains<T> for Upper<Exclusive<T>> {
     }
 }
 
-pub type UnionSubtrahend<L, U> = Interval<<U as Boundary>::Opposite, <L as Boundary>::Opposite>;
+pub type UnionSubtrahend<L, U> = Interval<<U as Boundary>::Fellow, <L as Boundary>::Fellow>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Interval<L, U> {
@@ -160,12 +193,11 @@ where
 
     pub fn union(&self, other: &Self) -> (Self, Option<UnionSubtrahend<L, U>>)
     where
-        Lower<U::Opposite>: Contains<L::Val>,
-        Upper<L::Opposite>: Contains<L::Val>,
+        Lower<U::Fellow>: Contains<L::Val>,
+        Upper<L::Fellow>: Contains<L::Val>,
     {
-        let subtrahend = Interval::new(self.upper.0.opposite(), other.lower.0.opposite()).or(
-            Interval::new(other.upper.0.opposite(), self.lower.0.opposite()),
-        );
+        let subtrahend = Interval::new(self.upper.0.fellow(), other.lower.0.fellow())
+            .or(Interval::new(other.upper.0.fellow(), self.lower.0.fellow()));
         (self.union_interval(other), subtrahend)
     }
 
@@ -173,6 +205,10 @@ where
         self.intersection(other).is_some()
     }
 }
+
+pub type ClosedInterval<T> = Interval<Inclusive<T>, Inclusive<T>>;
+pub type OpenInterval<T> = Interval<Exclusive<T>, Exclusive<T>>;
+pub type VariantInterval<T> = Interval<VariantBoundary<T>, VariantBoundary<T>>;
 
 // pub trait IntervalSet<T>: std::ops::Deref<Target = [Self::Interval]> {
 //     type Interval: Interval<T>;
