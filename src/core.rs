@@ -49,17 +49,6 @@ impl<T: Copy + Ord> Boundary for crate::Boundary<T> {
     }
 }
 
-impl<T> From<Inclusive<T>> for crate::Boundary<T> {
-    fn from(b: Inclusive<T>) -> Self {
-        Self::Inclusive(b.0)
-    }
-}
-impl<T> From<Exclusive<T>> for crate::Boundary<T> {
-    fn from(b: Exclusive<T>) -> Self {
-        Self::Exclusive(b.0)
-    }
-}
-
 impl<B: Boundary> Lower<B> {
     fn inf(&self) -> B::Val {
         self.0.val()
