@@ -13,16 +13,16 @@ pub trait Contains<T> {
 }
 
 // pub trait LowerBoundary: Boundary + Contains<Self::Scalar> {
-pub trait LowerBoundary: Boundary {
-    type Complement: UpperBoundary<Scalar = Self::Scalar>;
-    fn complement(&self) -> Self::Complement;
-}
+// pub trait LowerBoundary: Boundary {
+//     type Complement: UpperBoundary<Scalar = Self::Scalar>;
+//     fn complement(&self) -> Self::Complement;
+// }
 
 // pub trait UpperBoundary: Boundary + Contains<Self::Scalar> {
-pub trait UpperBoundary: Boundary {
-    type Complement: LowerBoundary<Scalar = Self::Scalar>;
-    fn complement(&self) -> Self::Complement;
-}
+// pub trait UpperBoundary: Boundary {
+//     type Complement: LowerBoundary<Scalar = Self::Scalar>;
+//     fn complement(&self) -> Self::Complement;
+// }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Inclusive<T>(pub T);
@@ -90,6 +90,11 @@ where
         Self(self.0.min(other.0))
     }
 }
+impl<IE: Opposite> Lower<IE> {
+    pub fn complement(&self) -> Upper<IE::Opposite> {
+        Upper(self.0.opposite())
+    }
+}
 
 impl<IE: std::ops::Deref> std::ops::Deref for Upper<IE> {
     type Target = IE::Target;
@@ -115,6 +120,11 @@ where
         Self(self.0.max(other.0))
     }
 }
+impl<IE: Opposite> Upper<IE> {
+    pub fn complement(&self) -> Lower<IE::Opposite> {
+        Lower(self.0.opposite())
+    }
+}
 
 impl<T: Copy + Ord> Contains<T> for Lower<Inclusive<T>> {
     fn contains(&self, t: T) -> bool {
@@ -137,29 +147,28 @@ impl<T: Copy + Ord> Contains<T> for Upper<Exclusive<T>> {
     }
 }
 
-impl<IE: Opposite> LowerBoundary for Lower<IE>
-where
-    IE::Target: Copy + Ord,
-    // Self: Contains<IE::Target>,
-{
-    type Complement = Upper<IE::Opposite>;
-    fn complement(&self) -> Self::Complement {
-        Upper(self.0.opposite())
-    }
-}
-impl<IE: Opposite> UpperBoundary for Upper<IE>
-where
-    IE::Target: Copy + Ord,
-    // Self: Contains<IE::Target>,
-{
-    type Complement = Lower<IE::Opposite>;
-    fn complement(&self) -> Self::Complement {
-        Lower(self.0.opposite())
-    }
-}
+// impl<IE: Opposite> LowerBoundary for Lower<IE>
+// where
+//     IE::Target: Copy + Ord,
+//     // Self: Contains<IE::Target>,
+// {
+//     type Complement = Upper<IE::Opposite>;
+//     fn complement(&self) -> Self::Complement {
+//         Upper(self.0.opposite())
+//     }
+// }
+// impl<IE: Opposite> UpperBoundary for Upper<IE>
+// where
+//     IE::Target: Copy + Ord,
+//     // Self: Contains<IE::Target>,
+// {
+//     type Complement = Lower<IE::Opposite>;
+//     fn complement(&self) -> Self::Complement {
+//         Lower(self.0.opposite())
+//     }
+// }
 
-pub type UnionSubtrahend<L, U> =
-    Interval<<Upper<U> as UpperBoundary>::Complement, <Lower<L> as LowerBoundary>::Complement>;
+pub type UnionSubtrahend<L, U> = Interval<<U as Opposite>::Opposite, <L as Opposite>::Opposite>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Interval<L, U> {
@@ -213,12 +222,16 @@ where
         }
     }
 
-    // pub fn union(&self, other: &Self) -> (Self, Option<UnionSubtrahend<L, U>>) {
-    //     let subtrahend = Interval::new_internal(self.1.complement(), other.0.complement()).or(
-    //         Interval::new_internal(other.1.complement(), self.0.complement()),
-    //     );
-    //     (self.union_interval(other), subtrahend)
-    // }
+    pub fn union(&self, other: &Self) -> (Self, Option<UnionSubtrahend<L, U>>)
+    where
+        Lower<U::Opposite>: Contains<L::Target>,
+        Upper<L::Opposite>: Contains<L::Target>,
+    {
+        let subtrahend = Interval::new_internal(self.1.complement(), other.0.complement()).or(
+            Interval::new_internal(other.1.complement(), self.0.complement()),
+        );
+        (self.union_interval(other), subtrahend)
+    }
 
     pub fn overlaps(&self, other: &Self) -> bool {
         self.intersection(other).is_some()
