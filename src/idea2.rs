@@ -1,28 +1,6 @@
-use std::marker::PhantomData;
-
-pub trait Boundary: std::ops::Deref<Target = Self::Scalar> {
-    type Scalar: Copy + Ord;
-    fn val(&self) -> Self::Scalar;
-    fn includes(&self, other: &Self) -> bool;
-    fn intersection(&self, other: &Self) -> Self;
-    fn union(&self, other: &Self) -> Self;
-}
-
 pub trait Contains<T> {
     fn contains(&self, t: T) -> bool;
 }
-
-// pub trait LowerBoundary: Boundary + Contains<Self::Scalar> {
-// pub trait LowerBoundary: Boundary {
-//     type Complement: UpperBoundary<Scalar = Self::Scalar>;
-//     fn complement(&self) -> Self::Complement;
-// }
-
-// pub trait UpperBoundary: Boundary + Contains<Self::Scalar> {
-// pub trait UpperBoundary: Boundary {
-//     type Complement: LowerBoundary<Scalar = Self::Scalar>;
-//     fn complement(&self) -> Self::Complement;
-// }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Inclusive<T>(pub T);
@@ -49,35 +27,34 @@ impl<T> std::ops::Deref for Exclusive<T> {
     }
 }
 
-pub trait Opposite: std::ops::Deref + Ord + Copy {
-    type Opposite: Opposite<Opposite = Self> + std::ops::Deref<Target = Self::Target>;
+pub trait Boundary: std::ops::Deref + Ord + Copy {
+    type Opposite: Boundary<Opposite = Self> + std::ops::Deref<Target = Self::Target>;
     fn opposite(&self) -> Self::Opposite;
 }
-impl<T: Copy + Ord> Opposite for Inclusive<T> {
+impl<T: Copy + Ord> Boundary for Inclusive<T> {
     type Opposite = Exclusive<T>;
     fn opposite(&self) -> Self::Opposite {
         Exclusive(self.0)
     }
 }
-impl<T: Copy + Ord> Opposite for Exclusive<T> {
+impl<T: Copy + Ord> Boundary for Exclusive<T> {
     type Opposite = Inclusive<T>;
     fn opposite(&self) -> Self::Opposite {
         Inclusive(self.0)
     }
 }
 
-impl<IE: std::ops::Deref> std::ops::Deref for Lower<IE> {
-    type Target = IE::Target;
+impl<B: std::ops::Deref> std::ops::Deref for Lower<B> {
+    type Target = B::Target;
     fn deref(&self) -> &Self::Target {
         self.0.deref()
     }
 }
-impl<IE: Opposite> Boundary for Lower<IE>
+impl<B: Boundary> Lower<B>
 where
-    IE::Target: Copy + Ord,
+    B::Target: Copy + Ord,
 {
-    type Scalar = IE::Target;
-    fn val(&self) -> Self::Scalar {
+    fn val(&self) -> B::Target {
         *self.0
     }
     fn includes(&self, other: &Self) -> bool {
@@ -90,24 +67,23 @@ where
         Self(self.0.min(other.0))
     }
 }
-impl<IE: Opposite> Lower<IE> {
-    pub fn complement(&self) -> Upper<IE::Opposite> {
+impl<B: Boundary> Lower<B> {
+    pub fn complement(&self) -> Upper<B::Opposite> {
         Upper(self.0.opposite())
     }
 }
 
-impl<IE: std::ops::Deref> std::ops::Deref for Upper<IE> {
-    type Target = IE::Target;
+impl<B: std::ops::Deref> std::ops::Deref for Upper<B> {
+    type Target = B::Target;
     fn deref(&self) -> &Self::Target {
         self.0.deref()
     }
 }
-impl<IE: Opposite> Boundary for Upper<IE>
+impl<B: Boundary> Upper<B>
 where
-    IE::Target: Copy + Ord,
+    B::Target: Copy + Ord,
 {
-    type Scalar = IE::Target;
-    fn val(&self) -> Self::Scalar {
+    fn val(&self) -> B::Target {
         *self.0
     }
     fn includes(&self, other: &Self) -> bool {
@@ -120,8 +96,8 @@ where
         Self(self.0.max(other.0))
     }
 }
-impl<IE: Opposite> Upper<IE> {
-    pub fn complement(&self) -> Lower<IE::Opposite> {
+impl<B: Boundary> Upper<B> {
+    pub fn complement(&self) -> Lower<B::Opposite> {
         Lower(self.0.opposite())
     }
 }
@@ -147,28 +123,7 @@ impl<T: Copy + Ord> Contains<T> for Upper<Exclusive<T>> {
     }
 }
 
-// impl<IE: Opposite> LowerBoundary for Lower<IE>
-// where
-//     IE::Target: Copy + Ord,
-//     // Self: Contains<IE::Target>,
-// {
-//     type Complement = Upper<IE::Opposite>;
-//     fn complement(&self) -> Self::Complement {
-//         Upper(self.0.opposite())
-//     }
-// }
-// impl<IE: Opposite> UpperBoundary for Upper<IE>
-// where
-//     IE::Target: Copy + Ord,
-//     // Self: Contains<IE::Target>,
-// {
-//     type Complement = Lower<IE::Opposite>;
-//     fn complement(&self) -> Self::Complement {
-//         Lower(self.0.opposite())
-//     }
-// }
-
-pub type UnionSubtrahend<L, U> = Interval<<U as Opposite>::Opposite, <L as Opposite>::Opposite>;
+pub type UnionSubtrahend<L, U> = Interval<<U as Boundary>::Opposite, <L as Boundary>::Opposite>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Interval<L, U> {
@@ -180,7 +135,7 @@ impl<L, U> std::ops::Deref for Interval<L, U> {
         &self.pair
     }
 }
-impl<L: Opposite, U: Opposite<Target = L::Target>> Interval<L, U>
+impl<L: Boundary, U: Boundary<Target = L::Target>> Interval<L, U>
 where
     L::Target: Sized + Copy + Ord,
     Lower<L>: Contains<L::Target>,
@@ -241,16 +196,6 @@ where
         self.0.includes(&other.0) && self.1.includes(&other.1)
     }
 }
-
-// pub trait Interval<T>: Sized + std::ops::Deref<Target = (T, T)> {
-//     fn lower(&self) -> T;
-//     fn upper(&self) -> T;
-//     fn is_inclusive(&self) -> (bool, bool);
-//     fn measure(&self) -> T;
-//     fn contains(&self, t: T) -> bool;
-//     fn intersection(&self, other: &Self) -> Option<Self>;
-//     fn union(&self, other: &Self) -> (Self, Option<Self>);
-// }
 
 // pub trait IntervalSet<T>: std::ops::Deref<Target = [Self::Interval]> {
 //     type Interval: Interval<T>;
