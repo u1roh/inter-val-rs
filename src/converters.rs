@@ -1,4 +1,5 @@
-use crate::*;
+use crate::{Boundary, Exclusive, Inclusive};
+use ordered_float::NotNan;
 
 impl<T> From<Inclusive<T>> for Boundary<T> {
     fn from(b: Inclusive<T>) -> Self {

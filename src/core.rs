@@ -1,4 +1,4 @@
-use crate::{Exclusive, Inclusive};
+use crate::{Exclusive, Inclusive, IntervalIsEmpty};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Lower<T>(pub T);
@@ -121,12 +121,13 @@ where
     Lower<L>: Contains<L::Val>,
     Upper<U>: Contains<L::Val>,
 {
-    fn new_internal(lower: Lower<L>, upper: Upper<U>) -> Option<Self> {
+    fn new_(lower: Lower<L>, upper: Upper<U>) -> Result<Self, IntervalIsEmpty> {
         (lower.contains(upper.sup()) && upper.contains(lower.inf()))
             .then_some(Self { lower, upper })
+            .ok_or(IntervalIsEmpty)
     }
-    pub fn new(lower: L, upper: U) -> Option<Self> {
-        Self::new_internal(Lower(lower), Upper(upper))
+    pub fn new(lower: L, upper: U) -> Result<Self, IntervalIsEmpty> {
+        Self::new_(Lower(lower), Upper(upper))
     }
     pub fn lower(&self) -> &Lower<L> {
         &self.lower
@@ -157,10 +158,11 @@ where
     }
 
     pub fn intersection(&self, other: &Self) -> Option<Self> {
-        Self::new_internal(
+        Self::new_(
             self.lower.intersection(&other.lower),
             self.upper.intersection(&other.upper),
         )
+        .ok()
     }
 
     pub fn union_interval(&self, other: &Self) -> Self {
@@ -176,7 +178,8 @@ where
         Upper<L::Fellow>: Contains<L::Val>,
     {
         let subtrahend = Interval::new(self.upper.0.fellow(), other.lower.0.fellow())
-            .or(Interval::new(other.upper.0.fellow(), self.lower.0.fellow()));
+            .or(Interval::new(other.upper.0.fellow(), self.lower.0.fellow()))
+            .ok();
         (self.union_interval(other), subtrahend)
     }
 

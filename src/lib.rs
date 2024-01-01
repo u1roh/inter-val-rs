@@ -17,6 +17,10 @@ pub enum Boundary<T> {
     Exclusive(T),
 }
 
+#[derive(Debug, thiserror::Error)]
+#[error("lower boundary must be less than or equal to upper boundary")]
+pub struct IntervalIsEmpty;
+
 pub type ClosedInterval<T> = core::Interval<Inclusive<T>, Inclusive<T>>;
 pub type OpenInterval<T> = core::Interval<Exclusive<T>, Exclusive<T>>;
 pub type RightHalfOpenInterval<T> = core::Interval<Inclusive<T>, Exclusive<T>>;
