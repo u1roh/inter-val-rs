@@ -113,14 +113,38 @@ impl<T: Copy + Ord> Contains<T> for Upper<Exclusive<T>> {
     }
 }
 
-// impl<T: Copy + Ord> std::ops::RangeBounds<T> for Lower<Inclusive<T>> {
-//     fn start_bound(&self) -> std::ops::Bound<&T> {
-//         std::ops::Bound::Included(&self.0 .0)
-//     }
-//     fn end_bound(&self) -> std::ops::Bound<&T> {
-//         std::ops::Bound::Unbounded
-//     }
-// }
+impl<T: Ord> std::ops::RangeBounds<T> for Lower<Inclusive<T>> {
+    fn start_bound(&self) -> std::ops::Bound<&T> {
+        std::ops::Bound::Included(self.inf())
+    }
+    fn end_bound(&self) -> std::ops::Bound<&T> {
+        std::ops::Bound::Unbounded
+    }
+}
+impl<T: Ord> std::ops::RangeBounds<T> for Lower<Exclusive<T>> {
+    fn start_bound(&self) -> std::ops::Bound<&T> {
+        std::ops::Bound::Excluded(self.inf())
+    }
+    fn end_bound(&self) -> std::ops::Bound<&T> {
+        std::ops::Bound::Unbounded
+    }
+}
+impl<T: Ord> std::ops::RangeBounds<T> for Upper<Inclusive<T>> {
+    fn start_bound(&self) -> std::ops::Bound<&T> {
+        std::ops::Bound::Unbounded
+    }
+    fn end_bound(&self) -> std::ops::Bound<&T> {
+        std::ops::Bound::Included(self.sup())
+    }
+}
+impl<T: Ord> std::ops::RangeBounds<T> for Upper<Exclusive<T>> {
+    fn start_bound(&self) -> std::ops::Bound<&T> {
+        std::ops::Bound::Unbounded
+    }
+    fn end_bound(&self) -> std::ops::Bound<&T> {
+        std::ops::Bound::Excluded(self.sup())
+    }
+}
 
 pub type UnionSubtrahend<L, U> = Interval<<U as Boundary>::Fellow, <L as Boundary>::Fellow>;
 
@@ -215,6 +239,18 @@ where
         U: Clone,
     {
         self.intersection(other).is_some()
+    }
+}
+impl<L: Boundary, U: Boundary<Val = L::Val>> std::ops::RangeBounds<L::Val> for Interval<L, U>
+where
+    Lower<L>: Contains<L::Val>,
+    Upper<U>: Contains<L::Val>,
+{
+    fn start_bound(&self) -> std::ops::Bound<&L::Val> {
+        std::ops::Bound::Included(self.inf())
+    }
+    fn end_bound(&self) -> std::ops::Bound<&L::Val> {
+        std::ops::Bound::Excluded(self.sup())
     }
 }
 
