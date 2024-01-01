@@ -1,28 +1,22 @@
 use crate::boundary::Boundary;
-use crate::{Exclusive, Inclusive, IntervalIsEmpty};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Lower<T>(pub T);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Upper<T>(pub T);
+use crate::{IntervalIsEmpty, Lower, Upper};
 
 impl<B: Boundary> Lower<B> {
-    fn inf(&self) -> &B::Val {
+    pub fn inf(&self) -> &B::Val {
         self.0.val()
     }
-    fn includes(&self, other: &Self) -> bool {
+    pub fn includes(&self, other: &Self) -> bool {
         self.inf() <= other.inf()
     }
-    fn contains(&self, t: &B::Val) -> bool {
+    pub fn contains(&self, t: &B::Val) -> bool {
         self.0.less_eq(t)
     }
 }
 impl<B: Boundary + Clone> Lower<B> {
-    fn intersection(&self, other: &Self) -> Self {
+    pub fn intersection(&self, other: &Self) -> Self {
         Self(self.0.clone().max(other.0.clone()))
     }
-    fn union(&self, other: &Self) -> Self {
+    pub fn union(&self, other: &Self) -> Self {
         Self(self.0.clone().min(other.0.clone()))
     }
     pub fn flip(&self) -> Upper<B::Flip> {
@@ -31,58 +25,25 @@ impl<B: Boundary + Clone> Lower<B> {
 }
 
 impl<B: Boundary> Upper<B> {
-    fn sup(&self) -> &B::Val {
+    pub fn sup(&self) -> &B::Val {
         self.0.val()
     }
-    fn includes(&self, other: &Self) -> bool {
+    pub fn includes(&self, other: &Self) -> bool {
         other.0 <= self.0
     }
-    fn contains(&self, t: &B::Val) -> bool {
+    pub fn contains(&self, t: &B::Val) -> bool {
         self.0.greater_eq(t)
     }
 }
 impl<B: Boundary + Clone> Upper<B> {
-    fn intersection(&self, other: &Self) -> Self {
+    pub fn intersection(&self, other: &Self) -> Self {
         Self(self.0.clone().min(other.0.clone()))
     }
-    fn union(&self, other: &Self) -> Self {
+    pub fn union(&self, other: &Self) -> Self {
         Self(self.0.clone().max(other.0.clone()))
     }
     pub fn flip(&self) -> Lower<B::Flip> {
         Lower(self.0.clone().flip())
-    }
-}
-
-impl<T: Ord> std::ops::RangeBounds<T> for Lower<Inclusive<T>> {
-    fn start_bound(&self) -> std::ops::Bound<&T> {
-        std::ops::Bound::Included(self.inf())
-    }
-    fn end_bound(&self) -> std::ops::Bound<&T> {
-        std::ops::Bound::Unbounded
-    }
-}
-impl<T: Ord> std::ops::RangeBounds<T> for Lower<Exclusive<T>> {
-    fn start_bound(&self) -> std::ops::Bound<&T> {
-        std::ops::Bound::Excluded(self.inf())
-    }
-    fn end_bound(&self) -> std::ops::Bound<&T> {
-        std::ops::Bound::Unbounded
-    }
-}
-impl<T: Ord> std::ops::RangeBounds<T> for Upper<Inclusive<T>> {
-    fn start_bound(&self) -> std::ops::Bound<&T> {
-        std::ops::Bound::Unbounded
-    }
-    fn end_bound(&self) -> std::ops::Bound<&T> {
-        std::ops::Bound::Included(self.sup())
-    }
-}
-impl<T: Ord> std::ops::RangeBounds<T> for Upper<Exclusive<T>> {
-    fn start_bound(&self) -> std::ops::Bound<&T> {
-        std::ops::Bound::Unbounded
-    }
-    fn end_bound(&self) -> std::ops::Bound<&T> {
-        std::ops::Bound::Excluded(self.sup())
     }
 }
 
@@ -195,6 +156,7 @@ impl<L: Boundary, U: Boundary<Val = L::Val>> std::ops::RangeBounds<L::Val> for I
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{Exclusive, Inclusive};
 
     #[test]
     fn it_works() {
@@ -204,5 +166,9 @@ mod tests {
         assert!(i.contains(&2));
         assert!(!i.contains(&3));
         assert!(!i.contains(&-1));
+
+        let i: Interval<Inclusive<i32>> = (Inclusive(4), Inclusive(7)).try_into().unwrap();
+        assert!(i.contains(&4));
+        assert!(i.contains(&7));
     }
 }

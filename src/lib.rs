@@ -1,6 +1,7 @@
 mod boundary;
 mod converters;
 pub mod core;
+mod impl_range_bounds;
 
 use ordered_float::NotNan;
 
@@ -15,6 +16,12 @@ pub enum Boundary<T> {
     Inclusive(T),
     Exclusive(T),
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Lower<T>(pub T);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Upper<T>(pub T);
 
 #[derive(Debug, thiserror::Error)]
 #[error("lower boundary must be less than or equal to upper boundary")]
