@@ -8,19 +8,19 @@ pub struct Upper<T>(pub T);
 
 pub trait Boundary: Ord {
     type Val: Ord;
-    type Fellow: Boundary<Val = Self::Val, Fellow = Self>;
+    type Flip: Boundary<Val = Self::Val, Flip = Self>;
     fn val(&self) -> &Self::Val;
-    fn fellow(self) -> Self::Fellow;
+    fn flip(self) -> Self::Flip;
     fn less_eq(&self, t: &Self::Val) -> bool;
     fn greater_eq(&self, t: &Self::Val) -> bool;
 }
 impl<T: Ord> Boundary for Inclusive<T> {
     type Val = T;
-    type Fellow = Exclusive<T>;
+    type Flip = Exclusive<T>;
     fn val(&self) -> &T {
         &self.0
     }
-    fn fellow(self) -> Self::Fellow {
+    fn flip(self) -> Self::Flip {
         Exclusive(self.0)
     }
     fn less_eq(&self, t: &Self::Val) -> bool {
@@ -32,11 +32,11 @@ impl<T: Ord> Boundary for Inclusive<T> {
 }
 impl<T: Ord> Boundary for Exclusive<T> {
     type Val = T;
-    type Fellow = Inclusive<T>;
+    type Flip = Inclusive<T>;
     fn val(&self) -> &T {
         &self.0
     }
-    fn fellow(self) -> Self::Fellow {
+    fn flip(self) -> Self::Flip {
         Inclusive(self.0)
     }
     fn less_eq(&self, t: &Self::Val) -> bool {
@@ -48,14 +48,14 @@ impl<T: Ord> Boundary for Exclusive<T> {
 }
 impl<T: Ord> Boundary for crate::Boundary<T> {
     type Val = T;
-    type Fellow = Self;
+    type Flip = Self;
     fn val(&self) -> &T {
         match self {
             Self::Inclusive(t) => t,
             Self::Exclusive(t) => t,
         }
     }
-    fn fellow(self) -> Self {
+    fn flip(self) -> Self {
         match self {
             Self::Inclusive(t) => Self::Exclusive(t),
             Self::Exclusive(t) => Self::Inclusive(t),
@@ -93,8 +93,8 @@ impl<B: Boundary + Clone> Lower<B> {
     fn union(&self, other: &Self) -> Self {
         Self(self.0.clone().min(other.0.clone()))
     }
-    pub fn complement(&self) -> Upper<B::Fellow> {
-        Upper(self.0.clone().fellow())
+    pub fn complement(&self) -> Upper<B::Flip> {
+        Upper(self.0.clone().flip())
     }
 }
 
@@ -116,8 +116,8 @@ impl<B: Boundary + Clone> Upper<B> {
     fn union(&self, other: &Self) -> Self {
         Self(self.0.clone().max(other.0.clone()))
     }
-    pub fn complement(&self) -> Lower<B::Fellow> {
-        Lower(self.0.clone().fellow())
+    pub fn complement(&self) -> Lower<B::Flip> {
+        Lower(self.0.clone().flip())
     }
 }
 
@@ -154,7 +154,7 @@ impl<T: Ord> std::ops::RangeBounds<T> for Upper<Exclusive<T>> {
     }
 }
 
-pub type UnionSubtrahend<L, U> = Interval<<U as Boundary>::Fellow, <L as Boundary>::Fellow>;
+pub type UnionSubtrahend<L, U> = Interval<<U as Boundary>::Flip, <L as Boundary>::Flip>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Interval<L, U> {
