@@ -93,7 +93,7 @@ impl<B: Boundary + Clone> Lower<B> {
     fn union(&self, other: &Self) -> Self {
         Self(self.0.clone().min(other.0.clone()))
     }
-    pub fn complement(&self) -> Upper<B::Flip> {
+    pub fn flip(&self) -> Upper<B::Flip> {
         Upper(self.0.clone().flip())
     }
 }
@@ -116,7 +116,7 @@ impl<B: Boundary + Clone> Upper<B> {
     fn union(&self, other: &Self) -> Self {
         Self(self.0.clone().max(other.0.clone()))
     }
-    pub fn complement(&self) -> Lower<B::Flip> {
+    pub fn flip(&self) -> Lower<B::Flip> {
         Lower(self.0.clone().flip())
     }
 }
@@ -226,11 +226,8 @@ impl<L: Boundary, U: Boundary<Val = L::Val>> Interval<L, U> {
         L: Clone,
         U: Clone,
     {
-        let subtrahend = Interval::new_(self.upper.complement(), other.lower.complement())
-            .or(Interval::new_(
-                other.upper.complement(),
-                self.lower.complement(),
-            ))
+        let subtrahend = Interval::new_(self.upper.flip(), other.lower.flip())
+            .or(Interval::new_(other.upper.flip(), self.lower.flip()))
             .ok();
         (self.union_interval(other), subtrahend)
     }
