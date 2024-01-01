@@ -1,3 +1,4 @@
+mod boundary;
 mod converters;
 pub mod core;
 
@@ -19,11 +20,12 @@ pub enum Boundary<T> {
 #[error("lower boundary must be less than or equal to upper boundary")]
 pub struct IntervalIsEmpty;
 
-pub type ClosedInterval<T> = core::Interval<Inclusive<T>>;
-pub type OpenInterval<T> = core::Interval<Exclusive<T>>;
-pub type RightHalfOpenInterval<T> = core::Interval<Inclusive<T>, Exclusive<T>>;
-pub type LeftHalfOpenInterval<T> = core::Interval<Exclusive<T>, Inclusive<T>>;
-pub type Interval<T> = core::Interval<Boundary<T>>;
+pub use core::Interval;
+pub type ClosedInterval<T> = Interval<Inclusive<T>>;
+pub type OpenInterval<T> = Interval<Exclusive<T>>;
+pub type RightHalfOpenInterval<T> = Interval<Inclusive<T>, Exclusive<T>>;
+pub type LeftHalfOpenInterval<T> = Interval<Exclusive<T>, Inclusive<T>>;
+pub type GeneralInterval<T> = Interval<Boundary<T>>;
 
 pub type ClosedIntervalF<T> = ClosedInterval<NotNan<T>>;
 pub type OpenIntervalF<T> = OpenInterval<NotNan<T>>;

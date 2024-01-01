@@ -1,5 +1,16 @@
-use crate::{Boundary, Exclusive, Inclusive};
+use crate::{Boundary, Exclusive, Inclusive, Interval};
 use ordered_float::NotNan;
+
+impl<T> From<T> for Inclusive<T> {
+    fn from(t: T) -> Self {
+        Self(t)
+    }
+}
+impl<T> From<T> for Exclusive<T> {
+    fn from(t: T) -> Self {
+        Self(t)
+    }
+}
 
 impl<T> From<Inclusive<T>> for Boundary<T> {
     fn from(b: Inclusive<T>) -> Self {
@@ -46,9 +57,16 @@ impl<T: ordered_float::FloatCore> TryFrom<Exclusive<T>> for Boundary<NotNan<T>> 
     }
 }
 
-impl<T: Ord> TryFrom<std::ops::Range<T>> for crate::core::Interval<Inclusive<T>, Exclusive<T>> {
+impl<T: Ord> TryFrom<std::ops::Range<T>> for Interval<Inclusive<T>, Exclusive<T>> {
     type Error = crate::IntervalIsEmpty;
     fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {
         Self::new(Inclusive(r.start), Exclusive(r.end))
+    }
+}
+impl<T: Ord> TryFrom<std::ops::RangeInclusive<T>> for Interval<Inclusive<T>> {
+    type Error = crate::IntervalIsEmpty;
+    fn try_from(r: std::ops::RangeInclusive<T>) -> Result<Self, Self::Error> {
+        let (lower, upper) = r.into_inner();
+        Self::new(Inclusive(lower), Inclusive(upper))
     }
 }
