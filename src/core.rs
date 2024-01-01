@@ -92,22 +92,22 @@ impl<B: Boundary + Clone> Upper<B> {
 pub trait Contains<T> {
     fn contains(&self, t: &T) -> bool;
 }
-impl<T: Copy + Ord> Contains<T> for Lower<Inclusive<T>> {
+impl<T: Ord> Contains<T> for Lower<Inclusive<T>> {
     fn contains(&self, t: &T) -> bool {
         self.inf() <= t
     }
 }
-impl<T: Copy + Ord> Contains<T> for Lower<Exclusive<T>> {
+impl<T: Ord> Contains<T> for Lower<Exclusive<T>> {
     fn contains(&self, t: &T) -> bool {
         self.inf() < t
     }
 }
-impl<T: Copy + Ord> Contains<T> for Upper<Inclusive<T>> {
+impl<T: Ord> Contains<T> for Upper<Inclusive<T>> {
     fn contains(&self, t: &T) -> bool {
         t <= self.sup()
     }
 }
-impl<T: Copy + Ord> Contains<T> for Upper<Exclusive<T>> {
+impl<T: Ord> Contains<T> for Upper<Exclusive<T>> {
     fn contains(&self, t: &T) -> bool {
         t < self.sup()
     }

@@ -45,3 +45,10 @@ impl<T: ordered_float::FloatCore> TryFrom<Exclusive<T>> for Boundary<NotNan<T>> 
         Boundary::from(b).try_into()
     }
 }
+
+impl<T: Ord> TryFrom<std::ops::Range<T>> for crate::core::Interval<Inclusive<T>, Exclusive<T>> {
+    type Error = crate::IntervalIsEmpty;
+    fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {
+        Self::new(Inclusive(r.start), Exclusive(r.end))
+    }
+}
