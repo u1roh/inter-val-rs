@@ -79,3 +79,6 @@ pub type ClosedIntervalF64 = ClosedIntervalF<f64>;
 pub type OpenIntervalF64 = OpenIntervalF<f64>;
 pub type RightHalfOpenIntervalF64 = RightHalfOpenIntervalF<f64>;
 pub type LeftHalfOpenIntervalF64 = LeftHalfOpenIntervalF<f64>;
+
+// TODO
+pub struct Box<const N: usize, L, U>([Interval<L, U>; N]);
