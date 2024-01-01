@@ -1,70 +1,54 @@
-use crate::{Exclusive, Inclusive};
+use crate::{Bound, Exclusive, Inclusive};
 
-pub trait Boundary: Ord {
-    type Val: Ord;
-    type Flip: Boundary<Val = Self::Val, Flip = Self>;
-    fn val(&self) -> &Self::Val;
+pub trait Boundary<T>: Ord + Copy {
+    type Flip: Boundary<T, Flip = Self>;
     fn flip(self) -> Self::Flip;
-    fn less_eq(&self, t: &Self::Val) -> bool;
-    fn greater_eq(&self, t: &Self::Val) -> bool;
+    fn less_eq(&self, this: &T, t: &T) -> bool;
+    fn greater_eq(&self, this: &T, t: &T) -> bool;
 }
-impl<T: Ord> Boundary for Inclusive<T> {
-    type Val = T;
-    type Flip = Exclusive<T>;
-    fn val(&self) -> &T {
-        &self.0
-    }
+
+impl<T: Ord> Boundary<T> for Inclusive {
+    type Flip = Exclusive;
     fn flip(self) -> Self::Flip {
-        Exclusive(self.0)
+        Exclusive
     }
-    fn less_eq(&self, t: &Self::Val) -> bool {
-        self.val() <= t
+    fn less_eq(&self, this: &T, t: &T) -> bool {
+        this <= t
     }
-    fn greater_eq(&self, t: &Self::Val) -> bool {
-        t <= self.val()
+    fn greater_eq(&self, this: &T, t: &T) -> bool {
+        t <= this
     }
 }
-impl<T: Ord> Boundary for Exclusive<T> {
-    type Val = T;
-    type Flip = Inclusive<T>;
-    fn val(&self) -> &T {
-        &self.0
-    }
+impl<T: Ord> Boundary<T> for Exclusive {
+    type Flip = Inclusive;
     fn flip(self) -> Self::Flip {
-        Inclusive(self.0)
+        Inclusive
     }
-    fn less_eq(&self, t: &Self::Val) -> bool {
-        self.val() < t
+    fn less_eq(&self, this: &T, t: &T) -> bool {
+        this < t
     }
-    fn greater_eq(&self, t: &Self::Val) -> bool {
-        t < self.val()
+    fn greater_eq(&self, this: &T, t: &T) -> bool {
+        t < this
     }
 }
-impl<T: Ord> Boundary for crate::Bound<T> {
-    type Val = T;
+impl<T: Ord> Boundary<T> for Bound {
     type Flip = Self;
-    fn val(&self) -> &T {
-        match self {
-            Self::Inclusive(t) => t,
-            Self::Exclusive(t) => t,
-        }
-    }
     fn flip(self) -> Self {
         match self {
-            Self::Inclusive(t) => Self::Exclusive(t),
-            Self::Exclusive(t) => Self::Inclusive(t),
+            Self::Inclusive => Self::Exclusive,
+            Self::Exclusive => Self::Inclusive,
         }
     }
-    fn less_eq(&self, t: &Self::Val) -> bool {
+    fn less_eq(&self, s: &T, t: &T) -> bool {
         match self {
-            Self::Inclusive(s) => s <= t,
-            Self::Exclusive(s) => s < t,
+            Bound::Inclusive => s <= t,
+            Bound::Exclusive => s < t,
         }
     }
-    fn greater_eq(&self, t: &Self::Val) -> bool {
+    fn greater_eq(&self, s: &T, t: &T) -> bool {
         match self {
-            Self::Inclusive(s) => t <= s,
-            Self::Exclusive(s) => t < s,
+            Bound::Inclusive => t <= s,
+            Bound::Exclusive => t < s,
         }
     }
 }
