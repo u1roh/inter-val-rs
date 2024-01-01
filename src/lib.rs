@@ -1,7 +1,5 @@
 mod converters;
 pub mod core;
-pub mod general;
-pub mod idea1;
 
 use ordered_float::NotNan;
 
