@@ -133,14 +133,6 @@ impl<L: Boundary, U: Boundary<Val = L::Val>> Interval<L, U> {
         self.intersection(other).is_some()
     }
 }
-impl<L: Boundary, U: Boundary<Val = L::Val>> std::ops::RangeBounds<L::Val> for Interval<L, U> {
-    fn start_bound(&self) -> std::ops::Bound<&L::Val> {
-        std::ops::Bound::Included(self.inf())
-    }
-    fn end_bound(&self) -> std::ops::Bound<&L::Val> {
-        std::ops::Bound::Excluded(self.sup())
-    }
-}
 
 // pub trait IntervalSet<T>: std::ops::Deref<Target = [Self::Interval]> {
 //     type Interval: Interval<T>;
@@ -170,5 +162,19 @@ mod tests {
         let i: Interval<Inclusive<i32>> = (Inclusive(4), Inclusive(7)).try_into().unwrap();
         assert!(i.contains(&4));
         assert!(i.contains(&7));
+
+        let i = Exclusive(-2).to(Inclusive(5)).unwrap();
+        assert!(!i.contains(&-2));
+        assert!(i.contains(&5));
+
+        let _i = Interval::new(
+            Inclusive::not_nan(1.23).unwrap(),
+            Exclusive::not_nan(4.56).unwrap(),
+        )
+        .unwrap();
+        let _i = Inclusive::not_nan(1.23)
+            .unwrap()
+            .to(Exclusive::not_nan(4.56).unwrap())
+            .unwrap();
     }
 }

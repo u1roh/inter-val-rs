@@ -1,4 +1,4 @@
-use crate::{Boundary, Exclusive, Inclusive, Interval};
+use crate::{Bound, Exclusive, Inclusive, Interval};
 use ordered_float::NotNan;
 
 impl<T> From<T> for Inclusive<T> {
@@ -12,12 +12,12 @@ impl<T> From<T> for Exclusive<T> {
     }
 }
 
-impl<T> From<Inclusive<T>> for Boundary<T> {
+impl<T> From<Inclusive<T>> for Bound<T> {
     fn from(b: Inclusive<T>) -> Self {
         Self::Inclusive(b.0)
     }
 }
-impl<T> From<Exclusive<T>> for Boundary<T> {
+impl<T> From<Exclusive<T>> for Bound<T> {
     fn from(b: Exclusive<T>) -> Self {
         Self::Exclusive(b.0)
     }
@@ -35,25 +35,25 @@ impl<T: ordered_float::FloatCore> TryFrom<Exclusive<T>> for Exclusive<NotNan<T>>
         NotNan::new(b.0).map(Self)
     }
 }
-impl<T: ordered_float::FloatCore> TryFrom<Boundary<T>> for Boundary<NotNan<T>> {
+impl<T: ordered_float::FloatCore> TryFrom<Bound<T>> for Bound<NotNan<T>> {
     type Error = ordered_float::FloatIsNan;
-    fn try_from(b: Boundary<T>) -> Result<Self, Self::Error> {
+    fn try_from(b: Bound<T>) -> Result<Self, Self::Error> {
         match b {
-            Boundary::Inclusive(t) => NotNan::new(t).map(Self::Inclusive),
-            Boundary::Exclusive(t) => NotNan::new(t).map(Self::Exclusive),
+            Bound::Inclusive(t) => NotNan::new(t).map(Self::Inclusive),
+            Bound::Exclusive(t) => NotNan::new(t).map(Self::Exclusive),
         }
     }
 }
-impl<T: ordered_float::FloatCore> TryFrom<Inclusive<T>> for Boundary<NotNan<T>> {
+impl<T: ordered_float::FloatCore> TryFrom<Inclusive<T>> for Bound<NotNan<T>> {
     type Error = ordered_float::FloatIsNan;
     fn try_from(b: Inclusive<T>) -> Result<Self, Self::Error> {
-        Boundary::from(b).try_into()
+        Bound::from(b).try_into()
     }
 }
-impl<T: ordered_float::FloatCore> TryFrom<Exclusive<T>> for Boundary<NotNan<T>> {
+impl<T: ordered_float::FloatCore> TryFrom<Exclusive<T>> for Bound<NotNan<T>> {
     type Error = ordered_float::FloatIsNan;
     fn try_from(b: Exclusive<T>) -> Result<Self, Self::Error> {
-        Boundary::from(b).try_into()
+        Bound::from(b).try_into()
     }
 }
 

@@ -40,7 +40,7 @@ impl<T: Ord> Boundary for Exclusive<T> {
         t < self.val()
     }
 }
-impl<T: Ord> Boundary for crate::Boundary<T> {
+impl<T: Ord> Boundary for crate::Bound<T> {
     type Val = T;
     type Flip = Self;
     fn val(&self) -> &T {
