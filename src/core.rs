@@ -157,7 +157,7 @@ impl<T: Ord> std::ops::RangeBounds<T> for Upper<Exclusive<T>> {
 pub type UnionSubtrahend<L, U> = Interval<<U as Boundary>::Flip, <L as Boundary>::Flip>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Interval<L, U> {
+pub struct Interval<L, U = L> {
     lower: Lower<L>,
     upper: Upper<U>,
 }
