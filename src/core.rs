@@ -11,6 +11,8 @@ pub trait Boundary: Ord {
     type Fellow: Boundary<Val = Self::Val, Fellow = Self>;
     fn val(&self) -> &Self::Val;
     fn fellow(self) -> Self::Fellow;
+    fn less_eq(&self, t: &Self::Val) -> bool;
+    fn greater_eq(&self, t: &Self::Val) -> bool;
 }
 impl<T: Ord> Boundary for Inclusive<T> {
     type Val = T;
@@ -21,6 +23,12 @@ impl<T: Ord> Boundary for Inclusive<T> {
     fn fellow(self) -> Self::Fellow {
         Exclusive(self.0)
     }
+    fn less_eq(&self, t: &Self::Val) -> bool {
+        self.val() <= t
+    }
+    fn greater_eq(&self, t: &Self::Val) -> bool {
+        t <= self.val()
+    }
 }
 impl<T: Ord> Boundary for Exclusive<T> {
     type Val = T;
@@ -30,6 +38,12 @@ impl<T: Ord> Boundary for Exclusive<T> {
     }
     fn fellow(self) -> Self::Fellow {
         Inclusive(self.0)
+    }
+    fn less_eq(&self, t: &Self::Val) -> bool {
+        self.val() < t
+    }
+    fn greater_eq(&self, t: &Self::Val) -> bool {
+        t < self.val()
     }
 }
 impl<T: Ord> Boundary for crate::Boundary<T> {
@@ -47,6 +61,18 @@ impl<T: Ord> Boundary for crate::Boundary<T> {
             Self::Exclusive(t) => Self::Inclusive(t),
         }
     }
+    fn less_eq(&self, t: &Self::Val) -> bool {
+        match self {
+            Self::Inclusive(s) => s <= t,
+            Self::Exclusive(s) => s < t,
+        }
+    }
+    fn greater_eq(&self, t: &Self::Val) -> bool {
+        match self {
+            Self::Inclusive(s) => t <= s,
+            Self::Exclusive(s) => t < s,
+        }
+    }
 }
 
 impl<B: Boundary> Lower<B> {
@@ -55,6 +81,9 @@ impl<B: Boundary> Lower<B> {
     }
     fn includes(&self, other: &Self) -> bool {
         self.inf() <= other.inf()
+    }
+    fn contains(&self, t: &B::Val) -> bool {
+        self.0.less_eq(t)
     }
 }
 impl<B: Boundary + Clone> Lower<B> {
@@ -76,6 +105,9 @@ impl<B: Boundary> Upper<B> {
     fn includes(&self, other: &Self) -> bool {
         other.0 <= self.0
     }
+    fn contains(&self, t: &B::Val) -> bool {
+        self.0.greater_eq(t)
+    }
 }
 impl<B: Boundary + Clone> Upper<B> {
     fn intersection(&self, other: &Self) -> Self {
@@ -86,30 +118,6 @@ impl<B: Boundary + Clone> Upper<B> {
     }
     pub fn complement(&self) -> Lower<B::Fellow> {
         Lower(self.0.clone().fellow())
-    }
-}
-
-pub trait Contains<T> {
-    fn contains(&self, t: &T) -> bool;
-}
-impl<T: Ord> Contains<T> for Lower<Inclusive<T>> {
-    fn contains(&self, t: &T) -> bool {
-        self.inf() <= t
-    }
-}
-impl<T: Ord> Contains<T> for Lower<Exclusive<T>> {
-    fn contains(&self, t: &T) -> bool {
-        self.inf() < t
-    }
-}
-impl<T: Ord> Contains<T> for Upper<Inclusive<T>> {
-    fn contains(&self, t: &T) -> bool {
-        t <= self.sup()
-    }
-}
-impl<T: Ord> Contains<T> for Upper<Exclusive<T>> {
-    fn contains(&self, t: &T) -> bool {
-        t < self.sup()
     }
 }
 
@@ -153,11 +161,7 @@ pub struct Interval<L, U> {
     lower: Lower<L>,
     upper: Upper<U>,
 }
-impl<L: Boundary, U: Boundary<Val = L::Val>> Interval<L, U>
-where
-    Lower<L>: Contains<L::Val>,
-    Upper<U>: Contains<L::Val>,
-{
+impl<L: Boundary, U: Boundary<Val = L::Val>> Interval<L, U> {
     fn new_(lower: Lower<L>, upper: Upper<U>) -> Result<Self, IntervalIsEmpty> {
         (lower.contains(upper.sup()) && upper.contains(lower.inf()))
             .then_some(Self { lower, upper })
@@ -221,8 +225,6 @@ where
     where
         L: Clone,
         U: Clone,
-        Lower<U::Fellow>: Contains<L::Val>,
-        Upper<L::Fellow>: Contains<L::Val>,
     {
         let subtrahend = Interval::new_(self.upper.complement(), other.lower.complement())
             .or(Interval::new_(
@@ -241,11 +243,7 @@ where
         self.intersection(other).is_some()
     }
 }
-impl<L: Boundary, U: Boundary<Val = L::Val>> std::ops::RangeBounds<L::Val> for Interval<L, U>
-where
-    Lower<L>: Contains<L::Val>,
-    Upper<U>: Contains<L::Val>,
-{
+impl<L: Boundary, U: Boundary<Val = L::Val>> std::ops::RangeBounds<L::Val> for Interval<L, U> {
     fn start_bound(&self) -> std::ops::Bound<&L::Val> {
         std::ops::Bound::Included(self.inf())
     }
