@@ -57,15 +57,6 @@ impl<T: ordered_float::FloatCore> TryFrom<Exclusive<T>> for Bound<NotNan<T>> {
     }
 }
 
-impl<L: crate::boundary::Boundary, U: crate::boundary::Boundary<Val = L::Val>> TryFrom<(L, U)>
-    for Interval<L, U>
-{
-    type Error = crate::IntervalIsEmpty;
-    fn try_from((l, u): (L, U)) -> Result<Self, Self::Error> {
-        Self::new(l, u)
-    }
-}
-
 impl<T: Ord> TryFrom<std::ops::Range<T>> for Interval<Inclusive<T>, Exclusive<T>> {
     type Error = crate::IntervalIsEmpty;
     fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {

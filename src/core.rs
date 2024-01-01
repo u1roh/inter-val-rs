@@ -159,7 +159,7 @@ mod tests {
         assert!(!i.contains(&3));
         assert!(!i.contains(&-1));
 
-        let i: Interval<Inclusive<i32>> = (Inclusive(4), Inclusive(7)).try_into().unwrap();
+        let i = Inclusive(4).to(Inclusive(7)).unwrap();
         assert!(i.contains(&4));
         assert!(i.contains(&7));
 
