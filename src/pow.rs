@@ -1,6 +1,6 @@
 use ordered_float::{FloatCore, NotNan};
 
-use crate::{boundary::Boundary, Interval};
+use crate::{boundary::Boundary, Interval, Lower, Upper};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct IntervalPow<const N: usize, T, L, U>([Interval<T, L, U>; N]);
@@ -21,12 +21,26 @@ impl<const N: usize, T, L, U> From<[Interval<T, L, U>; N]> for IntervalPow<N, T,
     }
 }
 impl<const N: usize, T: Ord + Clone, L: Boundary, U: Boundary> IntervalPow<N, T, L, U> {
-    pub fn lowers(&self) -> [T; N] {
-        std::array::from_fn(|i| self[i].lower().val.clone())
+    pub fn lower(&self) -> [&Lower<T, L>; N] {
+        std::array::from_fn(|i| self[i].lower())
     }
 
-    pub fn uppers(&self) -> [T; N] {
-        std::array::from_fn(|i| self[i].upper().val.clone())
+    pub fn upper(&self) -> [&Upper<T, U>; N] {
+        std::array::from_fn(|i| self[i].upper())
+    }
+
+    pub fn min_val(&self) -> [T; N]
+    where
+        Lower<T, L>: crate::core::MinVal<T>,
+    {
+        std::array::from_fn(|i| self[i].min_val())
+    }
+
+    pub fn max_val(&self) -> [T; N]
+    where
+        Upper<T, U>: crate::core::MaxVal<T>,
+    {
+        std::array::from_fn(|i| self[i].max_val())
     }
 
     pub fn intersection(&self, other: &Self) -> Option<Self> {
@@ -51,6 +65,12 @@ impl<const N: usize, T: Ord + Clone, L: Boundary, U: Boundary> IntervalPow<N, T,
 }
 
 impl<const N: usize, T: FloatCore, L: Boundary, U: Boundary> IntervalPow<N, NotNan<T>, L, U> {
+    pub fn inf(&self) -> [NotNan<T>; N] {
+        std::array::from_fn(|i| self[i].inf())
+    }
+    pub fn sup(&self) -> [NotNan<T>; N] {
+        std::array::from_fn(|i| self[i].sup())
+    }
     pub fn measure(&self) -> NotNan<T> {
         self.iter()
             .map(|i| i.measure())
