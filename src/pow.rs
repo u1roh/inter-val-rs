@@ -21,6 +21,14 @@ impl<const N: usize, T, L, U> From<[Interval<T, L, U>; N]> for IntervalPow<N, T,
     }
 }
 impl<const N: usize, T: Ord + Clone, L: Boundary, U: Boundary> IntervalPow<N, T, L, U> {
+    pub fn lowers(&self) -> [T; N] {
+        std::array::from_fn(|i| self[i].lower().val.clone())
+    }
+
+    pub fn uppers(&self) -> [T; N] {
+        std::array::from_fn(|i| self[i].upper().val.clone())
+    }
+
     pub fn intersection(&self, other: &Self) -> Option<Self> {
         let mut dst = self.clone();
         for i in 0..N {
@@ -29,16 +37,10 @@ impl<const N: usize, T: Ord + Clone, L: Boundary, U: Boundary> IntervalPow<N, T,
         Some(dst)
     }
 
-    pub fn union_mut(&mut self, other: &Self) {
-        for i in 0..N {
-            self[i] = self[i].clone().union(other[i].clone());
-        }
-    }
-
     pub fn union(&self, other: &Self) -> Self {
-        let mut dst = self.clone();
-        dst.union_mut(other);
-        dst
+        Self(std::array::from_fn(|i| {
+            self[i].clone().union(other[i].clone())
+        }))
     }
 
     pub fn bound<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
