@@ -124,14 +124,14 @@ impl<T: Ord, L: Boundary, U: Boundary> Interval<T, L, U> {
         .ok()
     }
 
-    pub fn union_interval(self, other: Self) -> Self {
+    pub fn union(self, other: Self) -> Self {
         Self {
             lower: self.lower.union(other.lower),
             upper: self.upper.union(other.upper),
         }
     }
 
-    pub fn union_subtrahend(self, other: Self) -> Option<Interval<T, U::Flip, L::Flip>> {
+    pub fn gap(self, other: Self) -> Option<Interval<T, U::Flip, L::Flip>> {
         Interval::new(self.upper.flip(), other.lower.flip())
             .or(Interval::new(other.upper.flip(), self.lower.flip()))
             .ok()
@@ -140,14 +140,14 @@ impl<T: Ord, L: Boundary, U: Boundary> Interval<T, L, U> {
     pub fn bound<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
         let mut items = items.into_iter();
         let first = items.next()?.into();
-        Some(items.fold(first, |acc, item| acc.union_interval(item.into())))
+        Some(items.fold(first, |acc, item| acc.union(item.into())))
     }
 }
 impl<T: Ord + Clone, L: Boundary, U: Boundary> Interval<T, L, U> {
     #[allow(clippy::type_complexity)]
-    pub fn union(self, other: Self) -> (Self, Option<Interval<T, U::Flip, L::Flip>>) {
-        let subtrahend = self.clone().union_subtrahend(other.clone());
-        (self.union_interval(other), subtrahend)
+    pub fn union_strict(self, other: Self) -> (Self, Option<Interval<T, U::Flip, L::Flip>>) {
+        let gap = self.clone().gap(other.clone());
+        (self.union(other), gap)
     }
 
     pub fn overlaps(&self, other: &Self) -> bool {

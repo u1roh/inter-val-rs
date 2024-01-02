@@ -2,13 +2,14 @@ mod boundary;
 mod converters;
 pub mod core;
 mod impl_range_bounds;
+mod pow;
 
 use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Inclusive;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Exclusive;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -90,5 +91,4 @@ pub type OpenIntervalF64 = OpenIntervalF<f64>;
 pub type RightHalfOpenIntervalF64 = RightHalfOpenIntervalF<f64>;
 pub type LeftHalfOpenIntervalF64 = LeftHalfOpenIntervalF<f64>;
 
-// TODO
-pub struct Box<const N: usize, L, U>([Interval<L, U>; N]);
+pub use pow::IntervalPow;
