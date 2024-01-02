@@ -1,7 +1,7 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::boundary::Boundary;
-use crate::{Bound, IntervalIsEmpty, IntoNotNanBound, Lower, Upper};
+use crate::{Bound, Exclusive, Inclusive, IntervalIsEmpty, IntoNotNanBound, Lower, Upper};
 
 impl<T: Ord, B: Boundary> Lower<T, B> {
     pub fn includes(&self, other: &Self) -> bool {
@@ -10,17 +10,27 @@ impl<T: Ord, B: Boundary> Lower<T, B> {
     pub fn contains(&self, t: &T) -> bool {
         self.bound.less(&self.val, t)
     }
-}
-impl<T: Ord + Clone, B: Boundary> Lower<T, B> {
-    pub fn intersection(&self, other: &Self) -> Self {
-        self.clone().max(other.clone())
+    pub fn closure(self) -> Lower<T, Inclusive> {
+        Lower {
+            val: self.val,
+            bound: Inclusive,
+        }
     }
-    pub fn union(&self, other: &Self) -> Self {
-        self.clone().min(other.clone())
+    pub fn interior(self) -> Lower<T, Exclusive> {
+        Lower {
+            val: self.val,
+            bound: Exclusive,
+        }
     }
-    pub fn flip(&self) -> Upper<T, B::Flip> {
+    pub fn intersection(self, other: Self) -> Self {
+        self.max(other)
+    }
+    pub fn union(self, other: Self) -> Self {
+        self.min(other)
+    }
+    pub fn flip(self) -> Upper<T, B::Flip> {
         Upper {
-            val: self.val.clone(),
+            val: self.val,
             bound: self.bound.flip(),
         }
     }
@@ -33,17 +43,27 @@ impl<T: Ord, B: Boundary> Upper<T, B> {
     pub fn contains(&self, t: &T) -> bool {
         self.bound.less(t, &self.val)
     }
-}
-impl<T: Ord + Clone, B: Boundary> Upper<T, B> {
-    pub fn intersection(&self, other: &Self) -> Self {
-        self.clone().min(other.clone())
+    pub fn closure(self) -> Upper<T, Inclusive> {
+        Upper {
+            val: self.val,
+            bound: Inclusive,
+        }
     }
-    pub fn union(&self, other: &Self) -> Self {
-        self.clone().max(other.clone())
+    pub fn interior(self) -> Upper<T, Exclusive> {
+        Upper {
+            val: self.val,
+            bound: Exclusive,
+        }
     }
-    pub fn flip(&self) -> Lower<T, B::Flip> {
+    pub fn intersection(self, other: Self) -> Self {
+        self.min(other)
+    }
+    pub fn union(self, other: Self) -> Self {
+        self.max(other)
+    }
+    pub fn flip(self) -> Lower<T, B::Flip> {
         Lower {
-            val: self.val.clone(),
+            val: self.val,
             bound: self.bound.flip(),
         }
     }
@@ -56,7 +76,7 @@ pub struct Interval<T, L = crate::Bound, U = L> {
     lower: Lower<T, L>,
     upper: Upper<T, U>,
 }
-impl<T: Ord + Clone, L: Boundary, U: Boundary> Interval<T, L, U> {
+impl<T: Ord, L: Boundary, U: Boundary> Interval<T, L, U> {
     pub fn new(
         lower: impl Into<Lower<T, L>>,
         upper: impl Into<Upper<T, U>>,
@@ -82,40 +102,56 @@ impl<T: Ord + Clone, L: Boundary, U: Boundary> Interval<T, L, U> {
         self.lower.includes(&other.lower) && self.upper.includes(&other.upper)
     }
 
-    pub fn intersection(&self, other: &Self) -> Option<Self> {
+    pub fn closure(self) -> Interval<T, Inclusive> {
+        Interval {
+            lower: self.lower.closure(),
+            upper: self.upper.closure(),
+        }
+    }
+
+    pub fn interior(self) -> Interval<T, Exclusive> {
+        Interval {
+            lower: self.lower.interior(),
+            upper: self.upper.interior(),
+        }
+    }
+
+    pub fn intersection(self, other: Self) -> Option<Self> {
         Self::new(
-            self.lower.intersection(&other.lower),
-            self.upper.intersection(&other.upper),
+            self.lower.intersection(other.lower),
+            self.upper.intersection(other.upper),
         )
         .ok()
     }
 
-    pub fn union_interval(&self, other: &Self) -> Self {
+    pub fn union_interval(self, other: Self) -> Self {
         Self {
-            lower: self.lower.union(&other.lower),
-            upper: self.upper.union(&other.upper),
+            lower: self.lower.union(other.lower),
+            upper: self.upper.union(other.upper),
         }
     }
 
-    pub fn union_subtrahend(&self, other: &Self) -> Option<Interval<T, U::Flip, L::Flip>> {
+    pub fn union_subtrahend(self, other: Self) -> Option<Interval<T, U::Flip, L::Flip>> {
         Interval::new(self.upper.flip(), other.lower.flip())
             .or(Interval::new(other.upper.flip(), self.lower.flip()))
             .ok()
     }
 
-    #[allow(clippy::type_complexity)]
-    pub fn union(&self, other: &Self) -> (Self, Option<Interval<T, U::Flip, L::Flip>>) {
-        (self.union_interval(other), self.union_subtrahend(other))
-    }
-
-    pub fn overlaps(&self, other: &Self) -> bool {
-        self.intersection(other).is_some()
-    }
-
     pub fn bound<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
         let mut items = items.into_iter();
         let first = items.next()?.into();
-        Some(items.fold(first, |acc, item| acc.union_interval(&item.into())))
+        Some(items.fold(first, |acc, item| acc.union_interval(item.into())))
+    }
+}
+impl<T: Ord + Clone, L: Boundary, U: Boundary> Interval<T, L, U> {
+    #[allow(clippy::type_complexity)]
+    pub fn union(self, other: Self) -> (Self, Option<Interval<T, U::Flip, L::Flip>>) {
+        let subtrahend = self.clone().union_subtrahend(other.clone());
+        (self.union_interval(other), subtrahend)
+    }
+
+    pub fn overlaps(&self, other: &Self) -> bool {
+        self.clone().intersection(other.clone()).is_some()
     }
 }
 impl<T: FloatCore, L: Boundary, U: Boundary> Interval<NotNan<T>, L, U> {
