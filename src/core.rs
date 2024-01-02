@@ -11,7 +11,7 @@ impl<T: Ord, B: Boundary<T>> Lower<T, B> {
         self.val <= other.val
     }
     pub fn contains(&self, t: &T) -> bool {
-        self.bound.less_eq(&self.val, t)
+        self.bound.less(&self.val, t)
     }
 }
 impl<T: Ord + Clone, B: Boundary<T>> Lower<T, B> {
@@ -37,7 +37,7 @@ impl<T: Ord, B: Boundary<T>> Upper<T, B> {
         other.val <= self.val
     }
     pub fn contains(&self, t: &T) -> bool {
-        self.bound.greater_eq(&self.val, t)
+        self.bound.less(t, &self.val)
     }
 }
 impl<T: Ord + Clone, B: Boundary<T>> Upper<T, B> {

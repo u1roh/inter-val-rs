@@ -3,8 +3,7 @@ use crate::{Bound, Exclusive, Inclusive};
 pub trait Boundary<T>: Ord + Copy {
     type Flip: Boundary<T, Flip = Self>;
     fn flip(self) -> Self::Flip;
-    fn less_eq(&self, this: &T, t: &T) -> bool;
-    fn greater_eq(&self, this: &T, t: &T) -> bool;
+    fn less(&self, this: &T, t: &T) -> bool;
 }
 
 impl<T: Ord> Boundary<T> for Inclusive {
@@ -12,11 +11,8 @@ impl<T: Ord> Boundary<T> for Inclusive {
     fn flip(self) -> Self::Flip {
         Exclusive
     }
-    fn less_eq(&self, this: &T, t: &T) -> bool {
+    fn less(&self, this: &T, t: &T) -> bool {
         this <= t
-    }
-    fn greater_eq(&self, this: &T, t: &T) -> bool {
-        t <= this
     }
 }
 impl<T: Ord> Boundary<T> for Exclusive {
@@ -24,11 +20,8 @@ impl<T: Ord> Boundary<T> for Exclusive {
     fn flip(self) -> Self::Flip {
         Inclusive
     }
-    fn less_eq(&self, this: &T, t: &T) -> bool {
+    fn less(&self, this: &T, t: &T) -> bool {
         this < t
-    }
-    fn greater_eq(&self, this: &T, t: &T) -> bool {
-        t < this
     }
 }
 impl<T: Ord> Boundary<T> for Bound {
@@ -39,16 +32,10 @@ impl<T: Ord> Boundary<T> for Bound {
             Self::Exclusive => Self::Inclusive,
         }
     }
-    fn less_eq(&self, s: &T, t: &T) -> bool {
+    fn less(&self, s: &T, t: &T) -> bool {
         match self {
             Bound::Inclusive => s <= t,
             Bound::Exclusive => s < t,
-        }
-    }
-    fn greater_eq(&self, s: &T, t: &T) -> bool {
-        match self {
-            Bound::Inclusive => t <= s,
-            Bound::Exclusive => t < s,
         }
     }
 }
