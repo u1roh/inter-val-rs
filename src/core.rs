@@ -1,7 +1,7 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::boundary::Boundary;
-use crate::{IntervalIsEmpty, Lower, Upper};
+use crate::{IntervalIsEmpty, IntoNotNanBound, Lower, Upper};
 
 impl<T: Ord, B: Boundary> Lower<T, B> {
     pub fn inf(&self) -> &T {
@@ -62,20 +62,6 @@ pub struct Interval<T, L = crate::Bound, U = L> {
     lower: Lower<T, L>,
     upper: Upper<T, U>,
 }
-impl<T: FloatCore, L: Boundary, U: Boundary> Interval<NotNan<T>, L, U> {
-    pub fn not_nan(
-        lower: impl Into<Lower<T, L>>,
-        upper: impl Into<Upper<T, U>>,
-    ) -> Result<Self, crate::Error> {
-        let lower = lower.into();
-        let upper = upper.into();
-        Self::new(
-            (NotNan::new(lower.val)?, lower.bound),
-            (NotNan::new(upper.val)?, upper.bound),
-        )
-        .map_err(Into::into)
-    }
-}
 impl<T: Ord + Clone, L: Boundary, U: Boundary> Interval<T, L, U> {
     pub fn new(
         lower: impl Into<Lower<T, L>>,
@@ -87,18 +73,6 @@ impl<T: Ord + Clone, L: Boundary, U: Boundary> Interval<T, L, U> {
             .then_some(Self { lower, upper })
             .ok_or(IntervalIsEmpty)
     }
-    // pub fn new(lower: (T, L), upper: (T, U)) -> Result<Self, IntervalIsEmpty> {
-    //     Self::new_(
-    //         Lower {
-    //             val: lower.0,
-    //             bound: lower.1,
-    //         },
-    //         Upper {
-    //             val: upper.0,
-    //             bound: upper.1,
-    //         },
-    //     )
-    // }
     pub fn lower(&self) -> &Lower<T, L> {
         &self.lower
     }
@@ -169,6 +143,16 @@ impl<T: Ord + Clone, L: Boundary, U: Boundary> Interval<T, L, U> {
         self.intersection(other).is_some()
     }
 }
+impl<T: FloatCore, L: Boundary, U: Boundary> Interval<NotNan<T>, L, U> {
+    pub fn not_nan(
+        lower: impl IntoNotNanBound<L, Float = T>,
+        upper: impl IntoNotNanBound<U, Float = T>,
+    ) -> Result<Self, crate::Error> {
+        let lower = lower.into_not_nan_boundary()?;
+        let upper = upper.into_not_nan_boundary()?;
+        Self::new(lower, upper).map_err(Into::into)
+    }
+}
 
 // pub trait IntervalSet<T>: std::ops::Deref<Target = [Self::Interval]> {
 //     type Interval: Interval<T>;
@@ -204,11 +188,7 @@ mod tests {
         // assert!(i.contains(&5));
 
         let _i = Interval::<NotNan<_>, Inclusive, Inclusive>::not_nan(1.23, 4.56).unwrap();
-        // let _i = Interval::<NotNan<_>, Inclusive, Inclusive>::not_nan(
-        //     (1.23, Inclusive),
-        //     (4.56, Exclusive),
-        // )
-        // .unwrap();
+        let _i = Interval::not_nan((1.23, Inclusive), (4.56, Exclusive)).unwrap();
         // let _i = Inclusive::not_nan(1.23)
         //     .unwrap()
         //     .to(Exclusive::not_nan(4.56).unwrap())

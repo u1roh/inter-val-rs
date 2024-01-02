@@ -1,4 +1,5 @@
 use crate::{boundary::Boundary, Bound, Exclusive, Inclusive, Interval, Lower, Upper};
+use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
 impl From<Inclusive> for Bound {
     fn from(_: Inclusive) -> Self {
@@ -11,99 +12,60 @@ impl From<Exclusive> for Bound {
     }
 }
 
-impl<T> From<T> for Lower<T, Inclusive> {
-    fn from(t: T) -> Self {
-        Lower {
-            val: t,
-            bound: Inclusive,
-        }
-    }
-}
-impl<T> From<T> for Lower<T, Exclusive> {
-    fn from(t: T) -> Self {
-        Lower {
-            val: t,
-            bound: Exclusive,
-        }
-    }
-}
-// impl<T, B: Boundary<T>, B2: Into<B>> From<(T, B2)> for Lower<T, B> {
-//     fn from((t, b): (T, B2)) -> Self {
-//         Lower {
-//             val: t,
-//             bound: b.into(),
-//         }
-//     }
-// }
-impl<T, B> From<(T, B)> for Lower<T, B> {
+impl<T: Ord, B: Boundary> From<(T, B)> for Lower<T, B> {
     fn from((t, b): (T, B)) -> Self {
         Lower { val: t, bound: b }
     }
 }
-
-impl<T> From<T> for Upper<T, Inclusive> {
-    fn from(t: T) -> Self {
-        Upper {
-            val: t,
-            bound: Inclusive,
-        }
-    }
-}
-impl<T> From<T> for Upper<T, Exclusive> {
-    fn from(t: T) -> Self {
-        Upper {
-            val: t,
-            bound: Exclusive,
-        }
-    }
-}
-// impl<T, B: Boundary<T>, B2: Into<B>> From<(T, B2)> for Upper<T, B> {
-//     fn from((t, b): (T, B2)) -> Self {
-//         Upper {
-//             val: t,
-//             bound: b.into(),
-//         }
-//     }
-// }
-impl<T, B> From<(T, B)> for Upper<T, B> {
+impl<T: Ord, B: Boundary> From<(T, B)> for Upper<T, B> {
     fn from((t, b): (T, B)) -> Self {
         Upper { val: t, bound: b }
     }
 }
 
-// impl<T: ordered_float::FloatCore> TryFrom<(T, Inclusive)> for Inclusive<NotNan<T>> {
-//     type Error = ordered_float::FloatIsNan;
-//     fn try_from(b: (T, Inclusive)) -> Result<Self, Self::Error> {
-//         NotNan::new(b.0).map(Self)
-//     }
-// }
-// impl<T: ordered_float::FloatCore> TryFrom<(T, Exclusive)> for Exclusive<NotNan<T>> {
-//     type Error = ordered_float::FloatIsNan;
-//     fn try_from(b: (T, Exclusive)) -> Result<Self, Self::Error> {
-//         NotNan::new(b.0).map(Self)
-//     }
-// }
-// impl<T: ordered_float::FloatCore> TryFrom<(T, Bound)> for Bound<NotNan<T>> {
-//     type Error = ordered_float::FloatIsNan;
-//     fn try_from(b: (T, Bound)) -> Result<Self, Self::Error> {
-//         match b {
-//             Bound::Inclusive(t) => NotNan::new(t).map(Self::Inclusive),
-//             Bound::Exclusive(t) => NotNan::new(t).map(Self::Exclusive),
-//         }
-//     }
-// }
-// impl<T: ordered_float::FloatCore> TryFrom<(T, Inclusive)> for Bound<NotNan<T>> {
-//     type Error = ordered_float::FloatIsNan;
-//     fn try_from(b: (T, Inclusive)) -> Result<Self, Self::Error> {
-//         Bound::from(b).try_into()
-//     }
-// }
-// impl<T: ordered_float::FloatCore> TryFrom<(T, Exclusive)> for Bound<NotNan<T>> {
-//     type Error = ordered_float::FloatIsNan;
-//     fn try_from(b: (T, Exclusive)) -> Result<Self, Self::Error> {
-//         Bound::from(b).try_into()
-//     }
-// }
+impl<T: Ord> From<T> for Lower<T, Inclusive> {
+    fn from(t: T) -> Self {
+        (t, Inclusive).into()
+    }
+}
+impl<T: Ord> From<T> for Lower<T, Exclusive> {
+    fn from(t: T) -> Self {
+        (t, Exclusive).into()
+    }
+}
+impl<T: Ord> From<T> for Upper<T, Inclusive> {
+    fn from(t: T) -> Self {
+        (t, Inclusive).into()
+    }
+}
+impl<T: Ord> From<T> for Upper<T, Exclusive> {
+    fn from(t: T) -> Self {
+        (t, Exclusive).into()
+    }
+}
+
+impl<T: FloatCore, B: Boundary> crate::IntoNotNanBound<B> for (T, B) {
+    type Float = T;
+    fn into_not_nan_boundary(self) -> Result<(NotNan<T>, B), FloatIsNan> {
+        let (t, b) = self;
+        NotNan::new(t).map(|t| (t, b))
+    }
+}
+
+macro_rules! impl_into_not_nan_bound {
+    ($t:ty,$b:ident) => {
+        impl crate::IntoNotNanBound<$b> for $t {
+            type Float = $t;
+            fn into_not_nan_boundary(self) -> Result<(NotNan<$t>, $b), FloatIsNan> {
+                NotNan::new(self).map(|t| (t, $b))
+            }
+        }
+    };
+}
+impl_into_not_nan_bound!(f32, Inclusive);
+impl_into_not_nan_bound!(f32, Exclusive);
+impl_into_not_nan_bound!(f64, Inclusive);
+impl_into_not_nan_bound!(f64, Exclusive);
 
 impl<T: Ord + Clone> TryFrom<std::ops::Range<T>> for Interval<T, Inclusive, Exclusive> {
     type Error = crate::IntervalIsEmpty;

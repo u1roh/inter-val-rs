@@ -3,7 +3,7 @@ mod converters;
 pub mod core;
 mod impl_range_bounds;
 
-use ordered_float::NotNan;
+use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Inclusive;
@@ -27,6 +27,11 @@ pub struct Lower<T, B> {
 pub struct Upper<T, B> {
     val: T,
     bound: B,
+}
+
+pub trait IntoNotNanBound<B: boundary::Boundary> {
+    type Float: FloatCore;
+    fn into_not_nan_boundary(self) -> Result<(NotNan<Self::Float>, B), FloatIsNan>;
 }
 
 #[derive(Debug, thiserror::Error)]
