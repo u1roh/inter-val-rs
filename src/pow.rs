@@ -1,9 +1,9 @@
 use ordered_float::{FloatCore, NotNan};
 
-use crate::{boundary::Boundary, Interval, Lower, Upper};
+use crate::{boundary::Boundary, Bound, Exclusive, Inclusive, Interval, Lower, Upper};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct IntervalPow<const N: usize, T, L, U>([Interval<T, L, U>; N]);
+pub struct IntervalPow<const N: usize, T, L = Bound, U = L>([Interval<T, L, U>; N]);
 impl<const N: usize, T, L, U> std::ops::Deref for IntervalPow<N, T, L, U> {
     type Target = [Interval<T, L, U>; N];
     fn deref(&self) -> &Self::Target {
@@ -71,9 +71,18 @@ impl<const N: usize, T: FloatCore, L: Boundary, U: Boundary> IntervalPow<N, NotN
     pub fn sup(&self) -> [NotNan<T>; N] {
         std::array::from_fn(|i| self[i].sup())
     }
+    pub fn center(&self) -> [NotNan<T>; N] {
+        std::array::from_fn(|i| self[i].center())
+    }
     pub fn measure(&self) -> NotNan<T> {
         self.iter()
             .map(|i| i.measure())
             .fold(NotNan::new(T::one()).unwrap(), |a, b| a * b)
+    }
+    pub fn closure(self) -> IntervalPow<N, NotNan<T>, Inclusive> {
+        IntervalPow(std::array::from_fn(|i| self[i].closure()))
+    }
+    pub fn interior(self) -> IntervalPow<N, NotNan<T>, Exclusive> {
+        IntervalPow(std::array::from_fn(|i| self[i].interior()))
     }
 }
