@@ -1,7 +1,7 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::boundary::Boundary;
-use crate::{IntervalIsEmpty, IntoNotNanBound, Lower, Upper};
+use crate::{Bound, IntervalIsEmpty, IntoNotNanBound, Lower, Upper};
 
 impl<T: Ord, B: Boundary> Lower<T, B> {
     pub fn includes(&self, other: &Self) -> bool {
@@ -97,15 +97,25 @@ impl<T: Ord + Clone, L: Boundary, U: Boundary> Interval<T, L, U> {
         }
     }
 
-    pub fn union(&self, other: &Self) -> (Self, Option<UnionSubtrahend<T, L, U>>) {
-        let subtrahend = Interval::new(self.upper.flip(), other.lower.flip())
+    pub fn union_subtrahend(&self, other: &Self) -> Option<Interval<T, U::Flip, L::Flip>> {
+        Interval::new(self.upper.flip(), other.lower.flip())
             .or(Interval::new(other.upper.flip(), self.lower.flip()))
-            .ok();
-        (self.union_interval(other), subtrahend)
+            .ok()
+    }
+
+    #[allow(clippy::type_complexity)]
+    pub fn union(&self, other: &Self) -> (Self, Option<Interval<T, U::Flip, L::Flip>>) {
+        (self.union_interval(other), self.union_subtrahend(other))
     }
 
     pub fn overlaps(&self, other: &Self) -> bool {
         self.intersection(other).is_some()
+    }
+
+    pub fn bound<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
+        let mut items = items.into_iter();
+        let first = items.next()?.into();
+        Some(items.fold(first, |acc, item| acc.union_interval(&item.into())))
     }
 }
 impl<T: FloatCore, L: Boundary, U: Boundary> Interval<NotNan<T>, L, U> {
@@ -119,6 +129,21 @@ impl<T: FloatCore, L: Boundary, U: Boundary> Interval<NotNan<T>, L, U> {
     }
     pub fn measure(&self) -> NotNan<T> {
         self.upper.val - self.lower.val
+    }
+    pub fn center(&self) -> NotNan<T> {
+        NotNan::new((*self.lower.val + *self.upper.val) / (T::one() + T::one())).unwrap()
+    }
+}
+impl<T> Interval<T> {
+    pub fn convert_from<L, U>(src: Interval<T, L, U>) -> Self
+    where
+        Lower<T, L>: Into<Lower<T, Bound>>,
+        Upper<T, U>: Into<Upper<T, Bound>>,
+    {
+        Self {
+            lower: src.lower.into(),
+            upper: src.upper.into(),
+        }
     }
 }
 
@@ -157,9 +182,9 @@ mod tests {
 
         let _i = Interval::<NotNan<_>, Inclusive, Inclusive>::not_nan(1.23, 4.56).unwrap();
         let _i = Interval::not_nan((1.23, Inclusive), (4.56, Exclusive)).unwrap();
-        // let _i = Inclusive::not_nan(1.23)
-        //     .unwrap()
-        //     .to(Exclusive::not_nan(4.56).unwrap())
-        //     .unwrap();
+
+        let i = Interval::bound([3, 9, 2, 5]).unwrap();
+        assert_eq!(i.lower().val, 2);
+        assert_eq!(i.upper().val, 9);
     }
 }
