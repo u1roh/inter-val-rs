@@ -101,11 +101,7 @@ impl<T: Ord + Clone, L: Boundary, U: Boundary> Interval<T, L, U> {
         self.lower.includes(&other.lower) && self.upper.includes(&other.upper)
     }
 
-    pub fn intersection(&self, other: &Self) -> Option<Self>
-    where
-        L: Clone,
-        U: Clone,
-    {
+    pub fn intersection(&self, other: &Self) -> Option<Self> {
         Self::new(
             self.lower.intersection(&other.lower),
             self.upper.intersection(&other.upper),
@@ -113,33 +109,21 @@ impl<T: Ord + Clone, L: Boundary, U: Boundary> Interval<T, L, U> {
         .ok()
     }
 
-    pub fn union_interval(&self, other: &Self) -> Self
-    where
-        L: Clone,
-        U: Clone,
-    {
+    pub fn union_interval(&self, other: &Self) -> Self {
         Self {
             lower: self.lower.union(&other.lower),
             upper: self.upper.union(&other.upper),
         }
     }
 
-    pub fn union(&self, other: &Self) -> (Self, Option<UnionSubtrahend<T, L, U>>)
-    where
-        L: Clone,
-        U: Clone,
-    {
+    pub fn union(&self, other: &Self) -> (Self, Option<UnionSubtrahend<T, L, U>>) {
         let subtrahend = Interval::new(self.upper.flip(), other.lower.flip())
             .or(Interval::new(other.upper.flip(), self.lower.flip()))
             .ok();
         (self.union_interval(other), subtrahend)
     }
 
-    pub fn overlaps(&self, other: &Self) -> bool
-    where
-        L: Clone,
-        U: Clone,
-    {
+    pub fn overlaps(&self, other: &Self) -> bool {
         self.intersection(other).is_some()
     }
 }
