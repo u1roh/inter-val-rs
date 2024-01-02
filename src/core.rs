@@ -3,7 +3,7 @@ use ordered_float::{FloatCore, NotNan};
 use crate::boundary::Boundary;
 use crate::{IntervalIsEmpty, Lower, Upper};
 
-impl<T: Ord, B: Boundary<T>> Lower<T, B> {
+impl<T: Ord, B: Boundary> Lower<T, B> {
     pub fn inf(&self) -> &T {
         &self.val
     }
@@ -14,7 +14,7 @@ impl<T: Ord, B: Boundary<T>> Lower<T, B> {
         self.bound.less(&self.val, t)
     }
 }
-impl<T: Ord + Clone, B: Boundary<T>> Lower<T, B> {
+impl<T: Ord + Clone, B: Boundary> Lower<T, B> {
     pub fn intersection(&self, other: &Self) -> Self {
         self.clone().max(other.clone())
     }
@@ -29,7 +29,7 @@ impl<T: Ord + Clone, B: Boundary<T>> Lower<T, B> {
     }
 }
 
-impl<T: Ord, B: Boundary<T>> Upper<T, B> {
+impl<T: Ord, B: Boundary> Upper<T, B> {
     pub fn sup(&self) -> &T {
         &self.val
     }
@@ -40,7 +40,7 @@ impl<T: Ord, B: Boundary<T>> Upper<T, B> {
         self.bound.less(t, &self.val)
     }
 }
-impl<T: Ord + Clone, B: Boundary<T>> Upper<T, B> {
+impl<T: Ord + Clone, B: Boundary> Upper<T, B> {
     pub fn intersection(&self, other: &Self) -> Self {
         self.clone().min(other.clone())
     }
@@ -55,14 +55,14 @@ impl<T: Ord + Clone, B: Boundary<T>> Upper<T, B> {
     }
 }
 
-pub type UnionSubtrahend<T, L, U> = Interval<T, <U as Boundary<T>>::Flip, <L as Boundary<T>>::Flip>;
+pub type UnionSubtrahend<T, L, U> = Interval<T, <U as Boundary>::Flip, <L as Boundary>::Flip>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Interval<T, L = crate::Bound, U = L> {
     lower: Lower<T, L>,
     upper: Upper<T, U>,
 }
-impl<T: FloatCore, L: Boundary<NotNan<T>>, U: Boundary<NotNan<T>>> Interval<NotNan<T>, L, U> {
+impl<T: FloatCore, L: Boundary, U: Boundary> Interval<NotNan<T>, L, U> {
     pub fn not_nan(
         lower: impl Into<Lower<T, L>>,
         upper: impl Into<Upper<T, U>>,
@@ -76,7 +76,7 @@ impl<T: FloatCore, L: Boundary<NotNan<T>>, U: Boundary<NotNan<T>>> Interval<NotN
         .map_err(Into::into)
     }
 }
-impl<T: Ord + Clone, L: Boundary<T>, U: Boundary<T>> Interval<T, L, U> {
+impl<T: Ord + Clone, L: Boundary, U: Boundary> Interval<T, L, U> {
     pub fn new(
         lower: impl Into<Lower<T, L>>,
         upper: impl Into<Upper<T, U>>,

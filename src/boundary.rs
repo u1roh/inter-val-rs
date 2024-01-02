@@ -1,30 +1,30 @@
 use crate::{Bound, Exclusive, Inclusive};
 
-pub trait Boundary<T>: Ord + Copy {
-    type Flip: Boundary<T, Flip = Self>;
+pub trait Boundary: Ord + Copy {
+    type Flip: Boundary<Flip = Self>;
     fn flip(self) -> Self::Flip;
-    fn less(&self, this: &T, t: &T) -> bool;
+    fn less<T: Ord>(&self, this: &T, t: &T) -> bool;
 }
 
-impl<T: Ord> Boundary<T> for Inclusive {
+impl Boundary for Inclusive {
     type Flip = Exclusive;
     fn flip(self) -> Self::Flip {
         Exclusive
     }
-    fn less(&self, this: &T, t: &T) -> bool {
+    fn less<T: Ord>(&self, this: &T, t: &T) -> bool {
         this <= t
     }
 }
-impl<T: Ord> Boundary<T> for Exclusive {
+impl Boundary for Exclusive {
     type Flip = Inclusive;
     fn flip(self) -> Self::Flip {
         Inclusive
     }
-    fn less(&self, this: &T, t: &T) -> bool {
+    fn less<T: Ord>(&self, this: &T, t: &T) -> bool {
         this < t
     }
 }
-impl<T: Ord> Boundary<T> for Bound {
+impl Boundary for Bound {
     type Flip = Self;
     fn flip(self) -> Self {
         match self {
@@ -32,7 +32,7 @@ impl<T: Ord> Boundary<T> for Bound {
             Self::Exclusive => Self::Inclusive,
         }
     }
-    fn less(&self, s: &T, t: &T) -> bool {
+    fn less<T: Ord>(&self, s: &T, t: &T) -> bool {
         match self {
             Bound::Inclusive => s <= t,
             Bound::Exclusive => s < t,

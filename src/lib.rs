@@ -11,11 +11,6 @@ pub struct Inclusive;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Exclusive;
 
-// #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-// pub enum (T, Bound) {
-//     Inclusive(T),
-//     Exclusive(T),
-// }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Bound {
     Inclusive,
