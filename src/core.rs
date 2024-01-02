@@ -63,32 +63,42 @@ pub struct Interval<T, L = crate::Bound, U = L> {
     upper: Upper<T, U>,
 }
 impl<T: FloatCore, L: Boundary<NotNan<T>>, U: Boundary<NotNan<T>>> Interval<NotNan<T>, L, U> {
-    pub fn not_nan(lower: (T, L), upper: (T, U)) -> Result<Self, crate::Error> {
+    pub fn not_nan(
+        lower: impl Into<Lower<T, L>>,
+        upper: impl Into<Upper<T, U>>,
+    ) -> Result<Self, crate::Error> {
+        let lower = lower.into();
+        let upper = upper.into();
         Self::new(
-            (NotNan::new(lower.0)?, lower.1),
-            (NotNan::new(upper.0)?, upper.1),
+            (NotNan::new(lower.val)?, lower.bound),
+            (NotNan::new(upper.val)?, upper.bound),
         )
         .map_err(Into::into)
     }
 }
 impl<T: Ord + Clone, L: Boundary<T>, U: Boundary<T>> Interval<T, L, U> {
-    fn new_(lower: Lower<T, L>, upper: Upper<T, U>) -> Result<Self, IntervalIsEmpty> {
+    pub fn new(
+        lower: impl Into<Lower<T, L>>,
+        upper: impl Into<Upper<T, U>>,
+    ) -> Result<Self, IntervalIsEmpty> {
+        let lower = lower.into();
+        let upper = upper.into();
         (lower.contains(upper.sup()) && upper.contains(lower.inf()))
             .then_some(Self { lower, upper })
             .ok_or(IntervalIsEmpty)
     }
-    pub fn new(lower: (T, L), upper: (T, U)) -> Result<Self, IntervalIsEmpty> {
-        Self::new_(
-            Lower {
-                val: lower.0,
-                bound: lower.1,
-            },
-            Upper {
-                val: upper.0,
-                bound: upper.1,
-            },
-        )
-    }
+    // pub fn new(lower: (T, L), upper: (T, U)) -> Result<Self, IntervalIsEmpty> {
+    //     Self::new_(
+    //         Lower {
+    //             val: lower.0,
+    //             bound: lower.1,
+    //         },
+    //         Upper {
+    //             val: upper.0,
+    //             bound: upper.1,
+    //         },
+    //     )
+    // }
     pub fn lower(&self) -> &Lower<T, L> {
         &self.lower
     }
@@ -122,7 +132,7 @@ impl<T: Ord + Clone, L: Boundary<T>, U: Boundary<T>> Interval<T, L, U> {
         L: Clone,
         U: Clone,
     {
-        Self::new_(
+        Self::new(
             self.lower.intersection(&other.lower),
             self.upper.intersection(&other.upper),
         )
@@ -145,8 +155,8 @@ impl<T: Ord + Clone, L: Boundary<T>, U: Boundary<T>> Interval<T, L, U> {
         L: Clone,
         U: Clone,
     {
-        let subtrahend = Interval::new_(self.upper.flip(), other.lower.flip())
-            .or(Interval::new_(other.upper.flip(), self.lower.flip()))
+        let subtrahend = Interval::new(self.upper.flip(), other.lower.flip())
+            .or(Interval::new(other.upper.flip(), self.lower.flip()))
             .ok();
         (self.union_interval(other), subtrahend)
     }
@@ -193,7 +203,12 @@ mod tests {
         // assert!(!i.contains(&-2));
         // assert!(i.contains(&5));
 
-        let _i = Interval::not_nan((1.23, Inclusive), (4.56, Exclusive)).unwrap();
+        let _i = Interval::<NotNan<_>, Inclusive, Inclusive>::not_nan(1.23, 4.56).unwrap();
+        // let _i = Interval::<NotNan<_>, Inclusive, Inclusive>::not_nan(
+        //     (1.23, Inclusive),
+        //     (4.56, Exclusive),
+        // )
+        // .unwrap();
         // let _i = Inclusive::not_nan(1.23)
         //     .unwrap()
         //     .to(Exclusive::not_nan(4.56).unwrap())

@@ -1,4 +1,4 @@
-use crate::{Bound, Exclusive, Inclusive, Interval};
+use crate::{boundary::Boundary, Bound, Exclusive, Inclusive, Interval, Lower, Upper};
 
 impl From<Inclusive> for Bound {
     fn from(_: Inclusive) -> Self {
@@ -11,16 +11,65 @@ impl From<Exclusive> for Bound {
     }
 }
 
-// impl<T> From<(T, Inclusive)> for (T, Bound) {
-//     fn from(b: (T, Inclusive)) -> Self {
-//         Self::Inclusive(b.0)
+impl<T> From<T> for Lower<T, Inclusive> {
+    fn from(t: T) -> Self {
+        Lower {
+            val: t,
+            bound: Inclusive,
+        }
+    }
+}
+impl<T> From<T> for Lower<T, Exclusive> {
+    fn from(t: T) -> Self {
+        Lower {
+            val: t,
+            bound: Exclusive,
+        }
+    }
+}
+// impl<T, B: Boundary<T>, B2: Into<B>> From<(T, B2)> for Lower<T, B> {
+//     fn from((t, b): (T, B2)) -> Self {
+//         Lower {
+//             val: t,
+//             bound: b.into(),
+//         }
 //     }
 // }
-// impl<T> From<(T, Exclusive)> for (T, Bound) {
-//     fn from(b: (T, Exclusive)) -> Self {
-//         Self::Exclusive(b.0)
+impl<T, B> From<(T, B)> for Lower<T, B> {
+    fn from((t, b): (T, B)) -> Self {
+        Lower { val: t, bound: b }
+    }
+}
+
+impl<T> From<T> for Upper<T, Inclusive> {
+    fn from(t: T) -> Self {
+        Upper {
+            val: t,
+            bound: Inclusive,
+        }
+    }
+}
+impl<T> From<T> for Upper<T, Exclusive> {
+    fn from(t: T) -> Self {
+        Upper {
+            val: t,
+            bound: Exclusive,
+        }
+    }
+}
+// impl<T, B: Boundary<T>, B2: Into<B>> From<(T, B2)> for Upper<T, B> {
+//     fn from((t, b): (T, B2)) -> Self {
+//         Upper {
+//             val: t,
+//             bound: b.into(),
+//         }
 //     }
 // }
+impl<T, B> From<(T, B)> for Upper<T, B> {
+    fn from((t, b): (T, B)) -> Self {
+        Upper { val: t, bound: b }
+    }
+}
 
 // impl<T: ordered_float::FloatCore> TryFrom<(T, Inclusive)> for Inclusive<NotNan<T>> {
 //     type Error = ordered_float::FloatIsNan;
@@ -59,13 +108,13 @@ impl From<Exclusive> for Bound {
 impl<T: Ord + Clone> TryFrom<std::ops::Range<T>> for Interval<T, Inclusive, Exclusive> {
     type Error = crate::IntervalIsEmpty;
     fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {
-        Self::new((r.start, Inclusive), (r.end, Exclusive))
+        Self::new(r.start, r.end)
     }
 }
 impl<T: Ord + Clone> TryFrom<std::ops::RangeInclusive<T>> for Interval<T, Inclusive> {
     type Error = crate::IntervalIsEmpty;
     fn try_from(r: std::ops::RangeInclusive<T>) -> Result<Self, Self::Error> {
         let (lower, upper) = r.into_inner();
-        Self::new((lower, Inclusive), (upper, Inclusive))
+        Self::new(lower, upper)
     }
 }
