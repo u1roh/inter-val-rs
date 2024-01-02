@@ -3,7 +3,7 @@ use std::ops::{Bound, RangeBounds};
 
 impl<T: Ord> RangeBounds<T> for Lower<T, Inclusive> {
     fn start_bound(&self) -> Bound<&T> {
-        Bound::Included(self.inf())
+        Bound::Included(&self.val)
     }
     fn end_bound(&self) -> Bound<&T> {
         Bound::Unbounded
@@ -11,7 +11,7 @@ impl<T: Ord> RangeBounds<T> for Lower<T, Inclusive> {
 }
 impl<T: Ord> RangeBounds<T> for Lower<T, Exclusive> {
     fn start_bound(&self) -> Bound<&T> {
-        Bound::Excluded(self.inf())
+        Bound::Excluded(&self.val)
     }
     fn end_bound(&self) -> Bound<&T> {
         Bound::Unbounded
@@ -22,7 +22,7 @@ impl<T: Ord> RangeBounds<T> for Upper<T, Inclusive> {
         Bound::Unbounded
     }
     fn end_bound(&self) -> Bound<&T> {
-        Bound::Included(self.sup())
+        Bound::Included(&self.val)
     }
 }
 impl<T: Ord> RangeBounds<T> for Upper<T, Exclusive> {
@@ -30,6 +30,6 @@ impl<T: Ord> RangeBounds<T> for Upper<T, Exclusive> {
         Bound::Unbounded
     }
     fn end_bound(&self) -> Bound<&T> {
-        Bound::Excluded(self.sup())
+        Bound::Excluded(&self.val)
     }
 }

@@ -4,9 +4,6 @@ use crate::boundary::Boundary;
 use crate::{IntervalIsEmpty, IntoNotNanBound, Lower, Upper};
 
 impl<T: Ord, B: Boundary> Lower<T, B> {
-    pub fn inf(&self) -> &T {
-        &self.val
-    }
     pub fn includes(&self, other: &Self) -> bool {
         self.val <= other.val
     }
@@ -30,9 +27,6 @@ impl<T: Ord + Clone, B: Boundary> Lower<T, B> {
 }
 
 impl<T: Ord, B: Boundary> Upper<T, B> {
-    pub fn sup(&self) -> &T {
-        &self.val
-    }
     pub fn includes(&self, other: &Self) -> bool {
         other.val <= self.val
     }
@@ -69,7 +63,7 @@ impl<T: Ord + Clone, L: Boundary, U: Boundary> Interval<T, L, U> {
     ) -> Result<Self, IntervalIsEmpty> {
         let lower = lower.into();
         let upper = upper.into();
-        (lower.contains(upper.sup()) && upper.contains(lower.inf()))
+        (lower.contains(&upper.val) && upper.contains(&lower.val))
             .then_some(Self { lower, upper })
             .ok_or(IntervalIsEmpty)
     }
@@ -78,19 +72,6 @@ impl<T: Ord + Clone, L: Boundary, U: Boundary> Interval<T, L, U> {
     }
     pub fn upper(&self) -> &Upper<T, U> {
         &self.upper
-    }
-    pub fn inf(&self) -> &T {
-        self.lower.inf()
-    }
-    pub fn sup(&self) -> &T {
-        self.upper.sup()
-    }
-
-    pub fn measure(&self) -> T
-    where
-        for<'a> &'a T: std::ops::Sub<Output = T>,
-    {
-        self.sup() - self.inf()
     }
 
     pub fn contains(&self, t: &T) -> bool {
@@ -135,6 +116,9 @@ impl<T: FloatCore, L: Boundary, U: Boundary> Interval<NotNan<T>, L, U> {
         let lower = lower.into_not_nan_boundary()?;
         let upper = upper.into_not_nan_boundary()?;
         Self::new(lower, upper).map_err(Into::into)
+    }
+    pub fn measure(&self) -> NotNan<T> {
+        self.upper.val - self.lower.val
     }
 }
 

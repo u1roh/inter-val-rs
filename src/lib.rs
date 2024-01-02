@@ -19,14 +19,14 @@ pub enum Bound {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Lower<T, B> {
-    val: T,
-    bound: B,
+    pub val: T,
+    pub bound: B,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Upper<T, B> {
-    val: T,
-    bound: B,
+    pub val: T,
+    pub bound: B,
 }
 
 pub trait IntoNotNanBound<B: boundary::Boundary> {
