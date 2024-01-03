@@ -14,14 +14,14 @@ impl<const N: usize, T: Ord + Clone, L: Boundary, U: Boundary> NDim<N, Interval<
 
     pub fn min_val(&self) -> NDim<N, T>
     where
-        Lower<T, L>: crate::core::MinVal<T>,
+        Lower<T, L>: crate::Minimum<T>,
     {
         std::array::from_fn(|i| self[i].min_val()).into()
     }
 
     pub fn max_val(&self) -> NDim<N, T>
     where
-        Upper<T, U>: crate::core::MaxVal<T>,
+        Upper<T, U>: crate::Maximum<T>,
     {
         std::array::from_fn(|i| self[i].max_val()).into()
     }

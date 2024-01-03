@@ -1,14 +1,10 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::boundary::Boundary;
-use crate::{Exclusive, Inclusion, Inclusive, IntervalIsEmpty, IntoNotNanBound, Lower, Upper};
-
-pub trait MinVal<T> {
-    fn min_val(&self) -> T;
-}
-pub trait MaxVal<T> {
-    fn max_val(&self) -> T;
-}
+use crate::{
+    Exclusive, Inclusion, Inclusive, IntervalIsEmpty, IntoNotNanBound, Lower, Maximum, Minimum,
+    Upper,
+};
 
 impl<T: Ord, B: Boundary> Lower<T, B> {
     pub fn includes(&self, other: &Self) -> bool {
@@ -47,18 +43,18 @@ impl<T: FloatCore, B: Boundary> Lower<NotNan<T>, B> {
         self.val
     }
 }
-impl<T: Clone> MinVal<T> for Lower<T, Inclusive> {
-    fn min_val(&self) -> T {
+impl<T: Clone> Minimum<T> for Lower<T, Inclusive> {
+    fn minimum(&self) -> T {
         self.val.clone()
     }
 }
-impl<T: num::Integer + Clone> MinVal<T> for Lower<T, Exclusive> {
-    fn min_val(&self) -> T {
+impl<T: num::Integer + Clone> Minimum<T> for Lower<T, Exclusive> {
+    fn minimum(&self) -> T {
         self.val.clone() + T::one()
     }
 }
-impl<T: num::Integer + Clone> MinVal<T> for Lower<T, Inclusion> {
-    fn min_val(&self) -> T {
+impl<T: num::Integer + Clone> Minimum<T> for Lower<T, Inclusion> {
+    fn minimum(&self) -> T {
         match self.boundary {
             Inclusion::Inclusive => self.val.clone(),
             Inclusion::Exclusive => self.val.clone() + T::one(),
@@ -103,18 +99,18 @@ impl<T: FloatCore, B: Boundary> Upper<NotNan<T>, B> {
         self.val
     }
 }
-impl<T: Clone> MaxVal<T> for Upper<T, Inclusive> {
-    fn max_val(&self) -> T {
+impl<T: Clone> Maximum<T> for Upper<T, Inclusive> {
+    fn maximum(&self) -> T {
         self.val.clone()
     }
 }
-impl<T: num::Integer + Clone> MaxVal<T> for Upper<T, Exclusive> {
-    fn max_val(&self) -> T {
+impl<T: num::Integer + Clone> Maximum<T> for Upper<T, Exclusive> {
+    fn maximum(&self) -> T {
         self.val.clone() - T::one()
     }
 }
-impl<T: num::Integer + Clone> MaxVal<T> for Upper<T, Inclusion> {
-    fn max_val(&self) -> T {
+impl<T: num::Integer + Clone> Maximum<T> for Upper<T, Inclusion> {
+    fn maximum(&self) -> T {
         match self.boundary {
             Inclusion::Inclusive => self.val.clone(),
             Inclusion::Exclusive => self.val.clone() - T::one(),
@@ -149,16 +145,16 @@ impl<T: Ord, L: Boundary, U: Boundary> Interval<T, L, U> {
 
     pub fn min_val(&self) -> T
     where
-        Lower<T, L>: MinVal<T>,
+        Lower<T, L>: Minimum<T>,
     {
-        self.lower.min_val()
+        self.lower.minimum()
     }
 
     pub fn max_val(&self) -> T
     where
-        Upper<T, U>: MaxVal<T>,
+        Upper<T, U>: Maximum<T>,
     {
-        self.upper.max_val()
+        self.upper.maximum()
     }
 
     pub fn contains(&self, t: &T) -> bool {

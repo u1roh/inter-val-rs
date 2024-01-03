@@ -1,6 +1,7 @@
 mod boundary;
 mod converters;
 pub mod core;
+mod half;
 mod impl_range_bounds;
 mod ndim;
 mod pow;
@@ -21,6 +22,12 @@ pub enum Inclusion {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Bound<T, B> {
+    pub val: T,
+    pub inclusion: B,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Lower<T, B> {
     pub val: T,
     pub boundary: B,
@@ -30,6 +37,13 @@ pub struct Lower<T, B> {
 pub struct Upper<T, B> {
     pub val: T,
     pub boundary: B,
+}
+
+pub trait Minimum<T> {
+    fn minimum(&self) -> T;
+}
+pub trait Maximum<T> {
+    fn maximum(&self) -> T;
 }
 
 pub trait IntoNotNanBound<B: boundary::Boundary> {
