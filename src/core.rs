@@ -234,11 +234,8 @@ impl<T: FloatCore, L: Boundary, U: Boundary> Interval<NotNan<T>, L, U> {
             upper: self.upper.closure(),
         }
     }
-    pub fn interior(self) -> Interval<NotNan<T>, Exclusive> {
-        Interval {
-            lower: self.lower.interior(),
-            upper: self.upper.interior(),
-        }
+    pub fn interior(self) -> Option<Interval<NotNan<T>, Exclusive>> {
+        Interval::new(self.lower.interior(), self.upper.interior()).ok()
     }
 }
 impl<T> Interval<T> {

@@ -68,7 +68,11 @@ impl<const N: usize, T: FloatCore, L: Boundary, U: Boundary> NDim<N, Interval<No
     pub fn closure(self) -> NDim<N, Interval<NotNan<T>, Inclusive>> {
         std::array::from_fn(|i| self[i].closure()).into()
     }
-    pub fn interior(self) -> NDim<N, Interval<NotNan<T>, Exclusive>> {
-        std::array::from_fn(|i| self[i].interior()).into()
+    pub fn interior(self) -> Option<NDim<N, Interval<NotNan<T>, Exclusive>>> {
+        let interiors: [_; N] = std::array::from_fn(|i| self[i].interior());
+        interiors
+            .iter()
+            .all(|i| i.is_some())
+            .then(|| std::array::from_fn(|i| interiors[i].unwrap()).into())
     }
 }
