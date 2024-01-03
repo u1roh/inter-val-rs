@@ -128,3 +128,17 @@ impl<T: Ord + Clone> TryFrom<std::ops::RangeInclusive<T>> for Interval<T, Inclus
         Self::new(lower, upper)
     }
 }
+
+impl<T: FloatCore> TryFrom<std::ops::Range<T>> for Interval<NotNan<T>, Inclusive, Exclusive> {
+    type Error = crate::Error;
+    fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {
+        Self::not_nan((r.start, Inclusive), (r.end, Exclusive))
+    }
+}
+impl<T: FloatCore> TryFrom<std::ops::RangeInclusive<T>> for Interval<NotNan<T>, Inclusive> {
+    type Error = crate::Error;
+    fn try_from(r: std::ops::RangeInclusive<T>) -> Result<Self, Self::Error> {
+        let (lower, upper) = r.into_inner();
+        Self::not_nan((lower, Inclusive), (upper, Inclusive))
+    }
+}

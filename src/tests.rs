@@ -1,4 +1,6 @@
 #![cfg(test)]
+use std::any::{Any, TypeId};
+
 use super::*;
 use crate::{Exclusive, Inclusive};
 
@@ -25,4 +27,23 @@ fn it_works() {
     let i = Interval::bound([3, 9, 2, 5]).unwrap();
     assert_eq!(i.lower().val, 2);
     assert_eq!(i.upper().val, 9);
+}
+
+fn assert_typeid<T: 'static>(a: &dyn Any) {
+    assert_eq!(a.type_id(), TypeId::of::<T>());
+}
+
+#[test]
+fn range_into_interval() {
+    let a: Interval<_, _, _> = (0..3).try_into().unwrap();
+    assert_typeid::<Interval<i32, Inclusive, Exclusive>>(&a);
+
+    let a: Interval<_, _, _> = (0..=3).try_into().unwrap();
+    assert_typeid::<Interval<i32, Inclusive, Inclusive>>(&a);
+
+    let a: Interval<_, _, _> = (1.23..4.56).try_into().unwrap();
+    assert_typeid::<Interval<NotNan<f64>, Inclusive, Exclusive>>(&a);
+
+    let a: Interval<_, _, _> = (1.23..=4.56).try_into().unwrap();
+    assert_typeid::<Interval<NotNan<f64>, Inclusive, Inclusive>>(&a);
 }
