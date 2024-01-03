@@ -1,7 +1,7 @@
-use crate::{Exclusive, Inclusive, Lower, Upper};
+use crate::{Exclusive, Inclusive, LeftBounded, RightBounded};
 use std::ops::{Bound, RangeBounds};
 
-impl<T: Ord> RangeBounds<T> for Lower<T, Inclusive> {
+impl<T: Ord> RangeBounds<T> for LeftBounded<T, Inclusive> {
     fn start_bound(&self) -> Bound<&T> {
         Bound::Included(&self.val)
     }
@@ -9,7 +9,7 @@ impl<T: Ord> RangeBounds<T> for Lower<T, Inclusive> {
         Bound::Unbounded
     }
 }
-impl<T: Ord> RangeBounds<T> for Lower<T, Exclusive> {
+impl<T: Ord> RangeBounds<T> for LeftBounded<T, Exclusive> {
     fn start_bound(&self) -> Bound<&T> {
         Bound::Excluded(&self.val)
     }
@@ -17,7 +17,7 @@ impl<T: Ord> RangeBounds<T> for Lower<T, Exclusive> {
         Bound::Unbounded
     }
 }
-impl<T: Ord> RangeBounds<T> for Upper<T, Inclusive> {
+impl<T: Ord> RangeBounds<T> for RightBounded<T, Inclusive> {
     fn start_bound(&self) -> Bound<&T> {
         Bound::Unbounded
     }
@@ -25,7 +25,7 @@ impl<T: Ord> RangeBounds<T> for Upper<T, Inclusive> {
         Bound::Included(&self.val)
     }
 }
-impl<T: Ord> RangeBounds<T> for Upper<T, Exclusive> {
+impl<T: Ord> RangeBounds<T> for RightBounded<T, Exclusive> {
     fn start_bound(&self) -> Bound<&T> {
         Bound::Unbounded
     }

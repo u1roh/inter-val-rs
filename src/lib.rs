@@ -9,6 +9,8 @@ mod tests;
 
 use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
+pub use half::{HalfBounded, LeftBounded, RightBounded};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Inclusive;
 
@@ -25,18 +27,6 @@ pub enum Inclusion {
 pub struct Bound<T, B> {
     pub val: T,
     pub inclusion: B,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Lower<T, B> {
-    pub val: T,
-    pub boundary: B,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Upper<T, B> {
-    pub val: T,
-    pub boundary: B,
 }
 
 pub trait Minimum<T> {

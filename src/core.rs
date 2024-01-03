@@ -2,157 +2,43 @@ use ordered_float::{FloatCore, NotNan};
 
 use crate::boundary::Boundary;
 use crate::{
-    Exclusive, Inclusion, Inclusive, IntervalIsEmpty, IntoNotNanBound, Lower, Maximum, Minimum,
-    Upper,
+    Bound, Exclusive, Inclusion, Inclusive, IntervalIsEmpty, IntoNotNanBound, LeftBounded, Maximum,
+    Minimum, RightBounded,
 };
-
-impl<T: Ord, B: Boundary> Lower<T, B> {
-    pub fn includes(&self, other: &Self) -> bool {
-        self.val <= other.val
-    }
-    pub fn contains(&self, t: &T) -> bool {
-        self.boundary.less(&self.val, t)
-    }
-    pub fn intersection(self, other: Self) -> Self {
-        self.max(other)
-    }
-    pub fn union(self, other: Self) -> Self {
-        self.min(other)
-    }
-    pub fn flip(self) -> Upper<T, B::Flip> {
-        Upper {
-            val: self.val,
-            boundary: self.boundary.flip(),
-        }
-    }
-}
-impl<T: FloatCore, B: Boundary> Lower<NotNan<T>, B> {
-    pub fn closure(self) -> Lower<NotNan<T>, Inclusive> {
-        Lower {
-            val: self.val,
-            boundary: Inclusive,
-        }
-    }
-    pub fn interior(self) -> Lower<NotNan<T>, Exclusive> {
-        Lower {
-            val: self.val,
-            boundary: Exclusive,
-        }
-    }
-    pub fn inf(&self) -> NotNan<T> {
-        self.val
-    }
-}
-impl<T: Clone> Minimum<T> for Lower<T, Inclusive> {
-    fn minimum(&self) -> T {
-        self.val.clone()
-    }
-}
-impl<T: num::Integer + Clone> Minimum<T> for Lower<T, Exclusive> {
-    fn minimum(&self) -> T {
-        self.val.clone() + T::one()
-    }
-}
-impl<T: num::Integer + Clone> Minimum<T> for Lower<T, Inclusion> {
-    fn minimum(&self) -> T {
-        match self.boundary {
-            Inclusion::Inclusive => self.val.clone(),
-            Inclusion::Exclusive => self.val.clone() + T::one(),
-        }
-    }
-}
-
-impl<T: Ord, B: Boundary> Upper<T, B> {
-    pub fn includes(&self, other: &Self) -> bool {
-        other.val <= self.val
-    }
-    pub fn contains(&self, t: &T) -> bool {
-        self.boundary.less(t, &self.val)
-    }
-    pub fn intersection(self, other: Self) -> Self {
-        self.min(other)
-    }
-    pub fn union(self, other: Self) -> Self {
-        self.max(other)
-    }
-    pub fn flip(self) -> Lower<T, B::Flip> {
-        Lower {
-            val: self.val,
-            boundary: self.boundary.flip(),
-        }
-    }
-}
-impl<T: FloatCore, B: Boundary> Upper<NotNan<T>, B> {
-    pub fn closure(self) -> Upper<NotNan<T>, Inclusive> {
-        Upper {
-            val: self.val,
-            boundary: Inclusive,
-        }
-    }
-    pub fn interior(self) -> Upper<NotNan<T>, Exclusive> {
-        Upper {
-            val: self.val,
-            boundary: Exclusive,
-        }
-    }
-    pub fn sup(&self) -> NotNan<T> {
-        self.val
-    }
-}
-impl<T: Clone> Maximum<T> for Upper<T, Inclusive> {
-    fn maximum(&self) -> T {
-        self.val.clone()
-    }
-}
-impl<T: num::Integer + Clone> Maximum<T> for Upper<T, Exclusive> {
-    fn maximum(&self) -> T {
-        self.val.clone() - T::one()
-    }
-}
-impl<T: num::Integer + Clone> Maximum<T> for Upper<T, Inclusion> {
-    fn maximum(&self) -> T {
-        match self.boundary {
-            Inclusion::Inclusive => self.val.clone(),
-            Inclusion::Exclusive => self.val.clone() - T::one(),
-        }
-    }
-}
-
-pub type UnionSubtrahend<T, L, U> = Interval<T, <U as Boundary>::Flip, <L as Boundary>::Flip>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Interval<T, L = crate::Inclusion, U = L> {
-    lower: Lower<T, L>,
-    upper: Upper<T, U>,
+    lower: LeftBounded<T, L>,
+    upper: RightBounded<T, U>,
 }
 impl<T: Ord, L: Boundary, U: Boundary> Interval<T, L, U> {
     pub fn new(
-        lower: impl Into<Lower<T, L>>,
-        upper: impl Into<Upper<T, U>>,
+        lower: impl Into<Bound<T, L>>,
+        upper: impl Into<Bound<T, U>>,
     ) -> Result<Self, IntervalIsEmpty> {
-        let lower = lower.into();
-        let upper = upper.into();
+        let lower: LeftBounded<T, L> = lower.into().into();
+        let upper: RightBounded<T, U> = upper.into().into();
         (lower.contains(&upper.val) && upper.contains(&lower.val))
             .then_some(Self { lower, upper })
             .ok_or(IntervalIsEmpty)
     }
-    pub fn lower(&self) -> &Lower<T, L> {
+    pub fn lower(&self) -> &LeftBounded<T, L> {
         &self.lower
     }
-    pub fn upper(&self) -> &Upper<T, U> {
+    pub fn upper(&self) -> &RightBounded<T, U> {
         &self.upper
     }
 
     pub fn min_val(&self) -> T
     where
-        Lower<T, L>: Minimum<T>,
+        LeftBounded<T, L>: Minimum<T>,
     {
         self.lower.minimum()
     }
 
     pub fn max_val(&self) -> T
     where
-        Upper<T, U>: Maximum<T>,
+        RightBounded<T, U>: Maximum<T>,
     {
         self.upper.maximum()
     }
@@ -237,8 +123,8 @@ impl<T: FloatCore, L: Boundary, U: Boundary> Interval<NotNan<T>, L, U> {
 impl<T> Interval<T> {
     pub fn convert_from<L, U>(src: Interval<T, L, U>) -> Self
     where
-        Lower<T, L>: Into<Lower<T, Inclusion>>,
-        Upper<T, U>: Into<Upper<T, Inclusion>>,
+        LeftBounded<T, L>: Into<LeftBounded<T, Inclusion>>,
+        RightBounded<T, U>: Into<RightBounded<T, Inclusion>>,
     {
         Self {
             lower: src.lower.into(),

@@ -3,10 +3,10 @@ use ordered_float::{FloatCore, NotNan};
 use crate::{boundary::Boundary, Bound, Exclusive, Inclusion, Inclusive, Maximum, Minimum};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
-struct Left;
+pub struct Left;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
-struct Right;
+pub struct Right;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct HalfBounded<T, B, Side>(Bound<T, B>, std::marker::PhantomData<Side>);
@@ -23,7 +23,22 @@ impl<T, B, Side> std::ops::Deref for HalfBounded<T, B, Side> {
 
 impl<T, B, Side> From<Bound<T, B>> for HalfBounded<T, B, Side> {
     fn from(b: Bound<T, B>) -> Self {
-        HalfBounded(b, std::marker::PhantomData)
+        Self(b, std::marker::PhantomData)
+    }
+}
+impl<T, B, Side> From<HalfBounded<T, B, Side>> for Bound<T, B> {
+    fn from(h: HalfBounded<T, B, Side>) -> Self {
+        h.0
+    }
+}
+impl<T, Side> From<HalfBounded<T, Inclusive, Side>> for HalfBounded<T, Inclusion, Side> {
+    fn from(h: HalfBounded<T, Inclusive, Side>) -> Self {
+        Self(h.0.into(), std::marker::PhantomData)
+    }
+}
+impl<T, Side> From<HalfBounded<T, Exclusive, Side>> for HalfBounded<T, Inclusion, Side> {
+    fn from(h: HalfBounded<T, Exclusive, Side>) -> Self {
+        Self(h.0.into(), std::marker::PhantomData)
     }
 }
 

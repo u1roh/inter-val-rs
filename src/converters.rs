@@ -1,4 +1,4 @@
-use crate::{boundary::Boundary, Exclusive, Inclusion, Inclusive, Interval, Lower, Upper};
+use crate::{boundary::Boundary, Bound, Exclusive, Inclusion, Inclusive, Interval};
 use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
 impl From<Inclusive> for Inclusion {
@@ -12,62 +12,46 @@ impl From<Exclusive> for Inclusion {
     }
 }
 
-impl<T, B: Boundary> From<(T, B)> for Lower<T, B> {
-    fn from((t, b): (T, B)) -> Self {
-        Lower {
-            val: t,
-            boundary: b,
+impl<T> From<Bound<T, Inclusive>> for Bound<T, Inclusion> {
+    fn from(b: Bound<T, Inclusive>) -> Self {
+        Self {
+            val: b.val,
+            inclusion: b.inclusion.into(),
         }
     }
 }
-impl<T, B: Boundary> From<(T, B)> for Upper<T, B> {
-    fn from((t, b): (T, B)) -> Self {
-        Upper {
-            val: t,
-            boundary: b,
+impl<T> From<Bound<T, Exclusive>> for Bound<T, Inclusion> {
+    fn from(b: Bound<T, Exclusive>) -> Self {
+        Self {
+            val: b.val,
+            inclusion: b.inclusion.into(),
         }
     }
 }
 
-impl<T> From<T> for Lower<T, Inclusive> {
+impl<T> From<T> for Bound<T, Inclusive> {
     fn from(t: T) -> Self {
-        (t, Inclusive).into()
+        Self {
+            val: t,
+            inclusion: Inclusive,
+        }
     }
 }
-impl<T> From<T> for Lower<T, Exclusive> {
+impl<T> From<T> for Bound<T, Exclusive> {
     fn from(t: T) -> Self {
-        (t, Exclusive).into()
-    }
-}
-impl<T> From<T> for Upper<T, Inclusive> {
-    fn from(t: T) -> Self {
-        (t, Inclusive).into()
-    }
-}
-impl<T> From<T> for Upper<T, Exclusive> {
-    fn from(t: T) -> Self {
-        (t, Exclusive).into()
+        Self {
+            val: t,
+            inclusion: Exclusive,
+        }
     }
 }
 
-impl<T> From<Lower<T, Inclusive>> for Lower<T, Inclusion> {
-    fn from(src: Lower<T, Inclusive>) -> Self {
-        (src.val, Inclusion::Inclusive).into()
-    }
-}
-impl<T> From<Lower<T, Exclusive>> for Lower<T, Inclusion> {
-    fn from(src: Lower<T, Exclusive>) -> Self {
-        (src.val, Inclusion::Exclusive).into()
-    }
-}
-impl<T> From<Upper<T, Inclusive>> for Upper<T, Inclusion> {
-    fn from(src: Upper<T, Inclusive>) -> Self {
-        (src.val, Inclusion::Inclusive).into()
-    }
-}
-impl<T> From<Upper<T, Exclusive>> for Upper<T, Inclusion> {
-    fn from(src: Upper<T, Exclusive>) -> Self {
-        (src.val, Inclusion::Exclusive).into()
+impl<T, B: Boundary> From<(T, B)> for Bound<T, B> {
+    fn from((t, b): (T, B)) -> Self {
+        Self {
+            val: t,
+            inclusion: b,
+        }
     }
 }
 
