@@ -15,7 +15,7 @@ pub struct Inclusive;
 pub struct Exclusive;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Bound {
+pub enum Inclusion {
     Inclusive,
     Exclusive,
 }
@@ -23,13 +23,13 @@ pub enum Bound {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Lower<T, B> {
     pub val: T,
-    pub bound: B,
+    pub boundary: B,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Upper<T, B> {
     pub val: T,
-    pub bound: B,
+    pub boundary: B,
 }
 
 pub trait IntoNotNanBound<B: boundary::Boundary> {
@@ -67,8 +67,8 @@ pub type RightHalfOpenIntervalF64 = RightHalfOpenIntervalF<f64>;
 pub type LeftHalfOpenIntervalF64 = LeftHalfOpenIntervalF<f64>;
 
 pub use ndim::NDim;
-pub type IntervalN<const N: usize, T, L = Bound, U = L> = NDim<N, Interval<T, L, U>>;
-pub type Interval2<T, L = Bound, U = L> = IntervalN<2, T, L, U>;
-pub type Interval3<T, L = Bound, U = L> = IntervalN<3, T, L, U>;
-pub type Interval4<T, L = Bound, U = L> = IntervalN<4, T, L, U>;
+pub type IntervalN<const N: usize, T, L = Inclusion, U = L> = NDim<N, Interval<T, L, U>>;
+pub type Interval2<T, L = Inclusion, U = L> = IntervalN<2, T, L, U>;
+pub type Interval3<T, L = Inclusion, U = L> = IntervalN<3, T, L, U>;
+pub type Interval4<T, L = Inclusion, U = L> = IntervalN<4, T, L, U>;
 pub type BoxN<const N: usize, T> = IntervalN<N, NotNan<T>, Inclusive>;

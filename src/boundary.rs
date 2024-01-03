@@ -1,4 +1,4 @@
-use crate::{Bound, Exclusive, Inclusive};
+use crate::{Exclusive, Inclusion, Inclusive};
 
 pub trait Boundary: Ord + Copy {
     type Flip: Boundary<Flip = Self>;
@@ -24,7 +24,7 @@ impl Boundary for Exclusive {
         this < t
     }
 }
-impl Boundary for Bound {
+impl Boundary for Inclusion {
     type Flip = Self;
     fn flip(self) -> Self {
         match self {
@@ -34,8 +34,8 @@ impl Boundary for Bound {
     }
     fn less<T: Ord>(&self, s: &T, t: &T) -> bool {
         match self {
-            Bound::Inclusive => s <= t,
-            Bound::Exclusive => s < t,
+            Inclusion::Inclusive => s <= t,
+            Inclusion::Exclusive => s < t,
         }
     }
 }

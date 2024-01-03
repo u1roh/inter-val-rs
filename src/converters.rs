@@ -1,12 +1,12 @@
-use crate::{boundary::Boundary, Bound, Exclusive, Inclusive, Interval, Lower, Upper};
+use crate::{boundary::Boundary, Exclusive, Inclusion, Inclusive, Interval, Lower, Upper};
 use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
-impl From<Inclusive> for Bound {
+impl From<Inclusive> for Inclusion {
     fn from(_: Inclusive) -> Self {
         Self::Inclusive
     }
 }
-impl From<Exclusive> for Bound {
+impl From<Exclusive> for Inclusion {
     fn from(_: Exclusive) -> Self {
         Self::Exclusive
     }
@@ -14,12 +14,18 @@ impl From<Exclusive> for Bound {
 
 impl<T, B: Boundary> From<(T, B)> for Lower<T, B> {
     fn from((t, b): (T, B)) -> Self {
-        Lower { val: t, bound: b }
+        Lower {
+            val: t,
+            boundary: b,
+        }
     }
 }
 impl<T, B: Boundary> From<(T, B)> for Upper<T, B> {
     fn from((t, b): (T, B)) -> Self {
-        Upper { val: t, bound: b }
+        Upper {
+            val: t,
+            boundary: b,
+        }
     }
 }
 
@@ -44,24 +50,24 @@ impl<T> From<T> for Upper<T, Exclusive> {
     }
 }
 
-impl<T> From<Lower<T, Inclusive>> for Lower<T, Bound> {
+impl<T> From<Lower<T, Inclusive>> for Lower<T, Inclusion> {
     fn from(src: Lower<T, Inclusive>) -> Self {
-        (src.val, Bound::Inclusive).into()
+        (src.val, Inclusion::Inclusive).into()
     }
 }
-impl<T> From<Lower<T, Exclusive>> for Lower<T, Bound> {
+impl<T> From<Lower<T, Exclusive>> for Lower<T, Inclusion> {
     fn from(src: Lower<T, Exclusive>) -> Self {
-        (src.val, Bound::Exclusive).into()
+        (src.val, Inclusion::Exclusive).into()
     }
 }
-impl<T> From<Upper<T, Inclusive>> for Upper<T, Bound> {
+impl<T> From<Upper<T, Inclusive>> for Upper<T, Inclusion> {
     fn from(src: Upper<T, Inclusive>) -> Self {
-        (src.val, Bound::Inclusive).into()
+        (src.val, Inclusion::Inclusive).into()
     }
 }
-impl<T> From<Upper<T, Exclusive>> for Upper<T, Bound> {
+impl<T> From<Upper<T, Exclusive>> for Upper<T, Inclusion> {
     fn from(src: Upper<T, Exclusive>) -> Self {
-        (src.val, Bound::Exclusive).into()
+        (src.val, Inclusion::Exclusive).into()
     }
 }
 

@@ -24,7 +24,7 @@ fn it_works() {
     let _i = Interval::<NotNan<_>, Inclusive, Inclusive>::not_nan(1.23, 4.56).unwrap();
     let _i = Interval::not_nan((1.23, Inclusive), (4.56, Exclusive)).unwrap();
 
-    let i = Interval::bound([3, 9, 2, 5]).unwrap();
+    let i = Interval::enclose([3, 9, 2, 5]).unwrap();
     assert_eq!(i.lower().val, 2);
     assert_eq!(i.upper().val, 9);
 }
