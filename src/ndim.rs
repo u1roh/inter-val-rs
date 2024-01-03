@@ -1,12 +1,15 @@
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct NDim<const N: usize, T>(pub [T; N]);
 
 #[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Xy<T> {
     pub x: T,
     pub y: T,
 }
 
 #[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Xyz<T> {
     pub x: T,
     pub y: T,
@@ -14,6 +17,7 @@ pub struct Xyz<T> {
 }
 
 #[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Xyzw<T> {
     pub x: T,
     pub y: T,
@@ -27,15 +31,30 @@ impl<T> std::ops::Deref for NDim<2, T> {
         unsafe { std::mem::transmute(self) }
     }
 }
+impl<T> std::ops::DerefMut for NDim<2, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { std::mem::transmute(self) }
+    }
+}
 impl<T> std::ops::Deref for NDim<3, T> {
     type Target = Xyz<T>;
     fn deref(&self) -> &Self::Target {
         unsafe { std::mem::transmute(self) }
     }
 }
+impl<T> std::ops::DerefMut for NDim<3, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { std::mem::transmute(self) }
+    }
+}
 impl<T> std::ops::Deref for NDim<4, T> {
     type Target = Xyzw<T>;
     fn deref(&self) -> &Self::Target {
+        unsafe { std::mem::transmute(self) }
+    }
+}
+impl<T> std::ops::DerefMut for NDim<4, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { std::mem::transmute(self) }
     }
 }
