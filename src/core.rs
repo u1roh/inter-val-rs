@@ -2,8 +2,8 @@ use ordered_float::{FloatCore, NotNan};
 
 use crate::boundary::Boundary;
 use crate::{
-    Bound, Exclusive, Inclusion, Inclusive, IntervalIsEmpty, IntoNotNanBound, LeftBounded, Maximum,
-    Minimum, RightBounded,
+    Bound, Exclusive, Inclusion, Inclusive, IntervalIsEmpty, LeftBounded, Maximum, Minimum,
+    RightBounded,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -12,15 +12,13 @@ pub struct Interval<T, L = crate::Inclusion, U = L> {
     upper: RightBounded<T, U>,
 }
 impl<T: Ord, L: Boundary, U: Boundary> Interval<T, L, U> {
-    pub fn new(
-        lower: impl Into<Bound<T, L>>,
-        upper: impl Into<Bound<T, U>>,
-    ) -> Result<Self, IntervalIsEmpty> {
-        let lower: LeftBounded<T, L> = lower.into().into();
-        let upper: RightBounded<T, U> = upper.into().into();
+    fn new_(lower: LeftBounded<T, L>, upper: RightBounded<T, U>) -> Result<Self, IntervalIsEmpty> {
         (lower.contains(&upper.val) && upper.contains(&lower.val))
             .then_some(Self { lower, upper })
             .ok_or(IntervalIsEmpty)
+    }
+    pub fn new(lower: Bound<T, L>, upper: Bound<T, U>) -> Result<Self, IntervalIsEmpty> {
+        Self::new_(lower.into(), upper.into())
     }
     pub fn lower(&self) -> &LeftBounded<T, L> {
         &self.lower
@@ -52,7 +50,7 @@ impl<T: Ord, L: Boundary, U: Boundary> Interval<T, L, U> {
     }
 
     pub fn intersection(self, other: Self) -> Option<Self> {
-        Self::new(
+        Self::new_(
             self.lower.intersection(other.lower),
             self.upper.intersection(other.upper),
         )
@@ -67,8 +65,8 @@ impl<T: Ord, L: Boundary, U: Boundary> Interval<T, L, U> {
     }
 
     pub fn gap(self, other: Self) -> Option<Interval<T, U::Flip, L::Flip>> {
-        Interval::new(self.upper.flip(), other.lower.flip())
-            .or(Interval::new(other.upper.flip(), self.lower.flip()))
+        Interval::new_(self.upper.flip(), other.lower.flip())
+            .or(Interval::new_(other.upper.flip(), self.lower.flip()))
             .ok()
     }
 
@@ -91,11 +89,11 @@ impl<T: Ord + Clone, L: Boundary, U: Boundary> Interval<T, L, U> {
 }
 impl<T: FloatCore, L: Boundary, U: Boundary> Interval<NotNan<T>, L, U> {
     pub fn not_nan(
-        lower: impl IntoNotNanBound<L, Float = T>,
-        upper: impl IntoNotNanBound<U, Float = T>,
+        lower: impl Into<Bound<T, L>>,
+        upper: impl Into<Bound<T, U>>,
     ) -> Result<Self, crate::Error> {
-        let lower = lower.into_not_nan_boundary()?;
-        let upper = upper.into_not_nan_boundary()?;
+        let lower = lower.into().into_not_nan()?;
+        let upper = upper.into().into_not_nan()?;
         Self::new(lower, upper).map_err(Into::into)
     }
     pub fn inf(&self) -> NotNan<T> {
@@ -110,6 +108,9 @@ impl<T: FloatCore, L: Boundary, U: Boundary> Interval<NotNan<T>, L, U> {
     pub fn center(&self) -> NotNan<T> {
         NotNan::new((*self.lower.val + *self.upper.val) / (T::one() + T::one())).unwrap()
     }
+    pub fn contains_f(&self, t: T) -> bool {
+        NotNan::new(t).map(|t| self.contains(&t)).unwrap_or(false)
+    }
     pub fn closure(self) -> Interval<NotNan<T>, Inclusive> {
         Interval {
             lower: self.lower.closure(),
@@ -117,7 +118,7 @@ impl<T: FloatCore, L: Boundary, U: Boundary> Interval<NotNan<T>, L, U> {
         }
     }
     pub fn interior(self) -> Option<Interval<NotNan<T>, Exclusive>> {
-        Interval::new(self.lower.interior(), self.upper.interior()).ok()
+        Interval::new_(self.lower.interior(), self.upper.interior()).ok()
     }
 }
 impl<T> Interval<T> {

@@ -28,17 +28,70 @@ pub struct Bound<T, B> {
     pub val: T,
     pub inclusion: B,
 }
+impl<T: Ord, B: boundary::Boundary> Bound<T, B> {
+    pub fn to<R: boundary::Boundary>(
+        self,
+        right: Bound<T, R>,
+    ) -> Result<Interval<T, B, R>, IntervalIsEmpty> {
+        Interval::new(self, right)
+    }
+}
+impl<T: FloatCore, B: boundary::Boundary> Bound<T, B> {
+    pub fn not_nan_to<R: boundary::Boundary>(
+        self,
+        right: Bound<T, R>,
+    ) -> Result<Interval<NotNan<T>, B, R>, Error> {
+        Interval::not_nan(self, right)
+    }
+}
+impl<T: FloatCore, B> Bound<T, B> {
+    pub fn into_not_nan(self) -> Result<Bound<NotNan<T>, B>, FloatIsNan> {
+        NotNan::new(self.val).map(|val| Bound {
+            val,
+            inclusion: self.inclusion,
+        })
+    }
+}
+
+impl Inclusive {
+    pub fn at<T>(self, t: T) -> Bound<T, Self> {
+        Bound {
+            val: t,
+            inclusion: self,
+        }
+    }
+    pub fn not_nan<T: FloatCore>(self, t: T) -> Result<Bound<NotNan<T>, Self>, FloatIsNan> {
+        self.at(t).into_not_nan()
+    }
+}
+impl Exclusive {
+    pub fn at<T>(self, t: T) -> Bound<T, Self> {
+        Bound {
+            val: t,
+            inclusion: self,
+        }
+    }
+    pub fn not_nan<T: FloatCore>(self, t: T) -> Result<Bound<NotNan<T>, Self>, FloatIsNan> {
+        self.at(t).into_not_nan()
+    }
+}
+impl Inclusion {
+    pub fn at<T>(self, t: T) -> Bound<T, Self> {
+        Bound {
+            val: t,
+            inclusion: self,
+        }
+    }
+    pub fn not_nan<T: FloatCore>(self, t: T) -> Result<Bound<NotNan<T>, Self>, FloatIsNan> {
+        self.at(t).into_not_nan()
+    }
+}
 
 pub trait Minimum<T> {
     fn minimum(&self) -> T;
 }
 pub trait Maximum<T> {
     fn maximum(&self) -> T;
-}
-
-pub trait IntoNotNanBound<B: boundary::Boundary> {
-    type Float: FloatCore;
-    fn into_not_nan_boundary(self) -> Result<(NotNan<Self::Float>, B), FloatIsNan>;
 }
 
 #[derive(Debug, thiserror::Error)]
