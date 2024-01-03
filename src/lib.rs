@@ -95,14 +95,14 @@ pub trait Maximum<T> {
 }
 
 #[derive(Debug, thiserror::Error)]
-#[error("lower boundary must be less than or equal to upper boundary")]
+#[error("left boundary must be less than or equal to right boundary")]
 pub struct IntervalIsEmpty;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("float is NaN")]
     FloatIsNan(#[from] ordered_float::FloatIsNan),
-    #[error("lower boundary must be less than or equal to upper boundary")]
+    #[error("left boundary must be less than or equal to right boundary")]
     IntervalIsEmpty(#[from] IntervalIsEmpty),
 }
 
@@ -112,7 +112,7 @@ pub type OpenInterval<T> = Interval<T, Exclusive>;
 pub type RightHalfOpenInterval<T> = Interval<T, Inclusive, Exclusive>;
 pub type LeftHalfOpenInterval<T> = Interval<T, Exclusive, Inclusive>;
 
-pub type IntervalF<T, L, U> = Interval<NotNan<T>, L, U>;
+pub type IntervalF<T, L, R> = Interval<NotNan<T>, L, R>;
 pub type ClosedIntervalF<T> = ClosedInterval<NotNan<T>>;
 pub type OpenIntervalF<T> = OpenInterval<NotNan<T>>;
 pub type RightHalfOpenIntervalF<T> = RightHalfOpenInterval<NotNan<T>>;
@@ -124,8 +124,8 @@ pub type RightHalfOpenIntervalF64 = RightHalfOpenIntervalF<f64>;
 pub type LeftHalfOpenIntervalF64 = LeftHalfOpenIntervalF<f64>;
 
 pub use ndim::NDim;
-pub type IntervalN<const N: usize, T, L = Inclusion, U = L> = NDim<N, Interval<T, L, U>>;
-pub type Interval2<T, L = Inclusion, U = L> = IntervalN<2, T, L, U>;
-pub type Interval3<T, L = Inclusion, U = L> = IntervalN<3, T, L, U>;
-pub type Interval4<T, L = Inclusion, U = L> = IntervalN<4, T, L, U>;
+pub type IntervalN<const N: usize, T, L = Inclusion, R = L> = NDim<N, Interval<T, L, R>>;
+pub type Interval2<T, L = Inclusion, R = L> = IntervalN<2, T, L, R>;
+pub type Interval3<T, L = Inclusion, R = L> = IntervalN<3, T, L, R>;
+pub type Interval4<T, L = Inclusion, R = L> = IntervalN<4, T, L, R>;
 pub type BoxN<const N: usize, T> = IntervalN<N, NotNan<T>, Inclusive>;

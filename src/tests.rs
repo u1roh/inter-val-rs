@@ -29,8 +29,8 @@ fn it_works() {
         .unwrap();
 
     let i = Interval::enclose([3, 9, 2, 5]).unwrap();
-    assert_eq!(i.lower().val, 2);
-    assert_eq!(i.upper().val, 9);
+    assert_eq!(i.left().val, 2);
+    assert_eq!(i.right().val, 9);
 }
 
 fn assert_typeid<T: 'static>(a: &dyn Any) {
