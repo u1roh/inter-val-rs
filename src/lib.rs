@@ -4,6 +4,7 @@ pub mod core;
 mod impl_range_bounds;
 mod ndim;
 mod pow;
+mod tests;
 
 use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
