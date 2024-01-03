@@ -1,46 +1,29 @@
 use ordered_float::{FloatCore, NotNan};
 
-use crate::{boundary::Boundary, Bound, Exclusive, Inclusive, Interval, Lower, Upper};
+use crate::ndim::NDim;
+use crate::{boundary::Boundary, Exclusive, Inclusive, Interval, Lower, Upper};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct IntervalPow<const N: usize, T, L = Bound, U = L>([Interval<T, L, U>; N]);
-impl<const N: usize, T, L, U> std::ops::Deref for IntervalPow<N, T, L, U> {
-    type Target = [Interval<T, L, U>; N];
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-impl<const N: usize, T, L, U> std::ops::DerefMut for IntervalPow<N, T, L, U> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-impl<const N: usize, T, L, U> From<[Interval<T, L, U>; N]> for IntervalPow<N, T, L, U> {
-    fn from(intervals: [Interval<T, L, U>; N]) -> Self {
-        Self(intervals)
-    }
-}
-impl<const N: usize, T: Ord + Clone, L: Boundary, U: Boundary> IntervalPow<N, T, L, U> {
-    pub fn lower(&self) -> [&Lower<T, L>; N] {
-        std::array::from_fn(|i| self[i].lower())
+impl<const N: usize, T: Ord + Clone, L: Boundary, U: Boundary> NDim<N, Interval<T, L, U>> {
+    pub fn lower(&self) -> NDim<N, &Lower<T, L>> {
+        std::array::from_fn(|i| self[i].lower()).into()
     }
 
-    pub fn upper(&self) -> [&Upper<T, U>; N] {
-        std::array::from_fn(|i| self[i].upper())
+    pub fn upper(&self) -> NDim<N, &Upper<T, U>> {
+        std::array::from_fn(|i| self[i].upper()).into()
     }
 
-    pub fn min_val(&self) -> [T; N]
+    pub fn min_val(&self) -> NDim<N, T>
     where
         Lower<T, L>: crate::core::MinVal<T>,
     {
-        std::array::from_fn(|i| self[i].min_val())
+        std::array::from_fn(|i| self[i].min_val()).into()
     }
 
-    pub fn max_val(&self) -> [T; N]
+    pub fn max_val(&self) -> NDim<N, T>
     where
         Upper<T, U>: crate::core::MaxVal<T>,
     {
-        std::array::from_fn(|i| self[i].max_val())
+        std::array::from_fn(|i| self[i].max_val()).into()
     }
 
     pub fn intersection(&self, other: &Self) -> Option<Self> {
@@ -64,25 +47,28 @@ impl<const N: usize, T: Ord + Clone, L: Boundary, U: Boundary> IntervalPow<N, T,
     }
 }
 
-impl<const N: usize, T: FloatCore, L: Boundary, U: Boundary> IntervalPow<N, NotNan<T>, L, U> {
-    pub fn inf(&self) -> [NotNan<T>; N] {
-        std::array::from_fn(|i| self[i].inf())
+impl<const N: usize, T: FloatCore, L: Boundary, U: Boundary> NDim<N, Interval<NotNan<T>, L, U>> {
+    pub fn inf(&self) -> NDim<N, NotNan<T>> {
+        std::array::from_fn(|i| self[i].inf()).into()
     }
-    pub fn sup(&self) -> [NotNan<T>; N] {
-        std::array::from_fn(|i| self[i].sup())
+    pub fn sup(&self) -> NDim<N, NotNan<T>> {
+        std::array::from_fn(|i| self[i].sup()).into()
     }
-    pub fn center(&self) -> [NotNan<T>; N] {
-        std::array::from_fn(|i| self[i].center())
+    pub fn center(&self) -> NDim<N, NotNan<T>> {
+        std::array::from_fn(|i| self[i].center()).into()
+    }
+    pub fn size(&self) -> NDim<N, NotNan<T>> {
+        std::array::from_fn(|i| self[i].measure()).into()
     }
     pub fn measure(&self) -> NotNan<T> {
         self.iter()
-            .map(|i| i.measure())
+            .map(|item| item.measure())
             .fold(NotNan::new(T::one()).unwrap(), |a, b| a * b)
     }
-    pub fn closure(self) -> IntervalPow<N, NotNan<T>, Inclusive> {
-        IntervalPow(std::array::from_fn(|i| self[i].closure()))
+    pub fn closure(self) -> NDim<N, Interval<NotNan<T>, Inclusive>> {
+        std::array::from_fn(|i| self[i].closure()).into()
     }
-    pub fn interior(self) -> IntervalPow<N, NotNan<T>, Exclusive> {
-        IntervalPow(std::array::from_fn(|i| self[i].interior()))
+    pub fn interior(self) -> NDim<N, Interval<NotNan<T>, Exclusive>> {
+        std::array::from_fn(|i| self[i].interior()).into()
     }
 }

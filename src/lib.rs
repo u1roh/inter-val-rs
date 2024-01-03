@@ -48,33 +48,6 @@ pub enum Error {
     IntervalIsEmpty(#[from] IntervalIsEmpty),
 }
 
-// impl<T: ordered_float::FloatCore> Inclusive<NotNan<T>> {
-//     pub fn not_nan(t: T) -> Result<Self, ordered_float::FloatIsNan> {
-//         NotNan::new(t).map(Self)
-//     }
-// }
-// impl<T: ordered_float::FloatCore> Exclusive<NotNan<T>> {
-//     pub fn not_nan(t: T) -> Result<Self, ordered_float::FloatIsNan> {
-//         NotNan::new(t).map(Self)
-//     }
-// }
-
-// impl<T: Ord> (T, Inclusive) {
-//     pub fn to<B: Boundary<Val = T>>(self, end: B) -> Result<Interval<Self, B>, IntervalIsEmpty> {
-//         Interval::new(self, end)
-//     }
-// }
-// impl<T: Ord> (T, Exclusive) {
-//     pub fn to<B: Boundary<Val = T>>(self, end: B) -> Result<Interval<Self, B>, IntervalIsEmpty> {
-//         Interval::new(self, end)
-//     }
-// }
-// impl<T: Ord> (T, Bound) {
-//     pub fn to(self, end: (T, Bound)) -> Result<Interval<Self>, IntervalIsEmpty> {
-//         Interval::new(self, end)
-//     }
-// }
-
 pub use core::Interval;
 pub type ClosedInterval<T> = Interval<T, Inclusive>;
 pub type OpenInterval<T> = Interval<T, Exclusive>;
@@ -92,4 +65,9 @@ pub type OpenIntervalF64 = OpenIntervalF<f64>;
 pub type RightHalfOpenIntervalF64 = RightHalfOpenIntervalF<f64>;
 pub type LeftHalfOpenIntervalF64 = LeftHalfOpenIntervalF<f64>;
 
-pub use pow::IntervalPow;
+pub use ndim::NDim;
+pub type IntervalN<const N: usize, T, L = Bound, U = L> = NDim<N, Interval<T, L, U>>;
+pub type Interval2<T, L = Bound, U = L> = IntervalN<2, T, L, U>;
+pub type Interval3<T, L = Bound, U = L> = IntervalN<3, T, L, U>;
+pub type Interval4<T, L = Bound, U = L> = IntervalN<4, T, L, U>;
+pub type BoxN<const N: usize, T> = IntervalN<N, NotNan<T>, Inclusive>;

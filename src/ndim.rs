@@ -73,6 +73,21 @@ impl<const N: usize, T> NDim<N, T> {
         self.0.iter()
     }
 }
+impl<T> NDim<2, T> {
+    pub fn new(x: T, y: T) -> Self {
+        Self([x, y])
+    }
+}
+impl<T> NDim<3, T> {
+    pub fn new(x: T, y: T, z: T) -> Self {
+        Self([x, y, z])
+    }
+}
+impl<T> NDim<4, T> {
+    pub fn new(x: T, y: T, z: T, w: T) -> Self {
+        Self([x, y, z, w])
+    }
+}
 impl<const N: usize, T> std::ops::Index<usize> for NDim<N, T> {
     type Output = T;
     fn index(&self, index: usize) -> &Self::Output {
