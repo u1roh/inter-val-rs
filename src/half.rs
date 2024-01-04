@@ -88,39 +88,6 @@ impl<T, B: IntoGeneral> IntoGeneral for Bound<T, B> {
     }
 }
 
-// impl<T> From<LeftBounded<T, Inclusive>> for LeftBounded<T, Inclusion> {
-//     fn from(src: LeftBounded<T, Inclusive>) -> Self {
-//         Self {
-//             val: src.val,
-//             inclusion: LeftInclusion(src.inclusion.0.into()),
-//         }
-//     }
-// }
-// impl<T> From<LeftBounded<T, Exclusive>> for LeftBounded<T, Inclusion> {
-//     fn from(src: LeftBounded<T, Exclusive>) -> Self {
-//         Self {
-//             val: src.val,
-//             inclusion: LeftInclusion(src.inclusion.0.into()),
-//         }
-//     }
-// }
-// impl<T> From<RightBounded<T, Inclusive>> for RightBounded<T, Inclusion> {
-//     fn from(src: RightBounded<T, Inclusive>) -> Self {
-//         Self {
-//             val: src.val,
-//             inclusion: RightInclusion(src.inclusion.0.into()),
-//         }
-//     }
-// }
-// impl<T> From<RightBounded<T, Exclusive>> for RightBounded<T, Inclusion> {
-//     fn from(src: RightBounded<T, Exclusive>) -> Self {
-//         Self {
-//             val: src.val,
-//             inclusion: RightInclusion(src.inclusion.0.into()),
-//         }
-//     }
-// }
-
 impl<T: FloatCore, B: Boundary> LeftBounded<NotNan<T>, B> {
     pub fn closure(self) -> LeftBounded<NotNan<T>, Inclusive> {
         Bound {
