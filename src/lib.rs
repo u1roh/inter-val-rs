@@ -1,4 +1,4 @@
-mod boundary;
+mod bound;
 mod converters;
 mod half;
 mod impl_range_bounds;
@@ -29,11 +29,11 @@ pub struct Bound<T, B> {
     pub val: T,
     pub inclusion: B,
 }
-impl<T: Ord, B: boundary::Boundary> Bound<T, B>
+impl<T: Ord, B: bound::Boundary> Bound<T, B>
 where
     LeftInclusion<B>: Ord,
 {
-    pub fn to<R: boundary::Boundary>(
+    pub fn to<R: bound::Boundary>(
         self,
         right: Bound<T, R>,
     ) -> Result<Interval<T, B, R>, IntervalIsEmpty>
@@ -43,11 +43,11 @@ where
         Interval::new(self, right)
     }
 }
-impl<T: FloatCore, B: boundary::Boundary> Bound<T, B>
+impl<T: FloatCore, B: bound::Boundary> Bound<T, B>
 where
     LeftInclusion<B>: Ord,
 {
-    pub fn not_nan_to<R: boundary::Boundary>(
+    pub fn not_nan_to<R: bound::Boundary>(
         self,
         right: Bound<T, R>,
     ) -> Result<Interval<NotNan<T>, B, R>, Error>
