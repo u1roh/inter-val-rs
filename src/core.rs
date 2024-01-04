@@ -1,10 +1,10 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::boundary::Boundary;
+use crate::converters::IntoGeneral;
 use crate::half::{LeftInclusion, RightInclusion};
 use crate::{
-    Bound, Exclusive, Inclusion, Inclusive, IntervalIsEmpty, LeftBounded, Maximum, Minimum,
-    RightBounded,
+    Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, Maximum, Minimum, RightBounded,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -142,15 +142,13 @@ where
         Interval::<_, Exclusive>::new_(self.left.interior(), self.right.interior()).ok()
     }
 }
-impl<T> Interval<T> {
-    pub fn convert_from<L, R>(src: Interval<T, L, R>) -> Self
-    where
-        LeftBounded<T, L>: Into<LeftBounded<T, Inclusion>>,
-        RightBounded<T, R>: Into<RightBounded<T, Inclusion>>,
-    {
-        Self {
-            left: src.left.into(),
-            right: src.right.into(),
+
+impl<T, L: IntoGeneral, R: IntoGeneral> IntoGeneral for Interval<T, L, R> {
+    type General = Interval<T, L::General, R::General>;
+    fn into_general(self) -> Self::General {
+        Interval {
+            left: self.left.into_general(),
+            right: self.right.into_general(),
         }
     }
 }

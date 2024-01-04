@@ -1,31 +1,21 @@
 use crate::{Bound, Exclusive, Inclusion, Inclusive, Interval};
 use ordered_float::{FloatCore, NotNan};
 
-impl From<Inclusive> for Inclusion {
-    fn from(_: Inclusive) -> Self {
-        Self::Inclusive
-    }
-}
-impl From<Exclusive> for Inclusion {
-    fn from(_: Exclusive) -> Self {
-        Self::Exclusive
-    }
+pub(crate) trait IntoGeneral {
+    type General;
+    fn into_general(self) -> Self::General;
 }
 
-impl<T> From<Bound<T, Inclusive>> for Bound<T, Inclusion> {
-    fn from(b: Bound<T, Inclusive>) -> Self {
-        Self {
-            val: b.val,
-            inclusion: b.inclusion.into(),
-        }
+impl IntoGeneral for Inclusive {
+    type General = Inclusion;
+    fn into_general(self) -> Self::General {
+        Inclusion::Inclusive
     }
 }
-impl<T> From<Bound<T, Exclusive>> for Bound<T, Inclusion> {
-    fn from(b: Bound<T, Exclusive>) -> Self {
-        Self {
-            val: b.val,
-            inclusion: b.inclusion.into(),
-        }
+impl IntoGeneral for Exclusive {
+    type General = Inclusion;
+    fn into_general(self) -> Self::General {
+        Inclusion::Exclusive
     }
 }
 
@@ -48,22 +38,22 @@ impl<T> From<T> for Bound<T, Exclusive> {
 
 impl<T> From<Interval<T, Inclusive>> for Interval<T> {
     fn from(i: Interval<T, Inclusive>) -> Self {
-        Self::convert_from(i)
+        i.into_general()
     }
 }
 impl<T> From<Interval<T, Exclusive>> for Interval<T> {
     fn from(i: Interval<T, Exclusive>) -> Self {
-        Self::convert_from(i)
+        i.into_general()
     }
 }
 impl<T> From<Interval<T, Inclusive, Exclusive>> for Interval<T> {
     fn from(i: Interval<T, Inclusive, Exclusive>) -> Self {
-        Self::convert_from(i)
+        i.into_general()
     }
 }
 impl<T> From<Interval<T, Exclusive, Inclusive>> for Interval<T> {
     fn from(i: Interval<T, Exclusive, Inclusive>) -> Self {
-        Self::convert_from(i)
+        i.into_general()
     }
 }
 

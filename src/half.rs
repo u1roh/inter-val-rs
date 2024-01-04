@@ -1,6 +1,9 @@
 use ordered_float::{FloatCore, NotNan};
 
-use crate::{boundary::Boundary, Bound, Exclusive, Inclusion, Inclusive, Maximum, Minimum};
+use crate::{
+    boundary::Boundary, converters::IntoGeneral, Bound, Exclusive, Inclusion, Inclusive, Maximum,
+    Minimum,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LeftInclusion<B>(B);
@@ -62,38 +65,61 @@ impl<T, B> From<Bound<T, B>> for RightBounded<T, B> {
     }
 }
 
-impl<T> From<LeftBounded<T, Inclusive>> for LeftBounded<T, Inclusion> {
-    fn from(src: LeftBounded<T, Inclusive>) -> Self {
-        Self {
-            val: src.val,
-            inclusion: LeftInclusion(src.inclusion.0.into()),
+impl<B: IntoGeneral> IntoGeneral for LeftInclusion<B> {
+    type General = LeftInclusion<B::General>;
+    fn into_general(self) -> Self::General {
+        LeftInclusion(self.0.into_general())
+    }
+}
+impl<B: IntoGeneral> IntoGeneral for RightInclusion<B> {
+    type General = RightInclusion<B::General>;
+    fn into_general(self) -> Self::General {
+        RightInclusion(self.0.into_general())
+    }
+}
+
+impl<T, B: IntoGeneral> IntoGeneral for Bound<T, B> {
+    type General = Bound<T, B::General>;
+    fn into_general(self) -> Self::General {
+        Bound {
+            val: self.val,
+            inclusion: self.inclusion.into_general(),
         }
     }
 }
-impl<T> From<LeftBounded<T, Exclusive>> for LeftBounded<T, Inclusion> {
-    fn from(src: LeftBounded<T, Exclusive>) -> Self {
-        Self {
-            val: src.val,
-            inclusion: LeftInclusion(src.inclusion.0.into()),
-        }
-    }
-}
-impl<T> From<RightBounded<T, Inclusive>> for RightBounded<T, Inclusion> {
-    fn from(src: RightBounded<T, Inclusive>) -> Self {
-        Self {
-            val: src.val,
-            inclusion: RightInclusion(src.inclusion.0.into()),
-        }
-    }
-}
-impl<T> From<RightBounded<T, Exclusive>> for RightBounded<T, Inclusion> {
-    fn from(src: RightBounded<T, Exclusive>) -> Self {
-        Self {
-            val: src.val,
-            inclusion: RightInclusion(src.inclusion.0.into()),
-        }
-    }
-}
+
+// impl<T> From<LeftBounded<T, Inclusive>> for LeftBounded<T, Inclusion> {
+//     fn from(src: LeftBounded<T, Inclusive>) -> Self {
+//         Self {
+//             val: src.val,
+//             inclusion: LeftInclusion(src.inclusion.0.into()),
+//         }
+//     }
+// }
+// impl<T> From<LeftBounded<T, Exclusive>> for LeftBounded<T, Inclusion> {
+//     fn from(src: LeftBounded<T, Exclusive>) -> Self {
+//         Self {
+//             val: src.val,
+//             inclusion: LeftInclusion(src.inclusion.0.into()),
+//         }
+//     }
+// }
+// impl<T> From<RightBounded<T, Inclusive>> for RightBounded<T, Inclusion> {
+//     fn from(src: RightBounded<T, Inclusive>) -> Self {
+//         Self {
+//             val: src.val,
+//             inclusion: RightInclusion(src.inclusion.0.into()),
+//         }
+//     }
+// }
+// impl<T> From<RightBounded<T, Exclusive>> for RightBounded<T, Inclusion> {
+//     fn from(src: RightBounded<T, Exclusive>) -> Self {
+//         Self {
+//             val: src.val,
+//             inclusion: RightInclusion(src.inclusion.0.into()),
+//         }
+//     }
+// }
 
 impl<T: FloatCore, B: Boundary> LeftBounded<NotNan<T>, B> {
     pub fn closure(self) -> LeftBounded<NotNan<T>, Inclusive> {
