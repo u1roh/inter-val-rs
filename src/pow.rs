@@ -1,15 +1,12 @@
 use ordered_float::{FloatCore, NotNan};
 
-use crate::inclusion::{Left, LeftInclusion, Right, RightInclusion};
+use crate::inclusion::{Left, Right};
 use crate::ndim::NDim;
-use crate::traits::{Boundary, BoundarySide, Maximum, Minimum};
+use crate::traits::{BoundarySide, Maximum, Minimum};
 use crate::{Exclusive, Inclusive, Interval, LeftBounded, RightBounded};
 
 impl<const N: usize, T: Ord + Clone, L: BoundarySide<Left>, R: BoundarySide<Right>>
     NDim<N, Interval<T, L, R>>
-where
-    LeftInclusion<L>: Ord,
-    RightInclusion<R>: Ord,
 {
     pub fn left(&self) -> NDim<N, &LeftBounded<T, L>> {
         std::array::from_fn(|i| self[i].left()).into()
@@ -27,19 +24,19 @@ where
         self.iter().zip(other.iter()).all(|(i, o)| i.includes(o))
     }
 
-    // pub fn min_val(&self) -> NDim<N, T>
-    // where
-    //     LeftBounded<T, L>: Minimum<T>,
-    // {
-    //     std::array::from_fn(|i| self[i].min()).into()
-    // }
+    pub fn min_val(&self) -> NDim<N, T>
+    where
+        LeftBounded<T, L>: Minimum<T>,
+    {
+        std::array::from_fn(|i| self[i].min()).into()
+    }
 
-    // pub fn max_val(&self) -> NDim<N, T>
-    // where
-    //     RightBounded<T, R>: Maximum<T>,
-    // {
-    //     std::array::from_fn(|i| self[i].max()).into()
-    // }
+    pub fn max_val(&self) -> NDim<N, T>
+    where
+        RightBounded<T, R>: Maximum<T>,
+    {
+        std::array::from_fn(|i| self[i].max()).into()
+    }
 
     pub fn intersection(&self, other: &Self) -> Option<Self> {
         let mut dst = self.clone();
@@ -64,9 +61,6 @@ where
 
 impl<const N: usize, T: FloatCore, L: BoundarySide<Left>, R: BoundarySide<Right>>
     NDim<N, Interval<NotNan<T>, L, R>>
-where
-    LeftInclusion<L>: Ord,
-    RightInclusion<R>: Ord,
 {
     pub fn inf(&self) -> NDim<N, NotNan<T>> {
         std::array::from_fn(|i| self[i].inf()).into()

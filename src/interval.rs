@@ -1,8 +1,7 @@
 use ordered_float::{FloatCore, NotNan};
 
-use crate::inclusion::{Left, Right, Side};
-use crate::inclusion::{LeftInclusion, RightInclusion};
-use crate::traits::{Boundary, BoundarySide, IntoGeneral, Maximum, Minimum};
+use crate::inclusion::{Left, Right};
+use crate::traits::{BoundarySide, IntoGeneral, Maximum, Minimum};
 use crate::{Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, RightBounded};
 
 #[derive(Debug, Clone, Copy, Eq)]
@@ -15,13 +14,7 @@ impl<T: Eq, L: Eq, R: Eq> PartialEq for Interval<T, L, R> {
         self.left == other.left && self.right == other.right
     }
 }
-impl<T: Ord, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<T, L, R>
-where
-    // Left: Side<L>,
-    // Right: Side<R>,
-    LeftInclusion<L>: Ord,
-    RightInclusion<R>: Ord,
-{
+impl<T: Ord, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<T, L, R> {
     fn new_(left: LeftBounded<T, L>, right: RightBounded<T, R>) -> Result<Self, IntervalIsEmpty> {
         (left.contains(&right.val) && right.contains(&left.val))
             .then_some(Self { left, right })
@@ -78,8 +71,6 @@ where
     where
         L::Flip: BoundarySide<Right>,
         R::Flip: BoundarySide<Left>,
-        LeftInclusion<R::Flip>: Ord,
-        RightInclusion<L::Flip>: Ord,
     {
         Interval::new_(self.right.flip(), other.left.flip())
             .or(Interval::new_(other.right.flip(), self.left.flip()))
@@ -92,18 +83,12 @@ where
         Some(items.fold(first, |acc, item| acc.enclosure(item.into())))
     }
 }
-impl<T: Ord + Clone, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<T, L, R>
-where
-    LeftInclusion<L>: Ord,
-    RightInclusion<R>: Ord,
-{
+impl<T: Ord + Clone, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<T, L, R> {
     #[allow(clippy::type_complexity)]
     pub fn union(self, other: Self) -> (Self, Option<Interval<T, R::Flip, L::Flip>>)
     where
         L::Flip: BoundarySide<Right>,
         R::Flip: BoundarySide<Left>,
-        LeftInclusion<R::Flip>: Ord,
-        RightInclusion<L::Flip>: Ord,
     {
         let gap = self.clone().gap(other.clone());
         (self.enclosure(other), gap)
@@ -113,11 +98,7 @@ where
         self.clone().intersection(other.clone()).is_some()
     }
 }
-impl<T: FloatCore, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<NotNan<T>, L, R>
-where
-    LeftInclusion<L>: Ord,
-    RightInclusion<R>: Ord,
-{
+impl<T: FloatCore, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<NotNan<T>, L, R> {
     pub fn not_nan(
         left: impl Into<Bound<T, L>>,
         right: impl Into<Bound<T, R>>,

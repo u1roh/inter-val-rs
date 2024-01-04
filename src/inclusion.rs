@@ -20,30 +20,6 @@ pub struct Left;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Right;
 
-pub trait Side<B> {
-    type Ordered: Ord;
-    fn make_ordered_inclusion(inclusion: B) -> Self::Ordered;
-}
-
-impl<B> Side<B> for Left
-where
-    SideInclusion<B, Self>: Ord,
-{
-    type Ordered = SideInclusion<B, Self>;
-    fn make_ordered_inclusion(inclusion: B) -> Self::Ordered {
-        SideInclusion(inclusion, PhantomData::<Self>)
-    }
-}
-impl<B> Side<B> for Right
-where
-    SideInclusion<B, Self>: Ord,
-{
-    type Ordered = SideInclusion<B, Self>;
-    fn make_ordered_inclusion(inclusion: B) -> Self::Ordered {
-        SideInclusion(inclusion, PhantomData::<Self>)
-    }
-}
-
 impl<LR> BoundarySide<LR> for Inclusive
 where
     SideInclusion<Self, LR>: Ord,
@@ -75,8 +51,8 @@ where
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SideInclusion<B, S>(B, PhantomData<S>);
 
-pub type LeftInclusion<B> = SideInclusion<B, Left>;
-pub type RightInclusion<B> = SideInclusion<B, Right>;
+type LeftInclusion<B> = SideInclusion<B, Left>;
+type RightInclusion<B> = SideInclusion<B, Right>;
 
 mod ordering {
     use super::{LeftInclusion, RightInclusion};
