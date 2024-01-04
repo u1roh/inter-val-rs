@@ -29,14 +29,14 @@ where
     where
         LeftBounded<T, L>: crate::Minimum<T>,
     {
-        std::array::from_fn(|i| self[i].min_val()).into()
+        std::array::from_fn(|i| self[i].min()).into()
     }
 
     pub fn max_val(&self) -> NDim<N, T>
     where
         RightBounded<T, R>: crate::Maximum<T>,
     {
-        std::array::from_fn(|i| self[i].max_val()).into()
+        std::array::from_fn(|i| self[i].max()).into()
     }
 
     pub fn intersection(&self, other: &Self) -> Option<Self> {
@@ -49,7 +49,7 @@ where
 
     pub fn union(&self, other: &Self) -> Self {
         Self(std::array::from_fn(|i| {
-            self[i].clone().union(other[i].clone())
+            self[i].clone().enclosure(other[i].clone())
         }))
     }
 

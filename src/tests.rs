@@ -28,7 +28,7 @@ fn it_works() {
         .to(Exclusive.not_nan(4.56).unwrap())
         .unwrap();
 
-    let i = Interval::enclose([3, 9, 2, 5]).unwrap();
+    let i = Interval::new_enclosure([3, 9, 2, 5]).unwrap();
     assert_eq!(i.left().val, 2);
     assert_eq!(i.right().val, 9);
 }

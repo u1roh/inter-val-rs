@@ -32,14 +32,14 @@ where
         &self.right
     }
 
-    pub fn min_val(&self) -> T
+    pub fn min(&self) -> T
     where
         LeftBounded<T, L>: Minimum<T>,
     {
         self.left.minimum()
     }
 
-    pub fn max_val(&self) -> T
+    pub fn max(&self) -> T
     where
         RightBounded<T, R>: Maximum<T>,
     {
@@ -62,7 +62,7 @@ where
         .ok()
     }
 
-    pub fn union(self, other: Self) -> Self {
+    pub fn enclosure(self, other: Self) -> Self {
         Self {
             left: self.left.union(other.left),
             right: self.right.union(other.right),
@@ -79,10 +79,10 @@ where
             .ok()
     }
 
-    pub fn enclose<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
+    pub fn new_enclosure<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
         let mut items = items.into_iter();
         let first = items.next()?.into();
-        Some(items.fold(first, |acc, item| acc.union(item.into())))
+        Some(items.fold(first, |acc, item| acc.enclosure(item.into())))
     }
 }
 impl<T: Ord + Clone, L: Boundary, R: Boundary> Interval<T, L, R>
@@ -91,13 +91,13 @@ where
     RightInclusion<R>: Ord,
 {
     #[allow(clippy::type_complexity)]
-    pub fn union_strict(self, other: Self) -> (Self, Option<Interval<T, R::Flip, L::Flip>>)
+    pub fn union(self, other: Self) -> (Self, Option<Interval<T, R::Flip, L::Flip>>)
     where
         LeftInclusion<R::Flip>: Ord,
         RightInclusion<L::Flip>: Ord,
     {
         let gap = self.clone().gap(other.clone());
-        (self.union(other), gap)
+        (self.enclosure(other), gap)
     }
 
     pub fn overlaps(&self, other: &Self) -> bool {
