@@ -1,3 +1,5 @@
+use crate::traits::Boundary;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Inclusive;
 
@@ -8,12 +10,6 @@ pub struct Exclusive;
 pub enum Inclusion {
     Inclusive,
     Exclusive,
-}
-
-pub trait Boundary: Eq + Copy {
-    type Flip: Boundary<Flip = Self>;
-    fn flip(self) -> Self::Flip;
-    fn less<T: Ord>(&self, this: &T, t: &T) -> bool;
 }
 
 impl Boundary for Inclusive {

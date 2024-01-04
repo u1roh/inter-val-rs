@@ -2,7 +2,8 @@ use ordered_float::{FloatCore, NotNan};
 
 use crate::half::{LeftInclusion, RightInclusion};
 use crate::ndim::NDim;
-use crate::{inclusion::Boundary, Exclusive, Inclusive, Interval, LeftBounded, RightBounded};
+use crate::traits::{Boundary, Maximum, Minimum};
+use crate::{Exclusive, Inclusive, Interval, LeftBounded, RightBounded};
 
 impl<const N: usize, T: Ord + Clone, L: Boundary, R: Boundary> NDim<N, Interval<T, L, R>>
 where
@@ -27,14 +28,14 @@ where
 
     pub fn min_val(&self) -> NDim<N, T>
     where
-        LeftBounded<T, L>: crate::Minimum<T>,
+        LeftBounded<T, L>: Minimum<T>,
     {
         std::array::from_fn(|i| self[i].min()).into()
     }
 
     pub fn max_val(&self) -> NDim<N, T>
     where
-        RightBounded<T, R>: crate::Maximum<T>,
+        RightBounded<T, R>: Maximum<T>,
     {
         std::array::from_fn(|i| self[i].max()).into()
     }

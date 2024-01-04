@@ -2,10 +2,8 @@ use ordered_float::{FloatCore, NotNan};
 
 use crate::converters::IntoGeneral;
 use crate::half::{LeftInclusion, RightInclusion};
-use crate::inclusion::Boundary;
-use crate::{
-    Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, Maximum, Minimum, RightBounded,
-};
+use crate::traits::{Boundary, Maximum, Minimum};
+use crate::{Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, RightBounded};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Interval<T, L = crate::Inclusion, R = L> {

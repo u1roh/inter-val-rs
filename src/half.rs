@@ -1,8 +1,9 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::{
-    converters::IntoGeneral, inclusion::Boundary, Bound, Exclusive, Inclusion, Inclusive, Maximum,
-    Minimum,
+    converters::IntoGeneral,
+    traits::{Boundary, Maximum, Minimum},
+    Bound, Exclusive, Inclusion, Inclusive,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
