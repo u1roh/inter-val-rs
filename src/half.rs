@@ -8,25 +8,6 @@ pub struct LeftInclusion<B>(B);
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RightInclusion<B>(B);
 
-impl<B: Boundary> Boundary for LeftInclusion<B> {
-    type Flip = RightInclusion<B::Flip>;
-    fn flip(self) -> Self::Flip {
-        RightInclusion(self.0.flip())
-    }
-    fn less<T: Ord>(&self, this: &T, t: &T) -> bool {
-        self.0.less(this, t)
-    }
-}
-impl<B: Boundary> Boundary for RightInclusion<B> {
-    type Flip = LeftInclusion<B::Flip>;
-    fn flip(self) -> Self::Flip {
-        LeftInclusion(self.0.flip())
-    }
-    fn less<T: Ord>(&self, this: &T, t: &T) -> bool {
-        self.0.less(this, t)
-    }
-}
-
 macro_rules! impl_ord {
     (($lhs:ident, $rhs:ident): $type:ty => $body:expr) => {
         impl PartialOrd for $type {
@@ -114,15 +95,6 @@ impl<T> From<RightBounded<T, Exclusive>> for RightBounded<T, Inclusion> {
     }
 }
 
-impl<T, B: Boundary> Bound<T, B> {
-    pub fn flip(self) -> Bound<T, B::Flip> {
-        Bound {
-            val: self.val,
-            inclusion: self.inclusion.flip(),
-        }
-    }
-}
-
 impl<T: FloatCore, B: Boundary> LeftBounded<NotNan<T>, B> {
     pub fn closure(self) -> LeftBounded<NotNan<T>, Inclusive> {
         Bound {
@@ -164,13 +136,19 @@ where
         self.val <= other.val
     }
     pub fn contains(&self, t: &T) -> bool {
-        self.inclusion.less(&self.val, t)
+        self.inclusion.0.less(&self.val, t)
     }
     pub fn intersection(self, other: Self) -> Self {
         self.max(other)
     }
     pub fn union(self, other: Self) -> Self {
         self.min(other)
+    }
+    pub fn flip(self) -> RightBounded<T, B::Flip> {
+        Bound {
+            val: self.val,
+            inclusion: RightInclusion(self.inclusion.0.flip()),
+        }
     }
 }
 impl<T: Ord, B: Boundary> RightBounded<T, B>
@@ -181,13 +159,19 @@ where
         other.val <= self.val
     }
     pub fn contains(&self, t: &T) -> bool {
-        self.inclusion.less(t, &self.val)
+        self.inclusion.0.less(t, &self.val)
     }
     pub fn intersection(self, other: Self) -> Self {
         self.min(other)
     }
     pub fn union(self, other: Self) -> Self {
         self.max(other)
+    }
+    pub fn flip(self) -> LeftBounded<T, B::Flip> {
+        Bound {
+            val: self.val,
+            inclusion: LeftInclusion(self.inclusion.0.flip()),
+        }
     }
 }
 
