@@ -7,7 +7,7 @@ pub trait Boundary: Flip + Eq + Copy {
     fn less<T: Ord>(&self, this: &T, t: &T) -> bool;
 }
 
-pub trait BoundarySide<LR>: Boundary {
+pub trait BoundaryOf<LR>: Boundary {
     type Ordered: Ord;
     fn into_ordered(self) -> Self::Ordered;
 }

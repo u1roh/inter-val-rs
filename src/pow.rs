@@ -2,10 +2,10 @@ use ordered_float::{FloatCore, NotNan};
 
 use crate::inclusion::{Left, Right};
 use crate::ndim::NDim;
-use crate::traits::{BoundarySide, Maximum, Minimum};
+use crate::traits::{BoundaryOf, Maximum, Minimum};
 use crate::{Exclusive, Inclusive, Interval, LeftBounded, RightBounded};
 
-impl<const N: usize, T: Ord + Clone, L: BoundarySide<Left>, R: BoundarySide<Right>>
+impl<const N: usize, T: Ord + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
     NDim<N, Interval<T, L, R>>
 {
     pub fn left(&self) -> NDim<N, &LeftBounded<T, L>> {
@@ -59,7 +59,7 @@ impl<const N: usize, T: Ord + Clone, L: BoundarySide<Left>, R: BoundarySide<Righ
     }
 }
 
-impl<const N: usize, T: FloatCore, L: BoundarySide<Left>, R: BoundarySide<Right>>
+impl<const N: usize, T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
     NDim<N, Interval<NotNan<T>, L, R>>
 {
     pub fn inf(&self) -> NDim<N, NotNan<T>> {

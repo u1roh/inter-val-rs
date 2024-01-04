@@ -11,10 +11,13 @@ mod traits;
 
 use inclusion::{Left, Right};
 use ordered_float::{FloatCore, FloatIsNan, NotNan};
+use traits::BoundaryOf;
 
 pub use bound::Bound;
 pub use half::{LeftBounded, RightBounded};
 pub use inclusion::{Exclusive, Inclusion, Inclusive};
+pub use interval::Interval;
+pub use ndim::NDim;
 
 impl Inclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
@@ -50,8 +53,8 @@ impl Inclusion {
     }
 }
 
-impl<T: Ord, B: BoundarySide<Left>> Bound<T, B> {
-    pub fn to<R: BoundarySide<Right>>(
+impl<T: Ord, B: BoundaryOf<Left>> Bound<T, B> {
+    pub fn to<R: BoundaryOf<Right>>(
         self,
         right: Bound<T, R>,
     ) -> Result<Interval<T, B, R>, IntervalIsEmpty> {
@@ -59,8 +62,8 @@ impl<T: Ord, B: BoundarySide<Left>> Bound<T, B> {
     }
 }
 
-impl<T: FloatCore, B: BoundarySide<Left>> Bound<T, B> {
-    pub fn not_nan_to<R: BoundarySide<Right>>(
+impl<T: FloatCore, B: BoundaryOf<Left>> Bound<T, B> {
+    pub fn not_nan_to<R: BoundaryOf<Right>>(
         self,
         right: Bound<T, R>,
     ) -> Result<Interval<NotNan<T>, B, R>, Error> {
@@ -80,7 +83,6 @@ pub enum Error {
     IntervalIsEmpty(#[from] IntervalIsEmpty),
 }
 
-pub use interval::Interval;
 pub type ClosedInterval<T> = Interval<T, Inclusive>;
 pub type OpenInterval<T> = Interval<T, Exclusive>;
 pub type RightHalfOpenInterval<T> = Interval<T, Inclusive, Exclusive>;
@@ -97,8 +99,6 @@ pub type OpenIntervalF64 = OpenIntervalF<f64>;
 pub type RightHalfOpenIntervalF64 = RightHalfOpenIntervalF<f64>;
 pub type LeftHalfOpenIntervalF64 = LeftHalfOpenIntervalF<f64>;
 
-pub use ndim::NDim;
-use traits::BoundarySide;
 pub type IntervalN<const N: usize, T, L = Inclusion, R = L> = NDim<N, Interval<T, L, R>>;
 pub type Interval2<T, L = Inclusion, R = L> = IntervalN<2, T, L, R>;
 pub type Interval3<T, L = Inclusion, R = L> = IntervalN<3, T, L, R>;

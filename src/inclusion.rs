@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::traits::{Boundary, BoundarySide, Flip, IntoGeneral};
+use crate::traits::{Boundary, BoundaryOf, Flip, IntoGeneral};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Inclusive;
@@ -14,49 +14,25 @@ pub enum Inclusion {
     Exclusive,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 pub struct Left;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 pub struct Right;
 
-impl<LR> BoundarySide<LR> for Inclusive
-where
-    SideInclusion<Self, LR>: Ord,
-{
-    type Ordered = SideInclusion<Self, LR>;
-    fn into_ordered(self) -> Self::Ordered {
-        SideInclusion(self, PhantomData)
-    }
-}
-impl<LR> BoundarySide<LR> for Exclusive
-where
-    SideInclusion<Self, LR>: Ord,
-{
-    type Ordered = SideInclusion<Self, LR>;
-    fn into_ordered(self) -> Self::Ordered {
-        SideInclusion(self, PhantomData)
-    }
-}
-impl<LR> BoundarySide<LR> for Inclusion
-where
-    SideInclusion<Self, LR>: Ord,
-{
-    type Ordered = SideInclusion<Self, LR>;
-    fn into_ordered(self) -> Self::Ordered {
-        SideInclusion(self, PhantomData)
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 pub struct SideInclusion<B, S>(B, PhantomData<S>);
 
-type LeftInclusion<B> = SideInclusion<B, Left>;
-type RightInclusion<B> = SideInclusion<B, Right>;
-
 mod ordering {
-    use super::{LeftInclusion, RightInclusion};
+    use super::{Left, Right, SideInclusion};
     use crate::{Exclusive, Inclusion, Inclusive};
+
+    impl<B: PartialEq, S> PartialEq for SideInclusion<B, S> {
+        fn eq(&self, other: &Self) -> bool {
+            self.0 == other.0
+        }
+    }
+    impl<B: Eq, S> Eq for SideInclusion<B, S> {}
 
     macro_rules! impl_ord {
         (($lhs:ident, $rhs:ident): $type:ty => $body:expr) => {
@@ -75,17 +51,17 @@ mod ordering {
         };
     }
 
-    impl_ord!((_lhs, _rhs): LeftInclusion<Inclusive> => std::cmp::Ordering::Equal);
-    impl_ord!((_lhs, _rhs): LeftInclusion<Exclusive> => std::cmp::Ordering::Equal);
-    impl_ord!((_lhs, _rhs): RightInclusion<Inclusive> => std::cmp::Ordering::Equal);
-    impl_ord!((_lhs, _rhs): RightInclusion<Exclusive> => std::cmp::Ordering::Equal);
-    impl_ord!((lhs, rhs): LeftInclusion<Inclusion> => match (lhs.0, rhs.0) {
+    impl_ord!((_lhs, _rhs): SideInclusion<Inclusive, Left> => std::cmp::Ordering::Equal);
+    impl_ord!((_lhs, _rhs): SideInclusion<Exclusive, Left> => std::cmp::Ordering::Equal);
+    impl_ord!((_lhs, _rhs): SideInclusion<Inclusive, Right> => std::cmp::Ordering::Equal);
+    impl_ord!((_lhs, _rhs): SideInclusion<Exclusive, Right> => std::cmp::Ordering::Equal);
+    impl_ord!((lhs, rhs): SideInclusion<Inclusion, Left> => match (lhs.0, rhs.0) {
         (Inclusion::Inclusive, Inclusion::Inclusive) => std::cmp::Ordering::Equal,
         (Inclusion::Inclusive, Inclusion::Exclusive) => std::cmp::Ordering::Less,
         (Inclusion::Exclusive, Inclusion::Inclusive) => std::cmp::Ordering::Greater,
         (Inclusion::Exclusive, Inclusion::Exclusive) => std::cmp::Ordering::Equal,
     });
-    impl_ord!((lhs, rhs): RightInclusion<Inclusion> => match (lhs.0, rhs.0) {
+    impl_ord!((lhs, rhs): SideInclusion<Inclusion, Right> => match (lhs.0, rhs.0) {
         (Inclusion::Inclusive, Inclusion::Inclusive) => std::cmp::Ordering::Equal,
         (Inclusion::Inclusive, Inclusion::Exclusive) => std::cmp::Ordering::Greater,
         (Inclusion::Exclusive, Inclusion::Inclusive) => std::cmp::Ordering::Less,
@@ -144,5 +120,33 @@ impl Boundary for Inclusion {
             Inclusion::Inclusive => s <= t,
             Inclusion::Exclusive => s < t,
         }
+    }
+}
+
+impl<LR> BoundaryOf<LR> for Inclusive
+where
+    SideInclusion<Self, LR>: Ord,
+{
+    type Ordered = SideInclusion<Self, LR>;
+    fn into_ordered(self) -> Self::Ordered {
+        SideInclusion(self, PhantomData)
+    }
+}
+impl<LR> BoundaryOf<LR> for Exclusive
+where
+    SideInclusion<Self, LR>: Ord,
+{
+    type Ordered = SideInclusion<Self, LR>;
+    fn into_ordered(self) -> Self::Ordered {
+        SideInclusion(self, PhantomData)
+    }
+}
+impl<LR> BoundaryOf<LR> for Inclusion
+where
+    SideInclusion<Self, LR>: Ord,
+{
+    type Ordered = SideInclusion<Self, LR>;
+    fn into_ordered(self) -> Self::Ordered {
+        SideInclusion(self, PhantomData)
     }
 }

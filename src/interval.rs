@@ -1,7 +1,7 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::inclusion::{Left, Right};
-use crate::traits::{BoundarySide, IntoGeneral, Maximum, Minimum};
+use crate::traits::{BoundaryOf, IntoGeneral, Maximum, Minimum};
 use crate::{Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, RightBounded};
 
 #[derive(Debug, Clone, Copy, Eq)]
@@ -14,7 +14,7 @@ impl<T: Eq, L: Eq, R: Eq> PartialEq for Interval<T, L, R> {
         self.left == other.left && self.right == other.right
     }
 }
-impl<T: Ord, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<T, L, R> {
+impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     fn new_(left: LeftBounded<T, L>, right: RightBounded<T, R>) -> Result<Self, IntervalIsEmpty> {
         (left.contains(&right.val) && right.contains(&left.val))
             .then_some(Self { left, right })
@@ -69,8 +69,8 @@ impl<T: Ord, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<T, L, R> {
 
     pub fn gap(self, other: Self) -> Option<Interval<T, R::Flip, L::Flip>>
     where
-        L::Flip: BoundarySide<Right>,
-        R::Flip: BoundarySide<Left>,
+        L::Flip: BoundaryOf<Right>,
+        R::Flip: BoundaryOf<Left>,
     {
         Interval::new_(self.right.flip(), other.left.flip())
             .or(Interval::new_(other.right.flip(), self.left.flip()))
@@ -83,12 +83,12 @@ impl<T: Ord, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<T, L, R> {
         Some(items.fold(first, |acc, item| acc.enclosure(item.into())))
     }
 }
-impl<T: Ord + Clone, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<T, L, R> {
+impl<T: Ord + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     #[allow(clippy::type_complexity)]
     pub fn union(self, other: Self) -> (Self, Option<Interval<T, R::Flip, L::Flip>>)
     where
-        L::Flip: BoundarySide<Right>,
-        R::Flip: BoundarySide<Left>,
+        L::Flip: BoundaryOf<Right>,
+        R::Flip: BoundaryOf<Left>,
     {
         let gap = self.clone().gap(other.clone());
         (self.enclosure(other), gap)
@@ -98,7 +98,7 @@ impl<T: Ord + Clone, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<T, 
         self.clone().intersection(other.clone()).is_some()
     }
 }
-impl<T: FloatCore, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<NotNan<T>, L, R> {
+impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>, L, R> {
     pub fn not_nan(
         left: impl Into<Bound<T, L>>,
         right: impl Into<Bound<T, R>>,
