@@ -69,6 +69,8 @@ where
 
     pub fn gap(self, other: Self) -> Option<Interval<T, R::Flip, L::Flip>>
     where
+        L::Flip: Boundary,
+        R::Flip: Boundary,
         LeftInclusion<R::Flip>: Ord,
         RightInclusion<L::Flip>: Ord,
     {
@@ -91,6 +93,8 @@ where
     #[allow(clippy::type_complexity)]
     pub fn union(self, other: Self) -> (Self, Option<Interval<T, R::Flip, L::Flip>>)
     where
+        L::Flip: Boundary,
+        R::Flip: Boundary,
         LeftInclusion<R::Flip>: Ord,
         RightInclusion<L::Flip>: Ord,
     {

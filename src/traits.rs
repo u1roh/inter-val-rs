@@ -1,6 +1,9 @@
-pub trait Boundary: Eq + Copy {
-    type Flip: Boundary<Flip = Self>;
+pub trait Flip {
+    type Flip: Flip<Flip = Self>;
     fn flip(self) -> Self::Flip;
+}
+
+pub trait Boundary: Flip + Eq + Copy {
     fn less<T: Ord>(&self, this: &T, t: &T) -> bool;
 }
 
