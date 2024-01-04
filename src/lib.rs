@@ -9,7 +9,7 @@ mod std_range;
 mod tests;
 mod traits;
 
-use half::{LeftInclusion, RightInclusion};
+use inclusion::{LeftInclusion, RightInclusion};
 use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
 pub use bound::Bound;

@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use crate::traits::{Boundary, Flip, IntoGeneral};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
@@ -10,6 +12,81 @@ pub struct Exclusive;
 pub enum Inclusion {
     Inclusive,
     Exclusive,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Left;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Right;
+
+pub trait Side<B> {
+    type Ordered: Ord;
+    fn make_ordered_inclusion(inclusion: B) -> Self::Ordered;
+}
+
+impl<B> Side<B> for Left
+where
+    SideInclusion<B, Self>: Ord,
+{
+    type Ordered = SideInclusion<B, Self>;
+    fn make_ordered_inclusion(inclusion: B) -> Self::Ordered {
+        SideInclusion(inclusion, PhantomData::<Self>)
+    }
+}
+impl<B> Side<B> for Right
+where
+    SideInclusion<B, Self>: Ord,
+{
+    type Ordered = SideInclusion<B, Self>;
+    fn make_ordered_inclusion(inclusion: B) -> Self::Ordered {
+        SideInclusion(inclusion, PhantomData::<Self>)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SideInclusion<B, S>(B, PhantomData<S>);
+
+pub type LeftInclusion<B> = SideInclusion<B, Left>;
+pub type RightInclusion<B> = SideInclusion<B, Right>;
+
+mod ordering {
+    use super::{LeftInclusion, RightInclusion};
+    use crate::{Exclusive, Inclusion, Inclusive};
+
+    macro_rules! impl_ord {
+        (($lhs:ident, $rhs:ident): $type:ty => $body:expr) => {
+            impl PartialOrd for $type {
+                fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+                    Some(self.cmp(other))
+                }
+            }
+            impl Ord for $type {
+                fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+                    let $lhs = self;
+                    let $rhs = other;
+                    $body
+                }
+            }
+        };
+    }
+
+    impl_ord!((_lhs, _rhs): LeftInclusion<Inclusive> => std::cmp::Ordering::Equal);
+    impl_ord!((_lhs, _rhs): LeftInclusion<Exclusive> => std::cmp::Ordering::Equal);
+    impl_ord!((_lhs, _rhs): RightInclusion<Inclusive> => std::cmp::Ordering::Equal);
+    impl_ord!((_lhs, _rhs): RightInclusion<Exclusive> => std::cmp::Ordering::Equal);
+    impl_ord!((lhs, rhs): LeftInclusion<Inclusion> => match (lhs.0, rhs.0) {
+        (Inclusion::Inclusive, Inclusion::Inclusive) => std::cmp::Ordering::Equal,
+        (Inclusion::Inclusive, Inclusion::Exclusive) => std::cmp::Ordering::Less,
+        (Inclusion::Exclusive, Inclusion::Inclusive) => std::cmp::Ordering::Greater,
+        (Inclusion::Exclusive, Inclusion::Exclusive) => std::cmp::Ordering::Equal,
+    });
+    impl_ord!((lhs, rhs): RightInclusion<Inclusion> => match (lhs.0, rhs.0) {
+        (Inclusion::Inclusive, Inclusion::Inclusive) => std::cmp::Ordering::Equal,
+        (Inclusion::Inclusive, Inclusion::Exclusive) => std::cmp::Ordering::Greater,
+        (Inclusion::Exclusive, Inclusion::Inclusive) => std::cmp::Ordering::Less,
+        (Inclusion::Exclusive, Inclusion::Exclusive) => std::cmp::Ordering::Equal,
+    });
 }
 
 impl IntoGeneral for Inclusive {

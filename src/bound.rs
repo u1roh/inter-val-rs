@@ -1,3 +1,4 @@
+use crate::traits::IntoGeneral;
 use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -11,5 +12,15 @@ impl<T: FloatCore, B> Bound<T, B> {
             val,
             inclusion: self.inclusion,
         })
+    }
+}
+
+impl<T, B: IntoGeneral> IntoGeneral for Bound<T, B> {
+    type General = Bound<T, B::General>;
+    fn into_general(self) -> Self::General {
+        Bound {
+            val: self.val,
+            inclusion: self.inclusion.into_general(),
+        }
     }
 }

@@ -1,13 +1,18 @@
 use ordered_float::{FloatCore, NotNan};
 
-use crate::half::{LeftInclusion, RightInclusion};
+use crate::inclusion::{LeftInclusion, RightInclusion};
 use crate::traits::{Boundary, IntoGeneral, Maximum, Minimum};
 use crate::{Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, RightBounded};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Eq)]
 pub struct Interval<T, L = crate::Inclusion, R = L> {
     left: LeftBounded<T, L>,
     right: RightBounded<T, R>,
+}
+impl<T: Eq, L: Eq, R: Eq> PartialEq for Interval<T, L, R> {
+    fn eq(&self, other: &Self) -> bool {
+        self.left == other.left && self.right == other.right
+    }
 }
 impl<T: Ord, L: Boundary, R: Boundary> Interval<T, L, R>
 where

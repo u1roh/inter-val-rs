@@ -1,6 +1,6 @@
 use ordered_float::{FloatCore, NotNan};
 
-use crate::half::{LeftInclusion, RightInclusion};
+use crate::inclusion::{LeftInclusion, RightInclusion};
 use crate::ndim::NDim;
 use crate::traits::{Boundary, Maximum, Minimum};
 use crate::{Exclusive, Inclusive, Interval, LeftBounded, RightBounded};
