@@ -1,4 +1,4 @@
-use crate::traits::IntoGeneral;
+use crate::traits::{Flip, IntoGeneral};
 use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -21,6 +21,16 @@ impl<T, B: IntoGeneral> IntoGeneral for Bound<T, B> {
         Bound {
             val: self.val,
             inclusion: self.inclusion.into_general(),
+        }
+    }
+}
+
+impl<T, B: Flip> Flip for Bound<T, B> {
+    type Flip = Bound<T, B::Flip>;
+    fn flip(self) -> Self::Flip {
+        Bound {
+            val: self.val,
+            inclusion: self.inclusion.flip(),
         }
     }
 }

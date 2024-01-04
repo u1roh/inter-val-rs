@@ -103,6 +103,18 @@ impl Flip for Inclusion {
         }
     }
 }
+impl Flip for Left {
+    type Flip = Right;
+    fn flip(self) -> Self::Flip {
+        Right
+    }
+}
+impl Flip for Right {
+    type Flip = Left;
+    fn flip(self) -> Self::Flip {
+        Left
+    }
+}
 
 impl Boundary for Inclusive {
     fn less<T: Ord>(&self, this: &T, t: &T) -> bool {

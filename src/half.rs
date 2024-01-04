@@ -2,7 +2,7 @@ use ordered_float::{FloatCore, NotNan};
 
 use crate::{
     inclusion::{Left, Right},
-    traits::{Boundary, IntoGeneral, Maximum, Minimum},
+    traits::{Boundary, BoundaryOf, Flip, IntoGeneral, Maximum, Minimum},
     Bound, Exclusive, Inclusion, Inclusive,
 };
 
@@ -65,10 +65,14 @@ impl<T, B: IntoGeneral, LR> IntoGeneral for HalfBounded<T, B, LR> {
     }
 }
 
-impl<T: Ord, B: Boundary> LeftBounded<T, B>
-where
-    Self: Ord,
-{
+impl<T, B: Flip, LR: Flip> Flip for HalfBounded<T, B, LR> {
+    type Flip = HalfBounded<T, B::Flip, LR::Flip>;
+    fn flip(self) -> Self::Flip {
+        HalfBounded(self.0.flip(), std::marker::PhantomData)
+    }
+}
+
+impl<T: Ord, B: BoundaryOf<Left>> LeftBounded<T, B> {
     pub fn includes(&self, other: &Self) -> bool {
         self.val <= other.val
     }
@@ -81,21 +85,9 @@ where
     pub fn union(self, other: Self) -> Self {
         self.min(other)
     }
-    pub fn flip(self) -> RightBounded<T, B::Flip> {
-        HalfBounded(
-            Bound {
-                val: self.0.val,
-                inclusion: self.0.inclusion.flip(),
-            },
-            std::marker::PhantomData,
-        )
-    }
 }
 
-impl<T: Ord, B: Boundary> RightBounded<T, B>
-where
-    Self: Ord,
-{
+impl<T: Ord, B: BoundaryOf<Right>> RightBounded<T, B> {
     pub fn includes(&self, other: &Self) -> bool {
         other.val <= self.val
     }
@@ -107,15 +99,6 @@ where
     }
     pub fn union(self, other: Self) -> Self {
         self.max(other)
-    }
-    pub fn flip(self) -> LeftBounded<T, B::Flip> {
-        HalfBounded(
-            Bound {
-                val: self.0.val,
-                inclusion: self.0.inclusion.flip(),
-            },
-            std::marker::PhantomData,
-        )
     }
 }
 

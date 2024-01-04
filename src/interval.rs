@@ -4,6 +4,7 @@ use crate::inclusion::{Left, Right};
 use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum};
 use crate::{Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, RightBounded};
 
+/// Return type of `Interval::union()`.
 pub struct IntervalUnion<T, L: Flip, R: Flip> {
     pub enclosure: Interval<T, L, R>,
     pub gap: Option<Interval<T, R::Flip, L::Flip>>,
@@ -18,6 +19,7 @@ where
     left.contains(&right.val) && right.contains(&left.val)
 }
 
+/// Interval type.
 #[derive(Debug, Clone, Copy, Eq)]
 pub struct Interval<T, L = crate::Inclusion, R = L> {
     left: LeftBounded<T, L>,
@@ -36,9 +38,27 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
             Err(IntervalIsEmpty)
         }
     }
+
+    /// Create a new interval.
+    /// ```
+    /// # use std::any::{Any, TypeId};
+    /// use intervals::{Interval, Inclusion, Exclusive, Inclusive};
+    ///
+    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::new(0.into(), 3.into()).unwrap();
+    /// assert!(a.contains(&0));
+    /// assert!(a.contains(&2));
+    /// assert!(!a.contains(&3));
+    ///
+    /// let a = Interval::new(Exclusive.at(0), Inclusive.at(3)).unwrap();
+    /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Exclusive, Inclusive>>());
+    ///
+    /// let a = Interval::new(Inclusion::Exclusive.at(0), Inclusion::Exclusive.at(3)).unwrap();
+    /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Inclusion, Inclusion>>());
+    /// ```
     pub fn new(left: Bound<T, L>, right: Bound<T, R>) -> Result<Self, IntervalIsEmpty> {
         Self::new_(left.into(), right.into())
     }
+
     pub fn left(&self) -> &LeftBounded<T, L> {
         &self.left
     }
@@ -46,6 +66,15 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
         &self.right
     }
 
+    /// ```
+    /// use intervals::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(4).to(Inclusive.at(7)).unwrap();
+    /// let b = Exclusive.at(4).to(Inclusive.at(7)).unwrap();
+    /// let c = Inclusive.at(1.23).not_nan_to(Inclusive.at(4.56)).unwrap();
+    /// assert_eq!(a.min(), 4);
+    /// assert_eq!(b.min(), 5);
+    /// assert_eq!(c.min(), 1.23);
+    /// ```
     pub fn min(&self) -> T
     where
         LeftBounded<T, L>: Minimum<T>,
@@ -53,6 +82,15 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
         self.left.minimum()
     }
 
+    /// ```
+    /// use intervals::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(4).to(Inclusive.at(7)).unwrap();
+    /// let b = Inclusive.at(4).to(Exclusive.at(7)).unwrap();
+    /// let c = Inclusive.at(1.23).not_nan_to(Inclusive.at(4.56)).unwrap();
+    /// assert_eq!(a.max(), 7);
+    /// assert_eq!(b.max(), 6);
+    /// assert_eq!(c.max(), 4.56);
+    /// ```
     pub fn max(&self) -> T
     where
         RightBounded<T, R>: Maximum<T>,
@@ -109,6 +147,20 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
             gap: self.clone().gap(other.clone()),
             enclosure: self.enclosure(other),
         }
+    }
+
+    pub fn lower_bound(&self) -> RightBounded<T, L::Flip>
+    where
+        T: Clone,
+    {
+        self.left.clone().flip()
+    }
+
+    pub fn upper_bound(&self) -> LeftBounded<T, R::Flip>
+    where
+        T: Clone,
+    {
+        self.right.clone().flip()
     }
 
     pub fn enclosure_of<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
