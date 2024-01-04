@@ -1,8 +1,22 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::inclusion::{Left, Right};
-use crate::traits::{BoundaryOf, IntoGeneral, Maximum, Minimum};
+use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum};
 use crate::{Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, RightBounded};
+
+pub struct IntervalUnion<T, L: Flip, R: Flip> {
+    pub enclosure: Interval<T, L, R>,
+    pub gap: Option<Interval<T, R::Flip, L::Flip>>,
+}
+
+fn is_valid_interval<T, L, R>(left: &LeftBounded<T, L>, right: &RightBounded<T, R>) -> bool
+where
+    T: Ord,
+    L: BoundaryOf<Left>,
+    R: BoundaryOf<Right>,
+{
+    left.contains(&right.val) && right.contains(&left.val)
+}
 
 #[derive(Debug, Clone, Copy, Eq)]
 pub struct Interval<T, L = crate::Inclusion, R = L> {
@@ -16,9 +30,11 @@ impl<T: Eq, L: Eq, R: Eq> PartialEq for Interval<T, L, R> {
 }
 impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     fn new_(left: LeftBounded<T, L>, right: RightBounded<T, R>) -> Result<Self, IntervalIsEmpty> {
-        (left.contains(&right.val) && right.contains(&left.val))
-            .then_some(Self { left, right })
-            .ok_or(IntervalIsEmpty)
+        if is_valid_interval(&left, &right) {
+            Ok(Self { left, right })
+        } else {
+            Err(IntervalIsEmpty)
+        }
     }
     pub fn new(left: Bound<T, L>, right: Bound<T, R>) -> Result<Self, IntervalIsEmpty> {
         Self::new_(left.into(), right.into())
@@ -52,6 +68,12 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
         self.left.includes(&other.left) && self.right.includes(&other.right)
     }
 
+    pub fn overlaps(&self, other: &Self) -> bool {
+        let left = std::cmp::max(&self.left, &other.left);
+        let right = std::cmp::min(&self.right, &other.right);
+        is_valid_interval(left, right)
+    }
+
     pub fn intersection(self, other: Self) -> Option<Self> {
         Self::new_(
             self.left.intersection(other.left),
@@ -77,25 +99,22 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
             .ok()
     }
 
-    pub fn new_enclosure<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
-        let mut items = items.into_iter();
-        let first = items.next()?.into();
-        Some(items.fold(first, |acc, item| acc.enclosure(item.into())))
-    }
-}
-impl<T: Ord + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
-    #[allow(clippy::type_complexity)]
-    pub fn union(self, other: Self) -> (Self, Option<Interval<T, R::Flip, L::Flip>>)
+    pub fn union(self, other: Self) -> IntervalUnion<T, L, R>
     where
+        T: Clone,
         L::Flip: BoundaryOf<Right>,
         R::Flip: BoundaryOf<Left>,
     {
-        let gap = self.clone().gap(other.clone());
-        (self.enclosure(other), gap)
+        IntervalUnion {
+            gap: self.clone().gap(other.clone()),
+            enclosure: self.enclosure(other),
+        }
     }
 
-    pub fn overlaps(&self, other: &Self) -> bool {
-        self.clone().intersection(other.clone()).is_some()
+    pub fn enclosure_of<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
+        let mut items = items.into_iter();
+        let first = items.next()?.into();
+        Some(items.fold(first, |acc, item| acc.enclosure(item.into())))
     }
 }
 impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>, L, R> {
@@ -142,14 +161,3 @@ impl<T, L: IntoGeneral, R: IntoGeneral> IntoGeneral for Interval<T, L, R> {
         }
     }
 }
-
-// pub trait IntervalSet<T>: std::ops::Deref<Target = [Self::Interval]> {
-//     type Interval: Interval<T>;
-//     type Complement: IntervalSet<T>;
-//     type Difference: IntervalSet<T>;
-//     fn intersection(&self, other: &Self) -> Self;
-//     fn union(&self, other: &Self) -> Self;
-//     fn complement(&self) -> Self::Complement;
-//     fn measure(&self) -> T;
-//     fn overlaps(&self, other: &Self) -> bool;
-// }
