@@ -81,3 +81,14 @@ fn range_into_interval() {
     let a: Interval<_, _, _> = (1.23..=4.56).try_into().unwrap();
     assert_typeid::<Interval<NotNan<f64>, Inclusive, Inclusive>>(&a);
 }
+
+#[test]
+fn ordering() {
+    let a: LeftBounded<_, _> = Inclusion::Inclusive.at(0).into();
+    let b: LeftBounded<_, _> = Inclusion::Exclusive.at(0).into();
+    assert!(a < b);
+
+    let a: RightBounded<_, _> = Inclusion::Inclusive.at(0).into();
+    let b: RightBounded<_, _> = Inclusion::Exclusive.at(0).into();
+    assert!(a > b);
+}

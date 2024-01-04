@@ -23,7 +23,7 @@ pub enum Inclusion {
     Exclusive,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Bound<T, B> {
     pub val: T,
     pub inclusion: B,

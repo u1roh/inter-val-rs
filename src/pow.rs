@@ -12,6 +12,14 @@ impl<const N: usize, T: Ord + Clone, L: Boundary, R: Boundary> NDim<N, Interval<
         std::array::from_fn(|i| self[i].right()).into()
     }
 
+    pub fn contains(&self, t: &NDim<N, T>) -> bool {
+        self.iter().zip(t.iter()).all(|(i, t)| i.contains(t))
+    }
+
+    pub fn includes(&self, other: &Self) -> bool {
+        self.iter().zip(other.iter()).all(|(i, o)| i.includes(o))
+    }
+
     pub fn min_val(&self) -> NDim<N, T>
     where
         LeftBounded<T, L>: crate::Minimum<T>,
