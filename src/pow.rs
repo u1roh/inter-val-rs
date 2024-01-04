@@ -1,9 +1,14 @@
 use ordered_float::{FloatCore, NotNan};
 
+use crate::half::{LeftInclusion, RightInclusion};
 use crate::ndim::NDim;
 use crate::{boundary::Boundary, Exclusive, Inclusive, Interval, LeftBounded, RightBounded};
 
-impl<const N: usize, T: Ord + Clone, L: Boundary, R: Boundary> NDim<N, Interval<T, L, R>> {
+impl<const N: usize, T: Ord + Clone, L: Boundary, R: Boundary> NDim<N, Interval<T, L, R>>
+where
+    LeftInclusion<L>: Ord,
+    RightInclusion<R>: Ord,
+{
     pub fn left(&self) -> NDim<N, &LeftBounded<T, L>> {
         std::array::from_fn(|i| self[i].left()).into()
     }
@@ -55,7 +60,11 @@ impl<const N: usize, T: Ord + Clone, L: Boundary, R: Boundary> NDim<N, Interval<
     }
 }
 
-impl<const N: usize, T: FloatCore, L: Boundary, R: Boundary> NDim<N, Interval<NotNan<T>, L, R>> {
+impl<const N: usize, T: FloatCore, L: Boundary, R: Boundary> NDim<N, Interval<NotNan<T>, L, R>>
+where
+    LeftInclusion<L>: Ord,
+    RightInclusion<R>: Ord,
+{
     pub fn inf(&self) -> NDim<N, NotNan<T>> {
         std::array::from_fn(|i| self[i].inf()).into()
     }

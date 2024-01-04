@@ -1,6 +1,7 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::boundary::Boundary;
+use crate::half::{LeftInclusion, RightInclusion};
 use crate::{
     Bound, Exclusive, Inclusion, Inclusive, IntervalIsEmpty, LeftBounded, Maximum, Minimum,
     RightBounded,
@@ -11,7 +12,11 @@ pub struct Interval<T, L = crate::Inclusion, R = L> {
     left: LeftBounded<T, L>,
     right: RightBounded<T, R>,
 }
-impl<T: Ord, L: Boundary, R: Boundary> Interval<T, L, R> {
+impl<T: Ord, L: Boundary, R: Boundary> Interval<T, L, R>
+where
+    LeftInclusion<L>: Ord,
+    RightInclusion<R>: Ord,
+{
     fn new_(left: LeftBounded<T, L>, right: RightBounded<T, R>) -> Result<Self, IntervalIsEmpty> {
         (left.contains(&right.val) && right.contains(&left.val))
             .then_some(Self { left, right })
@@ -64,7 +69,11 @@ impl<T: Ord, L: Boundary, R: Boundary> Interval<T, L, R> {
         }
     }
 
-    pub fn gap(self, other: Self) -> Option<Interval<T, R::Flip, L::Flip>> {
+    pub fn gap(self, other: Self) -> Option<Interval<T, R::Flip, L::Flip>>
+    where
+        LeftInclusion<R::Flip>: Ord,
+        RightInclusion<L::Flip>: Ord,
+    {
         Interval::new_(self.right.flip(), other.left.flip())
             .or(Interval::new_(other.right.flip(), self.left.flip()))
             .ok()
@@ -76,9 +85,17 @@ impl<T: Ord, L: Boundary, R: Boundary> Interval<T, L, R> {
         Some(items.fold(first, |acc, item| acc.union(item.into())))
     }
 }
-impl<T: Ord + Clone, L: Boundary, R: Boundary> Interval<T, L, R> {
+impl<T: Ord + Clone, L: Boundary, R: Boundary> Interval<T, L, R>
+where
+    LeftInclusion<L>: Ord,
+    RightInclusion<R>: Ord,
+{
     #[allow(clippy::type_complexity)]
-    pub fn union_strict(self, other: Self) -> (Self, Option<Interval<T, R::Flip, L::Flip>>) {
+    pub fn union_strict(self, other: Self) -> (Self, Option<Interval<T, R::Flip, L::Flip>>)
+    where
+        LeftInclusion<R::Flip>: Ord,
+        RightInclusion<L::Flip>: Ord,
+    {
         let gap = self.clone().gap(other.clone());
         (self.union(other), gap)
     }
@@ -87,7 +104,11 @@ impl<T: Ord + Clone, L: Boundary, R: Boundary> Interval<T, L, R> {
         self.clone().intersection(other.clone()).is_some()
     }
 }
-impl<T: FloatCore, L: Boundary, R: Boundary> Interval<NotNan<T>, L, R> {
+impl<T: FloatCore, L: Boundary, R: Boundary> Interval<NotNan<T>, L, R>
+where
+    LeftInclusion<L>: Ord,
+    RightInclusion<R>: Ord,
+{
     pub fn not_nan(
         left: impl Into<Bound<T, L>>,
         right: impl Into<Bound<T, R>>,
@@ -118,7 +139,7 @@ impl<T: FloatCore, L: Boundary, R: Boundary> Interval<NotNan<T>, L, R> {
         }
     }
     pub fn interior(self) -> Option<Interval<NotNan<T>, Exclusive>> {
-        Interval::new_(self.left.interior(), self.right.interior()).ok()
+        Interval::<_, Exclusive>::new_(self.left.interior(), self.right.interior()).ok()
     }
 }
 impl<T> Interval<T> {
