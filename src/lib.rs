@@ -24,7 +24,7 @@ pub enum Inclusion {
     Exclusive,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Bound<T, B> {
     pub val: T,
     pub inclusion: B,
@@ -63,16 +63,6 @@ impl<T: FloatCore, B> Bound<T, B> {
             val,
             inclusion: self.inclusion,
         })
-    }
-}
-impl<T: PartialOrd, B: PartialOrd> PartialOrd for Bound<T, B> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        (&self.val, &self.inclusion).partial_cmp(&(&other.val, &other.inclusion))
-    }
-}
-impl<T: Ord, B: Ord> Ord for Bound<T, B> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        (&self.val, &self.inclusion).cmp(&(&other.val, &other.inclusion))
     }
 }
 
