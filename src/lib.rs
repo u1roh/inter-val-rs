@@ -9,7 +9,7 @@ mod std_range;
 mod tests;
 mod traits;
 
-use inclusion::{LeftInclusion, RightInclusion};
+use inclusion::{Left, LeftInclusion, Right, RightInclusion};
 use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
 pub use bound::Bound;
@@ -50,11 +50,14 @@ impl Inclusion {
     }
 }
 
-impl<T: Ord, B: Boundary> Bound<T, B>
+impl<T: Ord, B: BoundarySide<Left>> Bound<T, B>
 where
     LeftInclusion<B>: Ord,
 {
-    pub fn to<R: Boundary>(self, right: Bound<T, R>) -> Result<Interval<T, B, R>, IntervalIsEmpty>
+    pub fn to<R: BoundarySide<Right>>(
+        self,
+        right: Bound<T, R>,
+    ) -> Result<Interval<T, B, R>, IntervalIsEmpty>
     where
         RightInclusion<R>: Ord,
     {
@@ -62,11 +65,11 @@ where
     }
 }
 
-impl<T: FloatCore, B: Boundary> Bound<T, B>
+impl<T: FloatCore, B: BoundarySide<Left>> Bound<T, B>
 where
     LeftInclusion<B>: Ord,
 {
-    pub fn not_nan_to<R: Boundary>(
+    pub fn not_nan_to<R: BoundarySide<Right>>(
         self,
         right: Bound<T, R>,
     ) -> Result<Interval<NotNan<T>, B, R>, Error>
@@ -107,7 +110,7 @@ pub type RightHalfOpenIntervalF64 = RightHalfOpenIntervalF<f64>;
 pub type LeftHalfOpenIntervalF64 = LeftHalfOpenIntervalF<f64>;
 
 pub use ndim::NDim;
-use traits::Boundary;
+use traits::{Boundary, BoundarySide};
 pub type IntervalN<const N: usize, T, L = Inclusion, R = L> = NDim<N, Interval<T, L, R>>;
 pub type Interval2<T, L = Inclusion, R = L> = IntervalN<2, T, L, R>;
 pub type Interval3<T, L = Inclusion, R = L> = IntervalN<3, T, L, R>;

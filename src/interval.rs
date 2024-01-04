@@ -1,7 +1,8 @@
 use ordered_float::{FloatCore, NotNan};
 
+use crate::inclusion::{Left, Right, Side};
 use crate::inclusion::{LeftInclusion, RightInclusion};
-use crate::traits::{Boundary, IntoGeneral, Maximum, Minimum};
+use crate::traits::{Boundary, BoundarySide, IntoGeneral, Maximum, Minimum};
 use crate::{Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, RightBounded};
 
 #[derive(Debug, Clone, Copy, Eq)]
@@ -14,8 +15,10 @@ impl<T: Eq, L: Eq, R: Eq> PartialEq for Interval<T, L, R> {
         self.left == other.left && self.right == other.right
     }
 }
-impl<T: Ord, L: Boundary, R: Boundary> Interval<T, L, R>
+impl<T: Ord, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<T, L, R>
 where
+    // Left: Side<L>,
+    // Right: Side<R>,
     LeftInclusion<L>: Ord,
     RightInclusion<R>: Ord,
 {
@@ -73,8 +76,8 @@ where
 
     pub fn gap(self, other: Self) -> Option<Interval<T, R::Flip, L::Flip>>
     where
-        L::Flip: Boundary,
-        R::Flip: Boundary,
+        L::Flip: BoundarySide<Right>,
+        R::Flip: BoundarySide<Left>,
         LeftInclusion<R::Flip>: Ord,
         RightInclusion<L::Flip>: Ord,
     {
@@ -89,7 +92,7 @@ where
         Some(items.fold(first, |acc, item| acc.enclosure(item.into())))
     }
 }
-impl<T: Ord + Clone, L: Boundary, R: Boundary> Interval<T, L, R>
+impl<T: Ord + Clone, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<T, L, R>
 where
     LeftInclusion<L>: Ord,
     RightInclusion<R>: Ord,
@@ -97,8 +100,8 @@ where
     #[allow(clippy::type_complexity)]
     pub fn union(self, other: Self) -> (Self, Option<Interval<T, R::Flip, L::Flip>>)
     where
-        L::Flip: Boundary,
-        R::Flip: Boundary,
+        L::Flip: BoundarySide<Right>,
+        R::Flip: BoundarySide<Left>,
         LeftInclusion<R::Flip>: Ord,
         RightInclusion<L::Flip>: Ord,
     {
@@ -110,7 +113,7 @@ where
         self.clone().intersection(other.clone()).is_some()
     }
 }
-impl<T: FloatCore, L: Boundary, R: Boundary> Interval<NotNan<T>, L, R>
+impl<T: FloatCore, L: BoundarySide<Left>, R: BoundarySide<Right>> Interval<NotNan<T>, L, R>
 where
     LeftInclusion<L>: Ord,
     RightInclusion<R>: Ord,

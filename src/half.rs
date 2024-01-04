@@ -25,7 +25,7 @@ impl<T, B, LR> std::ops::DerefMut for HalfBounded<T, B, LR> {
 }
 
 mod ordering {
-    use crate::inclusion::Side;
+    use crate::{inclusion::Side, traits::BoundarySide};
 
     use super::HalfBounded;
 
@@ -36,17 +36,24 @@ mod ordering {
     }
     impl<T: Eq, B: Eq, LR> Eq for HalfBounded<T, B, LR> {}
 
-    impl<T: Ord, B: Copy, LR: Side<B>> HalfBounded<T, B, LR> {
-        fn ordering_key(&self) -> (&T, LR::Ordered) {
-            (&self.val, LR::make_ordered_inclusion(self.inclusion))
+    // impl<T: Ord, B: Copy, LR: Side<B>> HalfBounded<T, B, LR> {
+    //     fn ordering_key(&self) -> (&T, LR::Ordered) {
+    //         (&self.val, LR::make_ordered_inclusion(self.inclusion))
+    //     }
+    // }
+    impl<T: Ord, B: BoundarySide<LR>, LR> HalfBounded<T, B, LR> {
+        fn ordering_key(&self) -> (&T, B::Ordered) {
+            (&self.val, self.inclusion.into_ordered())
         }
     }
-    impl<T: Ord, B: Eq + Copy, LR: Side<B>> PartialOrd for HalfBounded<T, B, LR> {
+    // impl<T: Ord, B: Eq + Copy, LR: Side<B>> PartialOrd for HalfBounded<T, B, LR> {
+    impl<T: Ord, B: BoundarySide<LR>, LR> PartialOrd for HalfBounded<T, B, LR> {
         fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
             Some(self.cmp(other))
         }
     }
-    impl<T: Ord, B: Eq + Copy, LR: Side<B>> Ord for HalfBounded<T, B, LR> {
+    // impl<T: Ord, B: Eq + Copy, LR: Side<B>> Ord for HalfBounded<T, B, LR> {
+    impl<T: Ord, B: BoundarySide<LR>, LR> Ord for HalfBounded<T, B, LR> {
         fn cmp(&self, other: &Self) -> std::cmp::Ordering {
             self.ordering_key().cmp(&other.ordering_key())
         }

@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::traits::{Boundary, Flip, IntoGeneral};
+use crate::traits::{Boundary, BoundarySide, Flip, IntoGeneral};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Inclusive;
@@ -41,6 +41,34 @@ where
     type Ordered = SideInclusion<B, Self>;
     fn make_ordered_inclusion(inclusion: B) -> Self::Ordered {
         SideInclusion(inclusion, PhantomData::<Self>)
+    }
+}
+
+impl<LR> BoundarySide<LR> for Inclusive
+where
+    SideInclusion<Self, LR>: Ord,
+{
+    type Ordered = SideInclusion<Self, LR>;
+    fn into_ordered(self) -> Self::Ordered {
+        SideInclusion(self, PhantomData)
+    }
+}
+impl<LR> BoundarySide<LR> for Exclusive
+where
+    SideInclusion<Self, LR>: Ord,
+{
+    type Ordered = SideInclusion<Self, LR>;
+    fn into_ordered(self) -> Self::Ordered {
+        SideInclusion(self, PhantomData)
+    }
+}
+impl<LR> BoundarySide<LR> for Inclusion
+where
+    SideInclusion<Self, LR>: Ord,
+{
+    type Ordered = SideInclusion<Self, LR>;
+    fn into_ordered(self) -> Self::Ordered {
+        SideInclusion(self, PhantomData)
     }
 }
 
