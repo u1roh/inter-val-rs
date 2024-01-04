@@ -61,26 +61,8 @@ impl_ord!((lhs, rhs): RightInclusion<Inclusion> => match (lhs.0, rhs.0) {
     (Inclusion::Exclusive, Inclusion::Exclusive) => std::cmp::Ordering::Equal,
 });
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
-pub struct Left;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
-pub struct Right;
-
-// #[derive(Debug, Clone, Copy)]
-// pub struct HalfBounded<T, B, Side>(Bound<T, B>, std::marker::PhantomData<Side>);
-
-// pub type LeftBounded<T, B> = HalfBounded<T, B, Left>;
-// pub type RightBounded<T, B> = HalfBounded<T, B, Right>;
 pub type LeftBounded<T, B> = Bound<T, LeftInclusion<B>>;
 pub type RightBounded<T, B> = Bound<T, RightInclusion<B>>;
-
-// impl<T, B, Side> std::ops::Deref for HalfBounded<T, B, Side> {
-//     type Target = Bound<T, B>;
-//     fn deref(&self) -> &Self::Target {
-//         &self.0
-//     }
-// }
 
 impl<T, B> From<Bound<T, B>> for LeftBounded<T, B> {
     fn from(b: Bound<T, B>) -> Self {
@@ -131,44 +113,6 @@ impl<T> From<RightBounded<T, Exclusive>> for RightBounded<T, Inclusion> {
         }
     }
 }
-
-// impl<T: PartialEq, B: PartialEq, Side> PartialEq for HalfBounded<T, B, Side> {
-//     fn eq(&self, other: &Self) -> bool {
-//         self.0 == other.0
-//     }
-// }
-// impl<T: Eq, B: Eq, Side> Eq for HalfBounded<T, B, Side> {}
-
-// impl<T: PartialOrd, B: PartialEq, Side> PartialOrd for HalfBounded<T, B, Side> {
-//     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-//         self.val.partial_cmp(&other.val)
-//     }
-// }
-// impl<T: Ord, B: Ord, Side> Ord for HalfBounded<T, B, Side> {
-//     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-//         self.val.cmp(&other.val)
-//     }
-// }
-// impl<T: PartialOrd> PartialOrd for HalfBounded<T, Inclusive, Left> {
-//     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-//         self.val.partial_cmp(&other.val)
-//     }
-// }
-// impl<T: Ord> Ord for HalfBounded<T, Inclusive, Left> {
-//     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-//         self.val.cmp(&other.val)
-//     }
-// }
-// impl<T: PartialOrd> PartialOrd for HalfBounded<T, Exclusive, Left> {
-//     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-//         self.val.partial_cmp(&other.val)
-//     }
-// }
-// impl<T: Ord> Ord for HalfBounded<T, Exclusive, Left> {
-//     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-//         self.val.cmp(&other.val)
-//     }
-// }
 
 impl<T, B: Boundary> Bound<T, B> {
     pub fn flip(self) -> Bound<T, B::Flip> {
@@ -228,9 +172,6 @@ where
     pub fn union(self, other: Self) -> Self {
         self.min(other)
     }
-    // pub fn flip(self) -> RightBounded<T, B::Flip> {
-    //     self.0.flip().into()
-    // }
 }
 impl<T: Ord, B: Boundary> RightBounded<T, B>
 where
@@ -248,9 +189,6 @@ where
     pub fn union(self, other: Self) -> Self {
         self.max(other)
     }
-    // pub fn flip(self) -> LeftBounded<T, B::Flip> {
-    //     self.0.flip().into()
-    // }
 }
 
 impl<T: FloatCore, B: Boundary> LeftBounded<NotNan<T>, B> {
