@@ -1,8 +1,8 @@
 mod boundary;
 mod converters;
-pub mod core;
 mod half;
 mod impl_range_bounds;
+mod interval;
 mod ndim;
 mod pow;
 mod tests;
@@ -119,7 +119,7 @@ pub enum Error {
     IntervalIsEmpty(#[from] IntervalIsEmpty),
 }
 
-pub use core::Interval;
+pub use interval::Interval;
 pub type ClosedInterval<T> = Interval<T, Inclusive>;
 pub type OpenInterval<T> = Interval<T, Exclusive>;
 pub type RightHalfOpenInterval<T> = Interval<T, Inclusive, Exclusive>;
