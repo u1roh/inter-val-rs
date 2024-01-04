@@ -1,7 +1,7 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::{
-    bound::Boundary, converters::IntoGeneral, Bound, Exclusive, Inclusion, Inclusive, Maximum,
+    converters::IntoGeneral, inclusion::Boundary, Bound, Exclusive, Inclusion, Inclusive, Maximum,
     Minimum,
 };
 

@@ -2,6 +2,7 @@ mod bound;
 mod converters;
 mod half;
 mod impl_range_bounds;
+mod inclusion;
 mod interval;
 mod ndim;
 mod pow;
@@ -10,61 +11,9 @@ mod tests;
 use half::{LeftInclusion, RightInclusion};
 use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
+pub use bound::Bound;
 pub use half::{LeftBounded, RightBounded};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
-pub struct Inclusive;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
-pub struct Exclusive;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Inclusion {
-    Inclusive,
-    Exclusive,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Bound<T, B> {
-    pub val: T,
-    pub inclusion: B,
-}
-impl<T: Ord, B: bound::Boundary> Bound<T, B>
-where
-    LeftInclusion<B>: Ord,
-{
-    pub fn to<R: bound::Boundary>(
-        self,
-        right: Bound<T, R>,
-    ) -> Result<Interval<T, B, R>, IntervalIsEmpty>
-    where
-        RightInclusion<R>: Ord,
-    {
-        Interval::new(self, right)
-    }
-}
-impl<T: FloatCore, B: bound::Boundary> Bound<T, B>
-where
-    LeftInclusion<B>: Ord,
-{
-    pub fn not_nan_to<R: bound::Boundary>(
-        self,
-        right: Bound<T, R>,
-    ) -> Result<Interval<NotNan<T>, B, R>, Error>
-    where
-        RightInclusion<R>: Ord,
-    {
-        Interval::not_nan(self, right)
-    }
-}
-impl<T: FloatCore, B> Bound<T, B> {
-    pub fn into_not_nan(self) -> Result<Bound<NotNan<T>, B>, FloatIsNan> {
-        NotNan::new(self.val).map(|val| Bound {
-            val,
-            inclusion: self.inclusion,
-        })
-    }
-}
+pub use inclusion::{Exclusive, Inclusion, Inclusive};
 
 impl Inclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
@@ -97,6 +46,36 @@ impl Inclusion {
     }
     pub fn not_nan<T: FloatCore>(self, t: T) -> Result<Bound<NotNan<T>, Self>, FloatIsNan> {
         self.at(t).into_not_nan()
+    }
+}
+
+impl<T: Ord, B: inclusion::Boundary> Bound<T, B>
+where
+    LeftInclusion<B>: Ord,
+{
+    pub fn to<R: inclusion::Boundary>(
+        self,
+        right: Bound<T, R>,
+    ) -> Result<Interval<T, B, R>, IntervalIsEmpty>
+    where
+        RightInclusion<R>: Ord,
+    {
+        Interval::new(self, right)
+    }
+}
+
+impl<T: FloatCore, B: inclusion::Boundary> Bound<T, B>
+where
+    LeftInclusion<B>: Ord,
+{
+    pub fn not_nan_to<R: inclusion::Boundary>(
+        self,
+        right: Bound<T, R>,
+    ) -> Result<Interval<NotNan<T>, B, R>, Error>
+    where
+        RightInclusion<R>: Ord,
+    {
+        Interval::not_nan(self, right)
     }
 }
 

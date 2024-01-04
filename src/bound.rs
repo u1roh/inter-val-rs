@@ -1,41 +1,15 @@
-use crate::{Exclusive, Inclusion, Inclusive};
+use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
-pub trait Boundary: Eq + Copy {
-    type Flip: Boundary<Flip = Self>;
-    fn flip(self) -> Self::Flip;
-    fn less<T: Ord>(&self, this: &T, t: &T) -> bool;
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Bound<T, B> {
+    pub val: T,
+    pub inclusion: B,
 }
-
-impl Boundary for Inclusive {
-    type Flip = Exclusive;
-    fn flip(self) -> Self::Flip {
-        Exclusive
-    }
-    fn less<T: Ord>(&self, this: &T, t: &T) -> bool {
-        this <= t
-    }
-}
-impl Boundary for Exclusive {
-    type Flip = Inclusive;
-    fn flip(self) -> Self::Flip {
-        Inclusive
-    }
-    fn less<T: Ord>(&self, this: &T, t: &T) -> bool {
-        this < t
-    }
-}
-impl Boundary for Inclusion {
-    type Flip = Self;
-    fn flip(self) -> Self {
-        match self {
-            Self::Inclusive => Self::Exclusive,
-            Self::Exclusive => Self::Inclusive,
-        }
-    }
-    fn less<T: Ord>(&self, s: &T, t: &T) -> bool {
-        match self {
-            Inclusion::Inclusive => s <= t,
-            Inclusion::Exclusive => s < t,
-        }
+impl<T: FloatCore, B> Bound<T, B> {
+    pub fn into_not_nan(self) -> Result<Bound<NotNan<T>, B>, FloatIsNan> {
+        NotNan::new(self.val).map(|val| Bound {
+            val,
+            inclusion: self.inclusion,
+        })
     }
 }

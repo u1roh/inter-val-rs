@@ -1,8 +1,8 @@
 use ordered_float::{FloatCore, NotNan};
 
-use crate::bound::Boundary;
 use crate::converters::IntoGeneral;
 use crate::half::{LeftInclusion, RightInclusion};
+use crate::inclusion::Boundary;
 use crate::{
     Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, Maximum, Minimum, RightBounded,
 };

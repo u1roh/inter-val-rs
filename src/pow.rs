@@ -2,7 +2,7 @@ use ordered_float::{FloatCore, NotNan};
 
 use crate::half::{LeftInclusion, RightInclusion};
 use crate::ndim::NDim;
-use crate::{bound::Boundary, Exclusive, Inclusive, Interval, LeftBounded, RightBounded};
+use crate::{inclusion::Boundary, Exclusive, Inclusive, Interval, LeftBounded, RightBounded};
 
 impl<const N: usize, T: Ord + Clone, L: Boundary, R: Boundary> NDim<N, Interval<T, L, R>>
 where
