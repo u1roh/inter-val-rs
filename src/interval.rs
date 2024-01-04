@@ -1,8 +1,7 @@
 use ordered_float::{FloatCore, NotNan};
 
-use crate::converters::IntoGeneral;
 use crate::half::{LeftInclusion, RightInclusion};
-use crate::traits::{Boundary, Maximum, Minimum};
+use crate::traits::{Boundary, IntoGeneral, Maximum, Minimum};
 use crate::{Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, RightBounded};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

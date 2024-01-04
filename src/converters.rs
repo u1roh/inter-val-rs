@@ -1,10 +1,5 @@
-use crate::{Bound, Exclusive, Inclusion, Inclusive, Interval};
+use crate::{traits::IntoGeneral, Bound, Exclusive, Inclusion, Inclusive, Interval};
 use ordered_float::{FloatCore, NotNan};
-
-pub(crate) trait IntoGeneral {
-    type General;
-    fn into_general(self) -> Self::General;
-}
 
 impl IntoGeneral for Inclusive {
     type General = Inclusion;

@@ -14,3 +14,8 @@ pub trait Minimum<T> {
 pub trait Maximum<T> {
     fn maximum(&self) -> T;
 }
+
+pub(crate) trait IntoGeneral {
+    type General;
+    fn into_general(self) -> Self::General;
+}

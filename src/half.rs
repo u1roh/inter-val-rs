@@ -1,8 +1,7 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::{
-    converters::IntoGeneral,
-    traits::{Boundary, Maximum, Minimum},
+    traits::{Boundary, IntoGeneral, Maximum, Minimum},
     Bound, Exclusive, Inclusion, Inclusive,
 };
 
