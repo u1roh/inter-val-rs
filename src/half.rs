@@ -27,77 +27,39 @@ impl<B: Boundary> Boundary for RightInclusion<B> {
     }
 }
 
-impl PartialOrd for LeftInclusion<Inclusive> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-impl Ord for LeftInclusion<Inclusive> {
-    fn cmp(&self, _: &Self) -> std::cmp::Ordering {
-        std::cmp::Ordering::Equal
-    }
-}
-impl PartialOrd for LeftInclusion<Exclusive> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-impl Ord for LeftInclusion<Exclusive> {
-    fn cmp(&self, _: &Self) -> std::cmp::Ordering {
-        std::cmp::Ordering::Equal
-    }
-}
-impl PartialOrd for RightInclusion<Inclusive> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-impl Ord for RightInclusion<Inclusive> {
-    fn cmp(&self, _: &Self) -> std::cmp::Ordering {
-        std::cmp::Ordering::Equal
-    }
-}
-impl PartialOrd for RightInclusion<Exclusive> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-impl Ord for RightInclusion<Exclusive> {
-    fn cmp(&self, _: &Self) -> std::cmp::Ordering {
-        std::cmp::Ordering::Equal
-    }
+macro_rules! impl_ord {
+    (($lhs:ident, $rhs:ident): $type:ty => $body:expr) => {
+        impl PartialOrd for $type {
+            fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+                Some(self.cmp(other))
+            }
+        }
+        impl Ord for $type {
+            fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+                let $lhs = self;
+                let $rhs = other;
+                $body
+            }
+        }
+    };
 }
 
-impl PartialOrd for LeftInclusion<Inclusion> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-impl Ord for LeftInclusion<Inclusion> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        match (self.0, other.0) {
-            (Inclusion::Inclusive, Inclusion::Inclusive) => std::cmp::Ordering::Equal,
-            (Inclusion::Inclusive, Inclusion::Exclusive) => std::cmp::Ordering::Less,
-            (Inclusion::Exclusive, Inclusion::Inclusive) => std::cmp::Ordering::Greater,
-            (Inclusion::Exclusive, Inclusion::Exclusive) => std::cmp::Ordering::Equal,
-        }
-    }
-}
-impl PartialOrd for RightInclusion<Inclusion> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-impl Ord for RightInclusion<Inclusion> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        match (self.0, other.0) {
-            (Inclusion::Inclusive, Inclusion::Inclusive) => std::cmp::Ordering::Equal,
-            (Inclusion::Inclusive, Inclusion::Exclusive) => std::cmp::Ordering::Greater,
-            (Inclusion::Exclusive, Inclusion::Inclusive) => std::cmp::Ordering::Less,
-            (Inclusion::Exclusive, Inclusion::Exclusive) => std::cmp::Ordering::Equal,
-        }
-    }
-}
+impl_ord!((_lhs, _rhs): LeftInclusion<Inclusive> => std::cmp::Ordering::Equal);
+impl_ord!((_lhs, _rhs): LeftInclusion<Exclusive> => std::cmp::Ordering::Equal);
+impl_ord!((_lhs, _rhs): RightInclusion<Inclusive> => std::cmp::Ordering::Equal);
+impl_ord!((_lhs, _rhs): RightInclusion<Exclusive> => std::cmp::Ordering::Equal);
+impl_ord!((lhs, rhs): LeftInclusion<Inclusion> => match (lhs.0, rhs.0) {
+    (Inclusion::Inclusive, Inclusion::Inclusive) => std::cmp::Ordering::Equal,
+    (Inclusion::Inclusive, Inclusion::Exclusive) => std::cmp::Ordering::Less,
+    (Inclusion::Exclusive, Inclusion::Inclusive) => std::cmp::Ordering::Greater,
+    (Inclusion::Exclusive, Inclusion::Exclusive) => std::cmp::Ordering::Equal,
+});
+impl_ord!((lhs, rhs): RightInclusion<Inclusion> => match (lhs.0, rhs.0) {
+    (Inclusion::Inclusive, Inclusion::Inclusive) => std::cmp::Ordering::Equal,
+    (Inclusion::Inclusive, Inclusion::Exclusive) => std::cmp::Ordering::Greater,
+    (Inclusion::Exclusive, Inclusion::Inclusive) => std::cmp::Ordering::Less,
+    (Inclusion::Exclusive, Inclusion::Exclusive) => std::cmp::Ordering::Equal,
+});
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Left;
