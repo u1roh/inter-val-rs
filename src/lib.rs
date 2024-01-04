@@ -1,11 +1,11 @@
 mod bound;
 mod converters;
 mod half;
-mod impl_range_bounds;
 mod inclusion;
 mod interval;
 mod ndim;
 mod pow;
+mod std_range;
 mod tests;
 mod traits;
 

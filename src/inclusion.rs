@@ -1,4 +1,4 @@
-use crate::traits::{Boundary, Flip};
+use crate::traits::{Boundary, Flip, IntoGeneral};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Inclusive;
@@ -10,6 +10,19 @@ pub struct Exclusive;
 pub enum Inclusion {
     Inclusive,
     Exclusive,
+}
+
+impl IntoGeneral for Inclusive {
+    type General = Inclusion;
+    fn into_general(self) -> Self::General {
+        Inclusion::Inclusive
+    }
+}
+impl IntoGeneral for Exclusive {
+    type General = Inclusion;
+    fn into_general(self) -> Self::General {
+        Inclusion::Exclusive
+    }
 }
 
 impl Flip for Inclusive {
