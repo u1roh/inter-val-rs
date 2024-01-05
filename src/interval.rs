@@ -47,6 +47,13 @@ where
 /// * `Interval<T, Inclusive, Exclusive>` represents a right half-open interval, i.e., *[a, b)*.
 /// * `Interval<T, Exclusive, Inclusive>` represents a left half-open interval, i.e., *(a, b]*.
 /// * `Interval<T>` (= `Interval<T, Bounding, Bounding>`) represents any of the above.
+///
+/// ```
+/// use intervals::{Interval, IntervalF, Exclusive, Inclusive, Bounding};
+/// assert_eq!(std::mem::size_of::<Interval<i32, Inclusive>>(), std::mem::size_of::<i32>() * 2);
+/// assert_eq!(std::mem::size_of::<IntervalF<f64, Exclusive>>(), std::mem::size_of::<f64>() * 2);
+/// assert!(std::mem::size_of::<Interval<i32>>() > (std::mem::size_of::<i32>() + std::mem::size_of::<Bounding>()) * 2);
+/// ```
 #[derive(Debug, Clone, Copy, Eq)]
 pub struct Interval<T, L = crate::Bounding, R = L> {
     pub(crate) left: LeftBounded<T, L>,
