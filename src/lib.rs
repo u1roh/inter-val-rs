@@ -1,7 +1,7 @@
 mod bound;
+mod bounding;
 mod converters;
 mod half;
-mod inclusion;
 mod interval;
 mod ndim;
 mod pow;
@@ -9,13 +9,13 @@ mod std_range;
 mod tests;
 mod traits;
 
-use inclusion::{Left, Right};
+use bounding::{Left, Right};
 use ordered_float::{FloatCore, NotNan};
 use traits::BoundaryOf;
 
 pub use bound::Bound;
+pub use bounding::{Bounding, Exclusive, Inclusive};
 pub use half::{LeftBounded, RightBounded};
-pub use inclusion::{Bounding, Exclusive, Inclusive};
 pub use interval::Interval;
 pub use ndim::NDim;
 

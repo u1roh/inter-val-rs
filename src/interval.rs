@@ -1,6 +1,6 @@
 use ordered_float::{FloatCore, NotNan};
 
-use crate::inclusion::{Left, Right};
+use crate::bounding::{Left, Right};
 use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum, OrdFrom};
 use crate::{Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, RightBounded};
 
@@ -42,7 +42,7 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// Create a new interval.
     /// ```
     /// # use std::any::{Any, TypeId};
-    /// use intervals::{Interval, Inclusion, Exclusive, Inclusive};
+    /// use intervals::{Interval, Bounding, Exclusive, Inclusive};
     ///
     /// let a: Interval<i32, Inclusive, Exclusive> = Interval::new(0.into(), 3.into()).unwrap();
     /// assert!(a.contains(&0));
@@ -52,8 +52,8 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// let a = Interval::new(Exclusive.at(0), Inclusive.at(3)).unwrap();
     /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Exclusive, Inclusive>>());
     ///
-    /// let a = Interval::new(Inclusion::Exclusive.at(0), Inclusion::Exclusive.at(3)).unwrap();
-    /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Inclusion, Inclusion>>());
+    /// let a = Interval::new(Bounding::Exclusive.at(0), Bounding::Exclusive.at(3)).unwrap();
+    /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Bounding, Bounding>>());
     /// ```
     pub fn new(left: Bound<T, L>, right: Bound<T, R>) -> Result<Self, IntervalIsEmpty> {
         Self::new_(left.into(), right.into())
