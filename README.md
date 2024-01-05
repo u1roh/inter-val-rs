@@ -2,6 +2,8 @@
 
 Mathematical intervals, i.g., [a, b], (a, b), [a, b), and (a, b].
 
+NOTE: This library is not yet stable.
+
 ## Usage
 ```
 use intervals::{Inclusive, Exclusive, Interval};
