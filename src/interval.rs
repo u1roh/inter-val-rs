@@ -345,3 +345,33 @@ where
         self.right.maximum()
     }
 }
+
+/// ```
+/// use intervals::{Interval, Exclusive, Inclusive, Bounding};
+///
+/// // Iterate from Interval<i32, Exclusive, Inclusive>
+/// let items: Vec<_> = Exclusive.at(0).to(Inclusive.at(10)).unwrap().into_iter().collect();
+/// assert_eq!(items.len(), 10);
+/// assert_eq!(items[0], 1);
+/// assert_eq!(items.last().unwrap(), &10);
+///
+/// // Iterate from Interval<i32>
+/// let items: Vec<_> = (Bounding::Exclusive.at(0).to(Bounding::Inclusive.at(10)))
+///     .unwrap()
+///     .into_iter()
+///     .collect();
+/// assert_eq!(items.len(), 10);
+/// assert_eq!(items[0], 1);
+/// assert_eq!(items.last().unwrap(), &10);
+/// ```
+impl<T, L, R> IntoIterator for Interval<T, L, R>
+where
+    std::ops::RangeInclusive<T>: Iterator<Item = T>,
+    Self: Minimum<T> + Maximum<T>,
+{
+    type Item = T;
+    type IntoIter = std::ops::RangeInclusive<T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.minimum()..=self.maximum()
+    }
+}
