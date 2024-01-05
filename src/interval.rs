@@ -9,6 +9,25 @@ pub struct IntervalUnion<T, L: Flip, R: Flip> {
     pub enclosure: Interval<T, L, R>,
     pub gap: Option<Interval<T, R::Flip, L::Flip>>,
 }
+impl<T, L: Flip, R: Flip> IntoIterator for IntervalUnion<T, L, R> {
+    type Item = Interval<T, L, R>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+    fn into_iter(self) -> Self::IntoIter {
+        if let Some(gap) = self.gap {
+            let first = Interval {
+                left: self.enclosure.left,
+                right: gap.left.flip(),
+            };
+            let second = Interval {
+                left: gap.right.flip(),
+                right: self.enclosure.right,
+            };
+            vec![first, second].into_iter()
+        } else {
+            vec![self.enclosure].into_iter()
+        }
+    }
+}
 
 fn is_valid_interval<T, L, R>(left: &LeftBounded<T, L>, right: &RightBounded<T, R>) -> bool
 where
@@ -251,6 +270,18 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
             .or(Interval::new_(other.right.flip(), self.left.flip()))
     }
 
+    /// ```
+    /// use intervals::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(0).to(Exclusive.at(3)).unwrap();
+    /// let b = Inclusive.at(5).to(Exclusive.at(8)).unwrap();
+    /// let union = a.union(b);
+    /// assert_eq!(union.enclosure, a.enclosure(b));
+    /// assert_eq!(union.gap, a.gap(b));
+    /// let ints: Vec<Interval<_, _, _>> = union.into_iter().collect();
+    /// assert_eq!(ints.len(), 2);
+    /// assert_eq!(ints[0], a);
+    /// assert_eq!(ints[1], b);
+    /// ```
     pub fn union(self, other: Self) -> IntervalUnion<T, L, R>
     where
         T: Clone,
