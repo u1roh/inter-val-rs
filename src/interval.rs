@@ -264,7 +264,7 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
         self.right.clone().flip()
     }
 
-    pub fn enclosure_of<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
+    pub fn enclosure_of_items<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
         let mut items = items.into_iter();
         let first = items.next()?.into();
         Some(items.fold(first, |acc, item| acc.enclosure(item.into())))
