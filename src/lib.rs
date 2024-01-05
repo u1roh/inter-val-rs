@@ -10,7 +10,7 @@ mod tests;
 mod traits;
 
 use inclusion::{Left, Right};
-use ordered_float::{FloatCore, FloatIsNan, NotNan};
+use ordered_float::{FloatCore, NotNan};
 use traits::BoundaryOf;
 
 pub use bound::Bound;
@@ -26,9 +26,6 @@ impl Inclusive {
             inclusion: self,
         }
     }
-    pub fn not_nan<T: FloatCore>(self, t: T) -> Result<Bound<NotNan<T>, Self>, FloatIsNan> {
-        self.at(t).into_not_nan()
-    }
 }
 impl Exclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
@@ -37,9 +34,6 @@ impl Exclusive {
             inclusion: self,
         }
     }
-    pub fn not_nan<T: FloatCore>(self, t: T) -> Result<Bound<NotNan<T>, Self>, FloatIsNan> {
-        self.at(t).into_not_nan()
-    }
 }
 impl Inclusion {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
@@ -47,9 +41,6 @@ impl Inclusion {
             val: t,
             inclusion: self,
         }
-    }
-    pub fn not_nan<T: FloatCore>(self, t: T) -> Result<Bound<NotNan<T>, Self>, FloatIsNan> {
-        self.at(t).into_not_nan()
     }
 }
 
@@ -63,11 +54,11 @@ impl<T: Ord, B: BoundaryOf<Left>> Bound<T, B> {
 }
 
 impl<T: FloatCore, B: BoundaryOf<Left>> Bound<T, B> {
-    pub fn not_nan_to<R: BoundaryOf<Right>>(
+    pub fn float_to<R: BoundaryOf<Right>>(
         self,
         right: Bound<T, R>,
     ) -> Result<Interval<NotNan<T>, B, R>, Error> {
-        Interval::not_nan(self, right)
+        Interval::try_new(self, right)
     }
 }
 
@@ -77,6 +68,8 @@ pub struct IntervalIsEmpty;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("infallible")]
+    Infallible(#[from] std::convert::Infallible),
     #[error("float is NaN")]
     FloatIsNan(#[from] ordered_float::FloatIsNan),
     #[error("left boundary must be less than or equal to right boundary")]

@@ -21,12 +21,9 @@ fn it_works() {
     // assert!(!i.contains(&-2));
     // assert!(i.contains(&5));
 
-    let _i = Interval::<NotNan<_>, Inclusive, Inclusive>::not_nan(1.23, 4.56).unwrap();
-    let _i = Inclusive
-        .not_nan(1.23)
-        .unwrap()
-        .to(Exclusive.not_nan(4.56).unwrap())
-        .unwrap();
+    // let _i = Interval::<NotNan<_>, Inclusive, Inclusive>::not_nan(1.23, 4.56).unwrap();
+    let _i =
+        Interval::<NotNan<_>, Inclusive, Inclusive>::try_new((1.23).into(), (4.56).into()).unwrap();
 
     let i = Interval::enclosure_of([3, 9, 2, 5]).unwrap();
     assert_eq!(i.left().val, 2);
@@ -34,7 +31,12 @@ fn it_works() {
 }
 
 fn assert_typeid<T: 'static>(a: &dyn Any) {
-    assert_eq!(a.type_id(), TypeId::of::<T>());
+    assert_eq!(
+        a.type_id(),
+        TypeId::of::<T>(),
+        "{}",
+        std::any::type_name::<T>()
+    );
 }
 
 #[test]
@@ -52,7 +54,7 @@ fn new_interval() {
     assert!(a.contains(&1));
     assert!(!a.contains(&3));
 
-    let a = Interval::<_, Exclusive, Inclusive>::not_nan(1.23, 4.56).unwrap();
+    let a = Interval::<_, Exclusive, Inclusive>::try_new(1.23.into(), 4.56.into()).unwrap();
     assert!(!a.contains_f(1.23));
     assert!(a.contains_f(1.23000000000001));
     assert!(a.contains_f(4.56));
@@ -63,7 +65,7 @@ fn bound_to_bound() {
     let a = Inclusive.at(0).to(Exclusive.at(3)).unwrap();
     assert_typeid::<Interval<i32, Inclusive, Exclusive>>(&a);
 
-    let a = Inclusive.at(1.23).not_nan_to(Exclusive.at(4.56)).unwrap();
+    let a = Inclusive.at(1.23).float_to(Exclusive.at(4.56)).unwrap();
     assert_typeid::<IntervalF<f64, Inclusive, Exclusive>>(&a);
 }
 

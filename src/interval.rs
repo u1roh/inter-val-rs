@@ -1,7 +1,7 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::inclusion::{Left, Right};
-use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum};
+use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum, OrdFrom};
 use crate::{Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, RightBounded};
 
 /// Return type of `Interval::union()`.
@@ -59,6 +59,22 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
         Self::new_(left.into(), right.into())
     }
 
+    pub fn try_new<T2>(left: Bound<T2, L>, right: Bound<T2, R>) -> Result<Self, crate::Error>
+    where
+        T: OrdFrom<T2>,
+        crate::Error: From<T::Error>,
+    {
+        let left = Bound {
+            val: T::ord_from(left.val)?,
+            inclusion: left.inclusion,
+        };
+        let right = Bound {
+            val: T::ord_from(right.val)?,
+            inclusion: right.inclusion,
+        };
+        Self::new(left, right).map_err(Into::into)
+    }
+
     pub fn left(&self) -> &LeftBounded<T, L> {
         &self.left
     }
@@ -70,7 +86,7 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// use intervals::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(4).to(Inclusive.at(7)).unwrap();
     /// let b = Exclusive.at(4).to(Inclusive.at(7)).unwrap();
-    /// let c = Inclusive.at(1.23).not_nan_to(Inclusive.at(4.56)).unwrap();
+    /// let c = Inclusive.at(1.23).float_to(Inclusive.at(4.56)).unwrap();
     /// assert_eq!(a.min(), 4);
     /// assert_eq!(b.min(), 5);
     /// assert_eq!(c.min(), 1.23);
@@ -86,7 +102,7 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// use intervals::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(4).to(Inclusive.at(7)).unwrap();
     /// let b = Inclusive.at(4).to(Exclusive.at(7)).unwrap();
-    /// let c = Inclusive.at(1.23).not_nan_to(Inclusive.at(4.56)).unwrap();
+    /// let c = Inclusive.at(1.23).float_to(Inclusive.at(4.56)).unwrap();
     /// assert_eq!(a.max(), 7);
     /// assert_eq!(b.max(), 6);
     /// assert_eq!(c.max(), 4.56);
@@ -170,14 +186,6 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     }
 }
 impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>, L, R> {
-    pub fn not_nan(
-        left: impl Into<Bound<T, L>>,
-        right: impl Into<Bound<T, R>>,
-    ) -> Result<Self, crate::Error> {
-        let left = left.into().into_not_nan()?;
-        let right = right.into().into_not_nan()?;
-        Self::new(left, right).map_err(Into::into)
-    }
     pub fn inf(&self) -> NotNan<T> {
         self.left.inf()
     }

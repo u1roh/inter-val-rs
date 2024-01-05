@@ -1,3 +1,5 @@
+use ordered_float::{FloatCore, FloatIsNan, NotNan};
+
 pub trait Flip {
     type Flip: Flip<Flip = Self>;
     fn flip(self) -> Self::Flip;
@@ -23,4 +25,21 @@ pub trait Maximum<T> {
 pub(crate) trait IntoGeneral {
     type General;
     fn into_general(self) -> Self::General;
+}
+
+pub trait OrdFrom<T>: Ord + Sized {
+    type Error;
+    fn ord_from(t: T) -> Result<Self, Self::Error>;
+}
+impl<T: Ord> OrdFrom<T> for T {
+    type Error = std::convert::Infallible;
+    fn ord_from(t: T) -> Result<Self, Self::Error> {
+        Ok(t)
+    }
+}
+impl<T: FloatCore> OrdFrom<T> for NotNan<T> {
+    type Error = FloatIsNan;
+    fn ord_from(t: T) -> Result<Self, Self::Error> {
+        NotNan::new(t)
+    }
 }
