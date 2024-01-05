@@ -1,7 +1,7 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::bounding::{Left, Right};
-use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum, OrdFrom};
+use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum, Scalar};
 use crate::{Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, RightBounded};
 
 /// Return type of `Interval::union()`.
@@ -61,15 +61,15 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
 
     pub fn try_new<T2>(left: Bound<T2, L>, right: Bound<T2, R>) -> Result<Self, crate::Error>
     where
-        T: OrdFrom<T2>,
+        T: Scalar<T2>,
         crate::Error: From<T::Error>,
     {
         let left = Bound {
-            val: T::ord_from(left.val)?,
+            val: T::scalar_try_from(left.val)?,
             bounding: left.bounding,
         };
         let right = Bound {
-            val: T::ord_from(right.val)?,
+            val: T::scalar_try_from(right.val)?,
             bounding: right.bounding,
         };
         Self::new(left, right).map_err(Into::into)
@@ -114,7 +114,19 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
         self.right.maximum()
     }
 
-    pub fn contains(&self, t: &T) -> bool {
+    /// ```
+    /// use intervals::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(4).to(Exclusive.at(7)).unwrap();
+    /// let b = Exclusive.at(1.23).float_to(Inclusive.at(4.56)).unwrap();
+    /// assert!(a.contains(&4));
+    /// assert!(!a.contains(&7));
+    /// assert!(!b.contains(&1.23));
+    /// assert!(b.contains(&4.56));
+    /// ```
+    pub fn contains<T2>(&self, t: &T2) -> bool
+    where
+        T: Scalar<T2>,
+    {
         self.left.contains(t) && self.right.contains(t)
     }
 
@@ -197,9 +209,6 @@ impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>
     }
     pub fn center(&self) -> NotNan<T> {
         NotNan::new((*self.left.val + *self.right.val) / (T::one() + T::one())).unwrap()
-    }
-    pub fn contains_f(&self, t: T) -> bool {
-        NotNan::new(t).map(|t| self.contains(&t)).unwrap_or(false)
     }
     pub fn closure(self) -> Interval<NotNan<T>, Inclusive> {
         Interval {

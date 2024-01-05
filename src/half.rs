@@ -2,7 +2,7 @@ use ordered_float::{FloatCore, NotNan};
 
 use crate::{
     bounding::{Left, Right},
-    traits::{Boundary, BoundaryOf, Flip, IntoGeneral, Maximum, Minimum},
+    traits::{Boundary, BoundaryOf, Flip, IntoGeneral, Maximum, Minimum, Scalar},
     Bound, Bounding, Exclusive, Inclusive,
 };
 
@@ -76,7 +76,10 @@ impl<T: Ord, B: BoundaryOf<Left>> LeftBounded<T, B> {
     pub fn includes(&self, other: &Self) -> bool {
         self.val <= other.val
     }
-    pub fn contains(&self, t: &T) -> bool {
+    pub fn contains<T2>(&self, t: &T2) -> bool
+    where
+        T: Scalar<T2>,
+    {
         self.bounding.less(&self.val, t)
     }
     pub fn intersection(self, other: Self) -> Self {
@@ -91,8 +94,11 @@ impl<T: Ord, B: BoundaryOf<Right>> RightBounded<T, B> {
     pub fn includes(&self, other: &Self) -> bool {
         other.val <= self.val
     }
-    pub fn contains(&self, t: &T) -> bool {
-        self.bounding.less(t, &self.val)
+    pub fn contains<T2>(&self, t: &T2) -> bool
+    where
+        T: Scalar<T2>,
+    {
+        self.bounding.greater(&self.val, t)
     }
     pub fn intersection(self, other: Self) -> Self {
         self.min(other)
