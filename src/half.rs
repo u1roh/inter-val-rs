@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Copy)]
-pub struct HalfBounded<T, B, LR>(Bound<T, B>, std::marker::PhantomData<LR>);
+pub struct HalfBounded<T, B, LR>(pub(crate) Bound<T, B>, std::marker::PhantomData<LR>);
 
 pub type LeftBounded<T, B> = HalfBounded<T, B, Left>;
 pub type RightBounded<T, B> = HalfBounded<T, B, Right>;

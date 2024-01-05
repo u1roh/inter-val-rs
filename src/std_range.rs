@@ -101,4 +101,30 @@ mod converters {
             Self::try_new(Inclusive.at(left), Inclusive.at(right))?.ok_or(IntervalIsEmpty.into())
         }
     }
+
+    /// ```
+    /// use intervals::{Interval, Inclusive, Exclusive};
+    /// let src = Inclusive.at(0).to(Exclusive.at(10)).unwrap();
+    /// let dst: std::ops::Range<i32> = src.into();
+    /// assert_eq!(dst.start, 0);
+    /// assert_eq!(dst.end, 10);
+    /// ```
+    impl<T> From<Interval<T, Inclusive, Exclusive>> for std::ops::Range<T> {
+        fn from(i: Interval<T, Inclusive, Exclusive>) -> Self {
+            i.left.0.val..i.right.0.val
+        }
+    }
+
+    /// ```
+    /// use intervals::{Interval, Inclusive};
+    /// let src = Inclusive.at(0).to(Inclusive.at(10)).unwrap();
+    /// let dst: std::ops::RangeInclusive<i32> = src.into();
+    /// assert_eq!(dst.start(), &0);
+    /// assert_eq!(dst.end(), &10);
+    /// ```
+    impl<T> From<Interval<T, Inclusive, Inclusive>> for std::ops::RangeInclusive<T> {
+        fn from(i: Interval<T, Inclusive, Inclusive>) -> Self {
+            i.left.0.val..=i.right.0.val
+        }
+    }
 }

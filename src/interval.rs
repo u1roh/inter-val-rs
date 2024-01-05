@@ -30,12 +30,20 @@ where
 /// * `Interval<T>` (= `Interval<T, Bounding, Bounding>`) represents any of the above.
 #[derive(Debug, Clone, Copy, Eq)]
 pub struct Interval<T, L = crate::Bounding, R = L> {
-    left: LeftBounded<T, L>,
-    right: RightBounded<T, R>,
+    pub(crate) left: LeftBounded<T, L>,
+    pub(crate) right: RightBounded<T, R>,
 }
 impl<T: Eq, L: Eq, R: Eq> PartialEq for Interval<T, L, R> {
     fn eq(&self, other: &Self) -> bool {
         self.left == other.left && self.right == other.right
+    }
+}
+impl<T, L, R> Interval<T, L, R> {
+    pub fn left(&self) -> &LeftBounded<T, L> {
+        &self.left
+    }
+    pub fn right(&self) -> &RightBounded<T, R> {
+        &self.right
     }
 }
 impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
@@ -120,13 +128,6 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
             T::scalar_try_from(left)?.into(),
             T::scalar_try_from(right)?.into(),
         ))
-    }
-
-    pub fn left(&self) -> &LeftBounded<T, L> {
-        &self.left
-    }
-    pub fn right(&self) -> &RightBounded<T, R> {
-        &self.right
     }
 
     /// ```
@@ -324,5 +325,23 @@ impl<T, L: IntoGeneral, R: IntoGeneral> IntoGeneral for Interval<T, L, R> {
             left: self.left.into_general(),
             right: self.right.into_general(),
         }
+    }
+}
+
+impl<T, L, R> Minimum<T> for Interval<T, L, R>
+where
+    LeftBounded<T, L>: Minimum<T>,
+{
+    fn minimum(&self) -> T {
+        self.left.minimum()
+    }
+}
+
+impl<T, L, R> Maximum<T> for Interval<T, L, R>
+where
+    RightBounded<T, R>: Maximum<T>,
+{
+    fn maximum(&self) -> T {
+        self.right.maximum()
     }
 }
