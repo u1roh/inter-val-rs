@@ -108,7 +108,7 @@ pub enum Error {
 pub type ClosedInterval<T> = Interval<T, Inclusive>;
 pub type OpenInterval<T> = Interval<T, Exclusive>;
 
-pub type IntervalF<T, L, R> = Interval<NotNan<T>, L, R>;
+pub type IntervalF<T, L = Bounding, R = L> = Interval<NotNan<T>, L, R>;
 pub type ClosedIntervalF<T> = ClosedInterval<NotNan<T>>;
 pub type OpenIntervalF<T> = OpenInterval<NotNan<T>>;
 

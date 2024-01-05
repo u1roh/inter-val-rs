@@ -461,6 +461,28 @@ impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>
     }
 }
 
+impl<T: FloatCore> Interval<NotNan<T>, Inclusive, Inclusive> {
+    /// ```
+    /// use intervals::IntervalF;
+    /// let span = IntervalF::enclosure_of_floats(vec![3.1, 9.2, 2.3, 5.4]).unwrap().unwrap(); // [2.3, 9.2]
+    /// assert_eq!(span.inf(), 2.3);
+    /// assert_eq!(span.sup(), 9.2);
+    /// assert!(IntervalF::<f64, _, _>::enclosure_of_floats(vec![]).unwrap().is_none());
+    /// ```
+    pub fn enclosure_of_floats(
+        floats: impl IntoIterator<Item = T>,
+    ) -> Result<Option<Self>, FloatIsNan> {
+        let mut inf = NotNan::new(T::infinity()).unwrap();
+        let mut sup = NotNan::new(T::neg_infinity()).unwrap();
+        for x in floats {
+            let x = NotNan::new(x)?;
+            inf = inf.min(x);
+            sup = sup.max(x);
+        }
+        Ok(Self::between(inf, sup))
+    }
+}
+
 impl<T, L: IntoGeneral, R: IntoGeneral> IntoGeneral for Interval<T, L, R> {
     type General = Interval<T, L::General, R::General>;
     fn into_general(self) -> Self::General {
