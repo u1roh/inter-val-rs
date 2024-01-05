@@ -4,7 +4,7 @@ impl<T> From<T> for Bound<T, Inclusive> {
     fn from(t: T) -> Self {
         Self {
             val: t,
-            inclusion: Inclusive,
+            bounding: Inclusive,
         }
     }
 }
@@ -12,7 +12,7 @@ impl<T> From<T> for Bound<T, Exclusive> {
     fn from(t: T) -> Self {
         Self {
             val: t,
-            inclusion: Exclusive,
+            bounding: Exclusive,
         }
     }
 }

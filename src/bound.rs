@@ -3,7 +3,7 @@ use crate::traits::{Flip, IntoGeneral};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Bound<T, B> {
     pub val: T,
-    pub inclusion: B,
+    pub bounding: B,
 }
 
 impl<T, B: IntoGeneral> IntoGeneral for Bound<T, B> {
@@ -11,7 +11,7 @@ impl<T, B: IntoGeneral> IntoGeneral for Bound<T, B> {
     fn into_general(self) -> Self::General {
         Bound {
             val: self.val,
-            inclusion: self.inclusion.into_general(),
+            bounding: self.bounding.into_general(),
         }
     }
 }
@@ -21,7 +21,7 @@ impl<T, B: Flip> Flip for Bound<T, B> {
     fn flip(self) -> Self::Flip {
         Bound {
             val: self.val,
-            inclusion: self.inclusion.flip(),
+            bounding: self.bounding.flip(),
         }
     }
 }

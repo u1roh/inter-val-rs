@@ -48,7 +48,7 @@ fn new_interval() {
     assert!(!a.contains(&3));
     assert!(!a.contains(&-1));
 
-    let a = Interval::new(Inclusion::Exclusive.at(0), Inclusion::Exclusive.at(3)).unwrap();
+    let a = Interval::new(Bounding::Exclusive.at(0), Bounding::Exclusive.at(3)).unwrap();
     assert_typeid::<Interval<i32>>(&a);
     assert!(!a.contains(&0));
     assert!(a.contains(&1));
@@ -86,11 +86,11 @@ fn range_into_interval() {
 
 #[test]
 fn ordering() {
-    let a: LeftBounded<_, _> = Inclusion::Inclusive.at(0).into();
-    let b: LeftBounded<_, _> = Inclusion::Exclusive.at(0).into();
+    let a: LeftBounded<_, _> = Bounding::Inclusive.at(0).into();
+    let b: LeftBounded<_, _> = Bounding::Exclusive.at(0).into();
     assert!(a < b);
 
-    let a: RightBounded<_, _> = Inclusion::Inclusive.at(0).into();
-    let b: RightBounded<_, _> = Inclusion::Exclusive.at(0).into();
+    let a: RightBounded<_, _> = Bounding::Inclusive.at(0).into();
+    let b: RightBounded<_, _> = Bounding::Exclusive.at(0).into();
     assert!(a > b);
 }

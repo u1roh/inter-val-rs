@@ -21,7 +21,7 @@ where
 
 /// Interval type.
 #[derive(Debug, Clone, Copy, Eq)]
-pub struct Interval<T, L = crate::Inclusion, R = L> {
+pub struct Interval<T, L = crate::Bounding, R = L> {
     left: LeftBounded<T, L>,
     right: RightBounded<T, R>,
 }
@@ -66,11 +66,11 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     {
         let left = Bound {
             val: T::ord_from(left.val)?,
-            inclusion: left.inclusion,
+            bounding: left.bounding,
         };
         let right = Bound {
             val: T::ord_from(right.val)?,
-            inclusion: right.inclusion,
+            bounding: right.bounding,
         };
         Self::new(left, right).map_err(Into::into)
     }

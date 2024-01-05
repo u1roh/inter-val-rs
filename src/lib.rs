@@ -15,7 +15,7 @@ use traits::BoundaryOf;
 
 pub use bound::Bound;
 pub use half::{LeftBounded, RightBounded};
-pub use inclusion::{Exclusive, Inclusion, Inclusive};
+pub use inclusion::{Bounding, Exclusive, Inclusive};
 pub use interval::Interval;
 pub use ndim::NDim;
 
@@ -23,7 +23,7 @@ impl Inclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
         Bound {
             val: t,
-            inclusion: self,
+            bounding: self,
         }
     }
 }
@@ -31,15 +31,15 @@ impl Exclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
         Bound {
             val: t,
-            inclusion: self,
+            bounding: self,
         }
     }
 }
-impl Inclusion {
+impl Bounding {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
         Bound {
             val: t,
-            inclusion: self,
+            bounding: self,
         }
     }
 }
@@ -92,8 +92,8 @@ pub type OpenIntervalF64 = OpenIntervalF<f64>;
 pub type RightHalfOpenIntervalF64 = RightHalfOpenIntervalF<f64>;
 pub type LeftHalfOpenIntervalF64 = LeftHalfOpenIntervalF<f64>;
 
-pub type IntervalN<const N: usize, T, L = Inclusion, R = L> = NDim<N, Interval<T, L, R>>;
-pub type Interval2<T, L = Inclusion, R = L> = IntervalN<2, T, L, R>;
-pub type Interval3<T, L = Inclusion, R = L> = IntervalN<3, T, L, R>;
-pub type Interval4<T, L = Inclusion, R = L> = IntervalN<4, T, L, R>;
+pub type IntervalN<const N: usize, T, L = Bounding, R = L> = NDim<N, Interval<T, L, R>>;
+pub type Interval2<T, L = Bounding, R = L> = IntervalN<2, T, L, R>;
+pub type Interval3<T, L = Bounding, R = L> = IntervalN<3, T, L, R>;
+pub type Interval4<T, L = Bounding, R = L> = IntervalN<4, T, L, R>;
 pub type BoxN<const N: usize, T> = IntervalN<N, NotNan<T>, Inclusive>;

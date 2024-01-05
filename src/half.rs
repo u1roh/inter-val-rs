@@ -3,7 +3,7 @@ use ordered_float::{FloatCore, NotNan};
 use crate::{
     inclusion::{Left, Right},
     traits::{Boundary, BoundaryOf, Flip, IntoGeneral, Maximum, Minimum},
-    Bound, Exclusive, Inclusion, Inclusive,
+    Bound, Bounding, Exclusive, Inclusive,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -37,7 +37,7 @@ mod ordering {
 
     impl<T: Ord, B: BoundaryOf<LR>, LR> HalfBounded<T, B, LR> {
         fn ordering_key(&self) -> (&T, B::Ordered) {
-            (&self.val, self.inclusion.into_ordered())
+            (&self.val, self.bounding.into_ordered())
         }
     }
     impl<T: Ord, B: BoundaryOf<LR>, LR> PartialOrd for HalfBounded<T, B, LR> {
@@ -77,7 +77,7 @@ impl<T: Ord, B: BoundaryOf<Left>> LeftBounded<T, B> {
         self.val <= other.val
     }
     pub fn contains(&self, t: &T) -> bool {
-        self.inclusion.less(&self.val, t)
+        self.bounding.less(&self.val, t)
     }
     pub fn intersection(self, other: Self) -> Self {
         self.max(other)
@@ -92,7 +92,7 @@ impl<T: Ord, B: BoundaryOf<Right>> RightBounded<T, B> {
         other.val <= self.val
     }
     pub fn contains(&self, t: &T) -> bool {
-        self.inclusion.less(t, &self.val)
+        self.bounding.less(t, &self.val)
     }
     pub fn intersection(self, other: Self) -> Self {
         self.min(other)
@@ -124,19 +124,19 @@ impl<T: num::Integer + Clone> Maximum<T> for RightBounded<T, Exclusive> {
     }
 }
 
-impl<T: num::Integer + Clone> Minimum<T> for LeftBounded<T, Inclusion> {
+impl<T: num::Integer + Clone> Minimum<T> for LeftBounded<T, Bounding> {
     fn minimum(&self) -> T {
-        match self.inclusion {
-            Inclusion::Inclusive => self.val.clone(),
-            Inclusion::Exclusive => self.val.clone() + T::one(),
+        match self.bounding {
+            Bounding::Inclusive => self.val.clone(),
+            Bounding::Exclusive => self.val.clone() + T::one(),
         }
     }
 }
-impl<T: num::Integer + Clone> Maximum<T> for RightBounded<T, Inclusion> {
+impl<T: num::Integer + Clone> Maximum<T> for RightBounded<T, Bounding> {
     fn maximum(&self) -> T {
-        match self.inclusion {
-            Inclusion::Inclusive => self.val.clone(),
-            Inclusion::Exclusive => self.val.clone() - T::one(),
+        match self.bounding {
+            Bounding::Inclusive => self.val.clone(),
+            Bounding::Exclusive => self.val.clone() - T::one(),
         }
     }
 }
@@ -148,14 +148,14 @@ impl<T: FloatCore, B: Boundary> LeftBounded<NotNan<T>, B> {
     pub fn closure(self) -> LeftBounded<NotNan<T>, Inclusive> {
         Bound {
             val: self.val,
-            inclusion: Inclusive,
+            bounding: Inclusive,
         }
         .into()
     }
     pub fn interior(self) -> LeftBounded<NotNan<T>, Exclusive> {
         Bound {
             val: self.val,
-            inclusion: Exclusive,
+            bounding: Exclusive,
         }
         .into()
     }
@@ -167,14 +167,14 @@ impl<T: FloatCore, B: Boundary> RightBounded<NotNan<T>, B> {
     pub fn closure(self) -> RightBounded<NotNan<T>, Inclusive> {
         Bound {
             val: self.val,
-            inclusion: Inclusive,
+            bounding: Inclusive,
         }
         .into()
     }
     pub fn interior(self) -> RightBounded<NotNan<T>, Exclusive> {
         Bound {
             val: self.val,
-            inclusion: Exclusive,
+            bounding: Exclusive,
         }
         .into()
     }

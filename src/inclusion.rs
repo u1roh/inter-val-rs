@@ -9,7 +9,7 @@ pub struct Inclusive;
 pub struct Exclusive;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Inclusion {
+pub enum Bounding {
     Inclusive,
     Exclusive,
 }
@@ -25,7 +25,7 @@ pub struct SideInclusion<B, S>(B, PhantomData<S>);
 
 mod ordering {
     use super::{Left, Right, SideInclusion};
-    use crate::{Exclusive, Inclusion, Inclusive};
+    use crate::{Bounding, Exclusive, Inclusive};
 
     impl<B: PartialEq, S> PartialEq for SideInclusion<B, S> {
         fn eq(&self, other: &Self) -> bool {
@@ -55,30 +55,30 @@ mod ordering {
     impl_ord!((_lhs, _rhs): SideInclusion<Exclusive, Left> => std::cmp::Ordering::Equal);
     impl_ord!((_lhs, _rhs): SideInclusion<Inclusive, Right> => std::cmp::Ordering::Equal);
     impl_ord!((_lhs, _rhs): SideInclusion<Exclusive, Right> => std::cmp::Ordering::Equal);
-    impl_ord!((lhs, rhs): SideInclusion<Inclusion, Left> => match (lhs.0, rhs.0) {
-        (Inclusion::Inclusive, Inclusion::Inclusive) => std::cmp::Ordering::Equal,
-        (Inclusion::Inclusive, Inclusion::Exclusive) => std::cmp::Ordering::Less,
-        (Inclusion::Exclusive, Inclusion::Inclusive) => std::cmp::Ordering::Greater,
-        (Inclusion::Exclusive, Inclusion::Exclusive) => std::cmp::Ordering::Equal,
+    impl_ord!((lhs, rhs): SideInclusion<Bounding, Left> => match (lhs.0, rhs.0) {
+        (Bounding::Inclusive, Bounding::Inclusive) => std::cmp::Ordering::Equal,
+        (Bounding::Inclusive, Bounding::Exclusive) => std::cmp::Ordering::Less,
+        (Bounding::Exclusive, Bounding::Inclusive) => std::cmp::Ordering::Greater,
+        (Bounding::Exclusive, Bounding::Exclusive) => std::cmp::Ordering::Equal,
     });
-    impl_ord!((lhs, rhs): SideInclusion<Inclusion, Right> => match (lhs.0, rhs.0) {
-        (Inclusion::Inclusive, Inclusion::Inclusive) => std::cmp::Ordering::Equal,
-        (Inclusion::Inclusive, Inclusion::Exclusive) => std::cmp::Ordering::Greater,
-        (Inclusion::Exclusive, Inclusion::Inclusive) => std::cmp::Ordering::Less,
-        (Inclusion::Exclusive, Inclusion::Exclusive) => std::cmp::Ordering::Equal,
+    impl_ord!((lhs, rhs): SideInclusion<Bounding, Right> => match (lhs.0, rhs.0) {
+        (Bounding::Inclusive, Bounding::Inclusive) => std::cmp::Ordering::Equal,
+        (Bounding::Inclusive, Bounding::Exclusive) => std::cmp::Ordering::Greater,
+        (Bounding::Exclusive, Bounding::Inclusive) => std::cmp::Ordering::Less,
+        (Bounding::Exclusive, Bounding::Exclusive) => std::cmp::Ordering::Equal,
     });
 }
 
 impl IntoGeneral for Inclusive {
-    type General = Inclusion;
+    type General = Bounding;
     fn into_general(self) -> Self::General {
-        Inclusion::Inclusive
+        Bounding::Inclusive
     }
 }
 impl IntoGeneral for Exclusive {
-    type General = Inclusion;
+    type General = Bounding;
     fn into_general(self) -> Self::General {
-        Inclusion::Exclusive
+        Bounding::Exclusive
     }
 }
 
@@ -94,7 +94,7 @@ impl Flip for Exclusive {
         Inclusive
     }
 }
-impl Flip for Inclusion {
+impl Flip for Bounding {
     type Flip = Self;
     fn flip(self) -> Self {
         match self {
@@ -126,11 +126,11 @@ impl Boundary for Exclusive {
         this < t
     }
 }
-impl Boundary for Inclusion {
+impl Boundary for Bounding {
     fn less<T: Ord>(&self, s: &T, t: &T) -> bool {
         match self {
-            Inclusion::Inclusive => s <= t,
-            Inclusion::Exclusive => s < t,
+            Bounding::Inclusive => s <= t,
+            Bounding::Exclusive => s < t,
         }
     }
 }
@@ -153,7 +153,7 @@ where
         SideInclusion(self, PhantomData)
     }
 }
-impl<LR> BoundaryOf<LR> for Inclusion
+impl<LR> BoundaryOf<LR> for Bounding
 where
     SideInclusion<Self, LR>: Ord,
 {
