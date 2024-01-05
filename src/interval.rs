@@ -59,6 +59,19 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
         Self::new_(left.into(), right.into())
     }
 
+    /// ```
+    /// use intervals::{IntervalF, Exclusive, Inclusive};
+    /// let a = IntervalF::try_new(Inclusive.at(-1.0), Exclusive.at(1.0)).unwrap().unwrap();
+    /// assert!(a.contains(&-1.0));
+    /// assert!(!a.contains(&1.0));
+    ///
+    /// let a = IntervalF::<_, Exclusive, Inclusive>::try_new(1.23.into(), 4.56.into())
+    ///     .unwrap()
+    ///     .unwrap();
+    /// assert!(!a.contains(&1.23));
+    /// assert!(a.contains(&1.23000000000001));
+    /// assert!(a.contains(&4.56));
+    /// ```
     pub fn try_new<T2>(left: Bound<T2, L>, right: Bound<T2, R>) -> Result<Option<Self>, T::Error>
     where
         T: Scalar<T2>,
@@ -120,6 +133,7 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// assert!(a.contains(&4));
     /// assert!(!a.contains(&7));
     /// assert!(!b.contains(&1.23));
+    /// assert!(b.contains(&1.230000000001));
     /// assert!(b.contains(&4.56));
     /// ```
     pub fn contains<T2>(&self, t: &T2) -> bool
