@@ -39,9 +39,9 @@ where
 }
 
 /// Interval like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `Ord` type.
-/// * `T`: Scalar type. `T` should implements `Ord`. Use `ordered_float::NotNan<T>` for floating point numbers.
-/// * `L`: Left boundary type. One of `Bounding`, `Inclusive` or `Exclusive`.
-/// * `R`: Right boundary type. One of `Bounding`, `Inclusive` or `Exclusive`.
+/// * `T`: Scalar type. `T` should implements `Ord`. Use [`NotNan<T>`](crate::ordered_float::NotNan) for floating point numbers.
+/// * `L`: Left boundary type. Specify one of [`Inclusive`], [`Exclusive`], or [`Bounding`](crate::Bounding).
+/// * `R`: Right boundary type. Specify one of [`Inclusive`] [`Exclusive`], or [`Bounding`](crate::Bounding).
 /// * `Interval<T, Inclusive>` represents a closed interval, i.e., *[a, b]*.
 /// * `Interval<T, Exclusive>` represents a open interval, i.e., *(a, b)*.
 /// * `Interval<T, Inclusive, Exclusive>` represents a right half-open interval, i.e., *[a, b)*.
@@ -191,11 +191,45 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// assert!(b.contains(&1.230000000001));
     /// assert!(b.contains(&4.56));
     /// ```
-    pub fn contains<T2>(&self, t: &T2) -> bool
+    pub fn contains<X>(&self, x: &X) -> bool
     where
-        T: Scalar<T2>,
+        T: Scalar<X>,
     {
-        self.left.contains(t) && self.right.contains(t)
+        self.left.contains(x) && self.right.contains(x)
+    }
+
+    /// ```
+    /// use intervals::{Inclusive, Exclusive};
+    /// let a = Inclusive.at(4).to(Exclusive.at(7)).unwrap();
+    /// assert_eq!(a.dilate(2), Inclusive.at(2).to(Exclusive.at(9)).unwrap());
+    /// assert_eq!(a.dilate(-1), Inclusive.at(5).to(Exclusive.at(6)).unwrap());
+    /// assert!(std::panic::catch_unwind(|| a.dilate(-2)).is_err());
+    /// ```
+    pub fn dilate(self, delta: T) -> Self
+    where
+        T: Clone + std::ops::Add<Output = T> + std::ops::Sub<Output = T>,
+    {
+        Self::new_(self.left.dilate(delta.clone()), self.right.dilate(delta)).unwrap()
+    }
+
+    /// ```
+    /// use intervals::{Inclusive, Exclusive};
+    /// let a = Inclusive.at(0.0).float_to(Exclusive.at(10.0)).unwrap();
+    /// assert_eq!(a.try_dilate(2.0).unwrap(), Inclusive.at(-2.0).float_to(Exclusive.at(12.0)).unwrap());
+    /// assert_eq!(a.try_dilate(-1.5).unwrap(), Inclusive.at(1.5).float_to(Exclusive.at(8.5)).unwrap());
+    /// assert!(a.try_dilate(-6.0).is_err());
+    /// ```
+    pub fn try_dilate<X>(self, delta: X) -> Result<Self, crate::Error>
+    where
+        T: Scalar<X>,
+        crate::Error: From<T::Error>,
+        X: Clone + std::ops::Add<Output = X> + std::ops::Sub<Output = X>,
+    {
+        Self::new_(
+            self.left.try_dilate(delta.clone())?,
+            self.right.try_dilate(delta)?,
+        )
+        .ok_or(crate::IntervalIsEmpty.into())
     }
 
     /// ```
@@ -407,6 +441,7 @@ impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>
         Interval::<_, Exclusive>::new_(self.left.interior(), self.right.interior())
     }
 
+    /// IoU - Intersection over Union.
     /// ```
     /// use intervals::{Interval, Inclusive};
     /// let a = Inclusive.at(0.0).float_to(Inclusive.at(1.0)).unwrap();
@@ -457,13 +492,13 @@ where
 /// ```
 /// use intervals::{Interval, Exclusive, Inclusive, Bounding};
 ///
-/// // Iterate from Interval<i32, Exclusive, Inclusive>
+/// // Iterate Interval<i32, Exclusive, Inclusive>
 /// let items: Vec<_> = Exclusive.at(0).to(Inclusive.at(10)).unwrap().into_iter().collect();
 /// assert_eq!(items.len(), 10);
 /// assert_eq!(items[0], 1);
 /// assert_eq!(items.last().unwrap(), &10);
 ///
-/// // Iterate from Interval<i32>
+/// // Iterate Interval<i32, Bounding, Bounding>
 /// let items: Vec<_> = (Bounding::Exclusive.at(0).to(Bounding::Inclusive.at(10)))
 ///     .unwrap()
 ///     .into_iter()

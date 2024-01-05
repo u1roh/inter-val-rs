@@ -20,6 +20,7 @@ pub(crate) trait IntoGeneral {
 
 pub trait Scalar<T>: Ord + Sized {
     type Error;
+    fn scalar_into(self) -> T;
     fn scalar_try_from(t: T) -> Result<Self, Self::Error>;
     fn scalar_partial_cmp(&self, t: &T) -> Option<std::cmp::Ordering>;
 
@@ -42,6 +43,9 @@ pub trait Scalar<T>: Ord + Sized {
 }
 impl<T: Ord> Scalar<T> for T {
     type Error = std::convert::Infallible;
+    fn scalar_into(self) -> T {
+        self
+    }
     fn scalar_try_from(t: T) -> Result<Self, Self::Error> {
         Ok(t)
     }
@@ -51,6 +55,9 @@ impl<T: Ord> Scalar<T> for T {
 }
 impl<T: FloatCore> Scalar<T> for NotNan<T> {
     type Error = FloatIsNan;
+    fn scalar_into(self) -> T {
+        self.into_inner()
+    }
     fn scalar_try_from(t: T) -> Result<Self, Self::Error> {
         NotNan::new(t)
     }

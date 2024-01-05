@@ -88,6 +88,29 @@ impl<T: Ord, B: BoundaryOf<Left>> LeftBounded<T, B> {
     pub fn union(self, other: Self) -> Self {
         self.min(other)
     }
+
+    pub fn dilate(self, delta: T) -> Self
+    where
+        T: std::ops::Sub<Output = T>,
+    {
+        Bound {
+            val: self.0.val - delta,
+            bounding: self.0.bounding,
+        }
+        .into()
+    }
+
+    pub fn try_dilate<X>(self, delta: X) -> Result<Self, T::Error>
+    where
+        T: Scalar<X>,
+        X: std::ops::Sub<Output = X>,
+    {
+        Ok(Bound {
+            val: T::scalar_try_from(self.0.val.scalar_into() - delta)?,
+            bounding: self.0.bounding,
+        }
+        .into())
+    }
 }
 
 impl<T: Ord, B: BoundaryOf<Right>> RightBounded<T, B> {
@@ -105,6 +128,29 @@ impl<T: Ord, B: BoundaryOf<Right>> RightBounded<T, B> {
     }
     pub fn union(self, other: Self) -> Self {
         self.max(other)
+    }
+
+    pub fn dilate(self, delta: T) -> Self
+    where
+        T: std::ops::Add<Output = T>,
+    {
+        Bound {
+            val: self.0.val + delta,
+            bounding: self.0.bounding,
+        }
+        .into()
+    }
+
+    pub fn try_dilate<X>(self, delta: X) -> Result<Self, T::Error>
+    where
+        T: Scalar<X>,
+        X: std::ops::Add<Output = X>,
+    {
+        Ok(Bound {
+            val: T::scalar_try_from(self.0.val.scalar_into() + delta)?,
+            bounding: self.0.bounding,
+        }
+        .into())
     }
 }
 
