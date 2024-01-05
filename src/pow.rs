@@ -68,10 +68,10 @@ impl<const N: usize, T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
     pub fn sup(&self) -> NDim<N, NotNan<T>> {
         std::array::from_fn(|i| self[i].sup()).into()
     }
-    pub fn center(&self) -> NDim<N, NotNan<T>> {
+    pub fn center(&self) -> NDim<N, T> {
         std::array::from_fn(|i| self[i].center()).into()
     }
-    pub fn size(&self) -> NDim<N, NotNan<T>> {
+    pub fn size(&self) -> NDim<N, T> {
         std::array::from_fn(|i| self[i].measure()).into()
     }
     pub fn measure(&self) -> NotNan<T> {

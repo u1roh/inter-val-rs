@@ -277,10 +277,10 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// let union = a.union(b);
     /// assert_eq!(union.enclosure, a.enclosure(b));
     /// assert_eq!(union.gap, a.gap(b));
-    /// let ints: Vec<Interval<_, _, _>> = union.into_iter().collect();
-    /// assert_eq!(ints.len(), 2);
-    /// assert_eq!(ints[0], a);
-    /// assert_eq!(ints[1], b);
+    /// let union_ints: Vec<Interval<_, _, _>> = union.into_iter().collect();
+    /// assert_eq!(union_ints.len(), 2);
+    /// assert_eq!(union_ints[0], a);
+    /// assert_eq!(union_ints[1], b);
     /// ```
     pub fn union(self, other: Self) -> IntervalUnion<T, L, R>
     where
@@ -308,12 +308,19 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
         self.right.clone().flip()
     }
 
+    /// ```
+    /// use intervals::Interval;
+    /// let span = Interval::enclosure_of_items(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
+    /// assert_eq!(span.min(), 2);
+    /// assert_eq!(span.max(), 9);
+    /// ```
     pub fn enclosure_of_items<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
         let mut items = items.into_iter();
         let first = items.next()?.into();
         Some(items.fold(first, |acc, item| acc.enclosure(item.into())))
     }
 }
+
 impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>, L, R> {
     /// ```
     /// use intervals::{Interval, Exclusive, Inclusive};
@@ -338,18 +345,58 @@ impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>
         Self::float_new(left.into(), right.into())
     }
 
+    /// ```
+    /// use intervals::{Interval, Exclusive, Inclusive};
+    /// let a = Interval::float_new(Inclusive.at(-1.0), Inclusive.at(1.0)).unwrap().unwrap();
+    /// assert_eq!(a.inf(), -1.0);
+    /// assert!(a.contains(&-1.0));
+    ///
+    /// let b = Interval::float_new(Exclusive.at(-1.0), Inclusive.at(1.0)).unwrap().unwrap();
+    /// assert_eq!(b.inf(), -1.0);
+    /// assert!(!b.contains(&-1.0));
+    /// ```
     pub fn inf(&self) -> NotNan<T> {
         self.left.inf()
     }
+
+    /// ```
+    /// use intervals::{Interval, Exclusive, Inclusive};
+    /// let a = Interval::float_new(Inclusive.at(-1.0), Inclusive.at(1.0)).unwrap().unwrap();
+    /// assert_eq!(a.sup(), 1.0);
+    /// assert!(a.contains(&1.0));
+    ///
+    /// let b = Interval::float_new(Inclusive.at(-1.0), Exclusive.at(1.0)).unwrap().unwrap();
+    /// assert_eq!(b.sup(), 1.0);
+    /// assert!(!b.contains(&1.0));
+    /// ```
     pub fn sup(&self) -> NotNan<T> {
         self.right.sup()
     }
-    pub fn measure(&self) -> NotNan<T> {
-        self.right.val - self.left.val
+
+    /// ```
+    /// use intervals::{Interval, Inclusive};
+    /// let a = Inclusive.at(2.1).float_to(Inclusive.at(5.3)).unwrap();
+    /// assert_eq!(a.measure(), 5.3 - 2.1);
+    ///
+    /// let a = Inclusive.at(std::f64::INFINITY).float_to(Inclusive.at(std::f64::INFINITY)).unwrap();
+    /// assert!(a.measure().is_nan());
+    /// ```
+    pub fn measure(&self) -> T {
+        *self.right.val - *self.left.val
     }
-    pub fn center(&self) -> NotNan<T> {
-        NotNan::new((*self.left.val + *self.right.val) / (T::one() + T::one())).unwrap()
+
+    /// ```
+    /// use intervals::{Interval, Inclusive};
+    /// let a = Inclusive.at(2.1).float_to(Inclusive.at(5.3)).unwrap();
+    /// assert_eq!(a.center(), (2.1 + 5.3) / 2.0);
+    ///
+    /// let a = Inclusive.at(std::f64::NEG_INFINITY).float_to(Inclusive.at(std::f64::INFINITY)).unwrap();
+    /// assert!(a.center().is_nan());
+    /// ```
+    pub fn center(&self) -> T {
+        (*self.left.val + *self.right.val) / (T::one() + T::one())
     }
+
     pub fn closure(self) -> Interval<NotNan<T>, Inclusive> {
         Interval {
             left: self.left.closure(),
@@ -358,6 +405,24 @@ impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>
     }
     pub fn interior(self) -> Option<Interval<NotNan<T>, Exclusive>> {
         Interval::<_, Exclusive>::new_(self.left.interior(), self.right.interior())
+    }
+
+    /// ```
+    /// use intervals::{Interval, Inclusive};
+    /// let a = Inclusive.at(0.0).float_to(Inclusive.at(1.0)).unwrap();
+    /// let b = Inclusive.at(0.0).float_to(Inclusive.at(2.0)).unwrap();
+    /// let c = Inclusive.at(1.0).float_to(Inclusive.at(2.0)).unwrap();
+    /// assert_eq!(a.iou(a), 1.0);
+    /// assert_eq!(a.iou(b), 0.5);
+    /// assert_eq!(a.iou(c), 0.0);
+    /// ```
+    pub fn iou(self, other: Self) -> T {
+        self.intersection(other)
+            .map(|intersection| {
+                let union = self.enclosure(other);
+                intersection.measure() / union.measure()
+            })
+            .unwrap_or(T::zero())
     }
 }
 
