@@ -39,11 +39,17 @@ use bounding::{Left, Right};
 use ordered_float::{FloatCore, NotNan};
 use traits::BoundaryOf;
 
+// re-export ordered_float
+pub use ordered_float;
+
 pub use bound::Bound;
 pub use bounding::{Bounding, Exclusive, Inclusive};
 pub use half::{HalfBounded, LeftBounded, RightBounded};
 pub use interval::Interval;
-pub use ndim::NDim;
+pub use traits::Scalar;
+
+// Hidden for now
+// pub use ndim::NDim;
 
 impl Inclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
@@ -99,24 +105,16 @@ pub enum Error {
     IntervalIsEmpty(#[from] IntervalIsEmpty),
 }
 
+pub type IntervalF<T, L, R> = Interval<NotNan<T>, L, R>;
+
 pub type ClosedInterval<T> = Interval<T, Inclusive>;
 pub type OpenInterval<T> = Interval<T, Exclusive>;
-pub type RightHalfOpenInterval<T> = Interval<T, Inclusive, Exclusive>;
-pub type LeftHalfOpenInterval<T> = Interval<T, Exclusive, Inclusive>;
 
-pub type IntervalF<T, L, R> = Interval<NotNan<T>, L, R>;
 pub type ClosedIntervalF<T> = ClosedInterval<NotNan<T>>;
 pub type OpenIntervalF<T> = OpenInterval<NotNan<T>>;
-pub type RightHalfOpenIntervalF<T> = RightHalfOpenInterval<NotNan<T>>;
-pub type LeftHalfOpenIntervalF<T> = LeftHalfOpenInterval<NotNan<T>>;
 
-pub type ClosedIntervalF64 = ClosedIntervalF<f64>;
-pub type OpenIntervalF64 = OpenIntervalF<f64>;
-pub type RightHalfOpenIntervalF64 = RightHalfOpenIntervalF<f64>;
-pub type LeftHalfOpenIntervalF64 = LeftHalfOpenIntervalF<f64>;
-
-pub type IntervalN<const N: usize, T, L = Bounding, R = L> = NDim<N, Interval<T, L, R>>;
-pub type Interval2<T, L = Bounding, R = L> = IntervalN<2, T, L, R>;
-pub type Interval3<T, L = Bounding, R = L> = IntervalN<3, T, L, R>;
-pub type Interval4<T, L = Bounding, R = L> = IntervalN<4, T, L, R>;
-pub type BoxN<const N: usize, T> = IntervalN<N, NotNan<T>, Inclusive>;
+// pub type IntervalN<const N: usize, T, L = Bounding, R = L> = NDim<N, Interval<T, L, R>>;
+// pub type Interval2<T, L = Bounding, R = L> = IntervalN<2, T, L, R>;
+// pub type Interval3<T, L = Bounding, R = L> = IntervalN<3, T, L, R>;
+// pub type Interval4<T, L = Bounding, R = L> = IntervalN<4, T, L, R>;
+// pub type BoxN<const N: usize, T> = IntervalN<N, NotNan<T>, Inclusive>;
