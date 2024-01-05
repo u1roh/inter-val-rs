@@ -37,7 +37,7 @@ mod impl_range_bounds {
 }
 
 mod converters {
-    use crate::{Exclusive, Inclusive, Interval};
+    use crate::{Exclusive, Inclusive, Interval, IntervalIsEmpty};
     use ordered_float::{FloatCore, NotNan};
 
     // use crate::traits::ScalarFrom;
@@ -64,30 +64,30 @@ mod converters {
     // }
 
     impl<T: Ord> TryFrom<std::ops::Range<T>> for Interval<T, Inclusive, Exclusive> {
-        type Error = crate::IntervalIsEmpty;
+        type Error = IntervalIsEmpty;
         fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {
-            Self::new(r.start.into(), r.end.into())
+            Self::new(r.start.into(), r.end.into()).ok_or(IntervalIsEmpty)
         }
     }
     impl<T: Ord> TryFrom<std::ops::RangeInclusive<T>> for Interval<T, Inclusive> {
-        type Error = crate::IntervalIsEmpty;
+        type Error = IntervalIsEmpty;
         fn try_from(r: std::ops::RangeInclusive<T>) -> Result<Self, Self::Error> {
             let (left, right) = r.into_inner();
-            Self::new(left.into(), right.into())
+            Self::new(left.into(), right.into()).ok_or(IntervalIsEmpty)
         }
     }
 
     impl<T: FloatCore> TryFrom<std::ops::Range<T>> for Interval<NotNan<T>, Inclusive, Exclusive> {
         type Error = crate::Error;
         fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {
-            Self::try_new(Inclusive.at(r.start), Exclusive.at(r.end))
+            Self::try_new(Inclusive.at(r.start), Exclusive.at(r.end))?.ok_or(IntervalIsEmpty.into())
         }
     }
     impl<T: FloatCore> TryFrom<std::ops::RangeInclusive<T>> for Interval<NotNan<T>, Inclusive> {
         type Error = crate::Error;
         fn try_from(r: std::ops::RangeInclusive<T>) -> Result<Self, Self::Error> {
             let (left, right) = r.into_inner();
-            Self::try_new(Inclusive.at(left), Inclusive.at(right))
+            Self::try_new(Inclusive.at(left), Inclusive.at(right))?.ok_or(IntervalIsEmpty.into())
         }
     }
 }

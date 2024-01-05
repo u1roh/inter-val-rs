@@ -45,10 +45,7 @@ impl Bounding {
 }
 
 impl<T: Ord, B: BoundaryOf<Left>> Bound<T, B> {
-    pub fn to<R: BoundaryOf<Right>>(
-        self,
-        right: Bound<T, R>,
-    ) -> Result<Interval<T, B, R>, IntervalIsEmpty> {
+    pub fn to<R: BoundaryOf<Right>>(self, right: Bound<T, R>) -> Option<Interval<T, B, R>> {
         Interval::new(self, right)
     }
 }
@@ -58,7 +55,7 @@ impl<T: FloatCore, B: BoundaryOf<Left>> Bound<T, B> {
         self,
         right: Bound<T, R>,
     ) -> Result<Interval<NotNan<T>, B, R>, Error> {
-        Interval::try_new(self, right)
+        Interval::try_new(self, right)?.ok_or(IntervalIsEmpty.into())
     }
 }
 

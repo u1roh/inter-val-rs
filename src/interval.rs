@@ -2,7 +2,7 @@ use ordered_float::{FloatCore, NotNan};
 
 use crate::bounding::{Left, Right};
 use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum, Scalar};
-use crate::{Bound, Exclusive, Inclusive, IntervalIsEmpty, LeftBounded, RightBounded};
+use crate::{Bound, Exclusive, Inclusive, LeftBounded, RightBounded};
 
 /// Return type of `Interval::union()`.
 pub struct IntervalUnion<T, L: Flip, R: Flip> {
@@ -31,12 +31,8 @@ impl<T: Eq, L: Eq, R: Eq> PartialEq for Interval<T, L, R> {
     }
 }
 impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
-    fn new_(left: LeftBounded<T, L>, right: RightBounded<T, R>) -> Result<Self, IntervalIsEmpty> {
-        if is_valid_interval(&left, &right) {
-            Ok(Self { left, right })
-        } else {
-            Err(IntervalIsEmpty)
-        }
+    fn new_(left: LeftBounded<T, L>, right: RightBounded<T, R>) -> Option<Self> {
+        is_valid_interval(&left, &right).then_some(Self { left, right })
     }
 
     /// Create a new interval.
@@ -54,15 +50,18 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     ///
     /// let a = Interval::new(Bounding::Exclusive.at(0), Bounding::Exclusive.at(3)).unwrap();
     /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Bounding, Bounding>>());
+    ///
+    /// assert!(Interval::new(Inclusive.at(3), Exclusive.at(0)).is_none());
+    /// assert!(Interval::new(Inclusive.at(3), Exclusive.at(3)).is_none());
+    /// assert!(Interval::new(Inclusive.at(3), Inclusive.at(3)).is_some());
     /// ```
-    pub fn new(left: Bound<T, L>, right: Bound<T, R>) -> Result<Self, IntervalIsEmpty> {
+    pub fn new(left: Bound<T, L>, right: Bound<T, R>) -> Option<Self> {
         Self::new_(left.into(), right.into())
     }
 
-    pub fn try_new<T2>(left: Bound<T2, L>, right: Bound<T2, R>) -> Result<Self, crate::Error>
+    pub fn try_new<T2>(left: Bound<T2, L>, right: Bound<T2, R>) -> Result<Option<Self>, T::Error>
     where
         T: Scalar<T2>,
-        crate::Error: From<T::Error>,
     {
         let left = Bound {
             val: T::scalar_try_from(left.val)?,
@@ -72,7 +71,7 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
             val: T::scalar_try_from(right.val)?,
             bounding: right.bounding,
         };
-        Self::new(left, right).map_err(Into::into)
+        Ok(Self::new(left, right))
     }
 
     pub fn left(&self) -> &LeftBounded<T, L> {
@@ -145,7 +144,6 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
             self.left.intersection(other.left),
             self.right.intersection(other.right),
         )
-        .ok()
     }
 
     pub fn enclosure(self, other: Self) -> Self {
@@ -162,7 +160,6 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     {
         Interval::new_(self.right.flip(), other.left.flip())
             .or(Interval::new_(other.right.flip(), self.left.flip()))
-            .ok()
     }
 
     pub fn union(self, other: Self) -> IntervalUnion<T, L, R>
@@ -217,7 +214,7 @@ impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>
         }
     }
     pub fn interior(self) -> Option<Interval<NotNan<T>, Exclusive>> {
-        Interval::<_, Exclusive>::new_(self.left.interior(), self.right.interior()).ok()
+        Interval::<_, Exclusive>::new_(self.left.interior(), self.right.interior())
     }
 }
 

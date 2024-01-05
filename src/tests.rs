@@ -54,7 +54,9 @@ fn new_interval() {
     assert!(a.contains(&1));
     assert!(!a.contains(&3));
 
-    let a = IntervalF::<_, Exclusive, Inclusive>::try_new(1.23.into(), 4.56.into()).unwrap();
+    let a = IntervalF::<_, Exclusive, Inclusive>::try_new(1.23.into(), 4.56.into())
+        .unwrap()
+        .unwrap();
     assert!(!a.contains(&1.23));
     assert!(a.contains(&1.23000000000001));
     assert!(a.contains(&4.56));
