@@ -15,7 +15,7 @@ use traits::BoundaryOf;
 
 pub use bound::Bound;
 pub use bounding::{Bounding, Exclusive, Inclusive};
-pub use half::{LeftBounded, RightBounded};
+pub use half::{HalfBounded, LeftBounded, RightBounded};
 pub use interval::Interval;
 pub use ndim::NDim;
 

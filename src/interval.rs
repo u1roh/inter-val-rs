@@ -1,4 +1,4 @@
-use ordered_float::{FloatCore, NotNan};
+use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
 use crate::bounding::{Left, Right};
 use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum, Scalar};
@@ -19,7 +19,15 @@ where
     left.contains(&right.val) && right.contains(&left.val)
 }
 
-/// Interval type.
+/// Interval like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `Ord` type.
+/// * `T`: Scalar type. `T` should implements `Ord`. Use `ordered_float::NotNan<T>` for floating point numbers.
+/// * `L`: Left boundary type. One of `Bounding`, `Inclusive` or `Exclusive`.
+/// * `R`: Right boundary type. One of `Bounding`, `Inclusive` or `Exclusive`.
+/// * `Interval<T, Inclusive>` represents a closed interval, i.e., *[a, b]*.
+/// * `Interval<T, Exclusive>` represents a open interval, i.e., *(a, b)*.
+/// * `Interval<T, Inclusive, Exclusive>` represents a right half-open interval, i.e., *[a, b)*.
+/// * `Interval<T, Exclusive, Inclusive>` represents a left half-open interval, i.e., *(a, b]*.
+/// * `Interval<T>` (= `Interval<T, Bounding, Bounding>`) represents any of the above.
 #[derive(Debug, Clone, Copy, Eq)]
 pub struct Interval<T, L = crate::Bounding, R = L> {
     left: LeftBounded<T, L>,
@@ -37,7 +45,7 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
 
     /// Create a new interval.
     /// ```
-    /// # use std::any::{Any, TypeId};
+    /// use std::any::{Any, TypeId};
     /// use intervals::{Interval, Bounding, Exclusive, Inclusive};
     ///
     /// let a: Interval<i32, Inclusive, Exclusive> = Interval::new(0.into(), 3.into()).unwrap();
@@ -85,6 +93,33 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
             bounding: right.bounding,
         };
         Ok(Self::new(left, right))
+    }
+
+    /// ```
+    /// use intervals::{Interval, Exclusive, Inclusive};
+    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::between(-2, 5).unwrap();
+    /// assert_eq!(a, Inclusive.at(-2).to(Exclusive.at(5)).unwrap());
+    /// ```
+    pub fn between(left: T, right: T) -> Option<Self>
+    where
+        T: Into<Bound<T, L>> + Into<Bound<T, R>>,
+    {
+        Self::new(left.into(), right.into())
+    }
+
+    /// ```
+    /// use intervals::{IntervalF, Exclusive, Inclusive};
+    /// let a: IntervalF<f64, Inclusive, Exclusive> = IntervalF::try_between(-1.0, 1.0).unwrap().unwrap();
+    /// assert_eq!(a, Inclusive.at(-1.0).float_to(Exclusive.at(1.0)).unwrap());
+    /// ```
+    pub fn try_between<T2>(left: T2, right: T2) -> Result<Option<Self>, T::Error>
+    where
+        T: Scalar<T2> + Into<Bound<T, L>> + Into<Bound<T, R>>,
+    {
+        Ok(Self::new(
+            T::scalar_try_from(left)?.into(),
+            T::scalar_try_from(right)?.into(),
+        ))
     }
 
     pub fn left(&self) -> &LeftBounded<T, L> {
@@ -143,16 +178,43 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
         self.left.contains(t) && self.right.contains(t)
     }
 
+    /// ```
+    /// use intervals::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(0).to(Exclusive.at(3)).unwrap();
+    /// let b = Inclusive.at(0).to(Exclusive.at(4)).unwrap();
+    /// let c = Inclusive.at(1).to(Exclusive.at(4)).unwrap();
+    /// assert!(a.includes(&a));
+    /// assert!(!a.includes(&b) && b.includes(&a));
+    /// assert!(!a.includes(&c) && !c.includes(&a));
+    /// ```
     pub fn includes(&self, other: &Self) -> bool {
         self.left.includes(&other.left) && self.right.includes(&other.right)
     }
 
+    /// ```
+    /// use intervals::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(0).to(Exclusive.at(3)).unwrap();
+    /// let b = Inclusive.at(1).to(Exclusive.at(4)).unwrap();
+    /// let c = Inclusive.at(3).to(Exclusive.at(5)).unwrap();
+    /// assert!(a.overlaps(&a));
+    /// assert!(a.overlaps(&b) && b.overlaps(&a));
+    /// assert!(!a.overlaps(&c) && !c.overlaps(&a));
+    /// ```
     pub fn overlaps(&self, other: &Self) -> bool {
         let left = std::cmp::max(&self.left, &other.left);
         let right = std::cmp::min(&self.right, &other.right);
         is_valid_interval(left, right)
     }
 
+    /// ```
+    /// use intervals::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(0).to(Exclusive.at(3)).unwrap();
+    /// let b = Inclusive.at(1).to(Exclusive.at(4)).unwrap();
+    /// let c = Inclusive.at(3).to(Exclusive.at(5)).unwrap();
+    /// assert_eq!(a.intersection(a), Some(a));
+    /// assert_eq!(a.intersection(b), Inclusive.at(1).to(Exclusive.at(3)));
+    /// assert_eq!(a.intersection(c), None);
+    /// ```
     pub fn intersection(self, other: Self) -> Option<Self> {
         Self::new_(
             self.left.intersection(other.left),
@@ -209,6 +271,29 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     }
 }
 impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>, L, R> {
+    /// ```
+    /// use intervals::{Interval, Exclusive, Inclusive};
+    /// let a = Interval::float_new(Inclusive.at(-1.0), Exclusive.at(1.0)).unwrap().unwrap();
+    /// assert!(a.contains(&-1.0));
+    /// assert!(!a.contains(&1.0));
+    /// ```
+    pub fn float_new(left: Bound<T, L>, right: Bound<T, R>) -> Result<Option<Self>, FloatIsNan> {
+        Self::try_new(left, right)
+    }
+
+    /// ```
+    /// use intervals::{Interval, Exclusive, Inclusive};
+    /// let a: Interval<_, Inclusive, Exclusive> = Interval::float_between(-1.0, 1.0).unwrap().unwrap();
+    /// assert!(a.contains(&-1.0));
+    /// assert!(!a.contains(&1.0));
+    /// ```
+    pub fn float_between(left: T, right: T) -> Result<Option<Self>, FloatIsNan>
+    where
+        T: Into<Bound<T, L>> + Into<Bound<T, R>>,
+    {
+        Self::float_new(left.into(), right.into())
+    }
+
     pub fn inf(&self) -> NotNan<T> {
         self.left.inf()
     }

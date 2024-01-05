@@ -40,35 +40,29 @@ mod converters {
     use crate::{Exclusive, Inclusive, Interval, IntervalIsEmpty};
     use ordered_float::{FloatCore, NotNan};
 
-    // use crate::traits::ScalarFrom;
-    //
-    // impl<T, U: ScalarFrom<T>> TryFrom<std::ops::Range<T>> for Interval<U, Inclusive, Exclusive>
-    // where
-    //     crate::Error: From<U::Error>,
-    // {
-    //     type Error = crate::Error;
-    //     fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {
-    //         Self::new(r.start.into(), r.end.into())
-    //     }
-    // }
-    //
-    // impl<T, U: ScalarFrom<T>> TryFrom<std::ops::RangeInclusive<T>> for Interval<U, Inclusive>
-    // where
-    //     crate::Error: From<U::Error>,
-    // {
-    //     type Error = crate::Error;
-    //     fn try_from(r: std::ops::RangeInclusive<T>) -> Result<Self, Self::Error> {
-    //         let (left, right) = r.into_inner();
-    //         Self::new(left.into(), right.into())
-    //     }
-    // }
-
+    /// ```
+    /// use std::any::{Any, TypeId};
+    /// use intervals::{Interval, Inclusive, Exclusive};
+    /// let a: Interval<_, _, _> = (2..4).try_into().unwrap();
+    /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Inclusive, Exclusive>>());
+    /// assert_eq!(a.left().val, 2);
+    /// assert_eq!(a.right().val, 4);
+    /// ```
     impl<T: Ord> TryFrom<std::ops::Range<T>> for Interval<T, Inclusive, Exclusive> {
         type Error = IntervalIsEmpty;
         fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {
             Self::new(r.start.into(), r.end.into()).ok_or(IntervalIsEmpty)
         }
     }
+
+    /// ```
+    /// use std::any::{Any, TypeId};
+    /// use intervals::{Interval, Inclusive};
+    /// let a: Interval<_, _, _> = (2..=4).try_into().unwrap();
+    /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Inclusive, Inclusive>>());
+    /// assert_eq!(a.left().val, 2);
+    /// assert_eq!(a.right().val, 4);
+    /// ```
     impl<T: Ord> TryFrom<std::ops::RangeInclusive<T>> for Interval<T, Inclusive> {
         type Error = IntervalIsEmpty;
         fn try_from(r: std::ops::RangeInclusive<T>) -> Result<Self, Self::Error> {
@@ -77,12 +71,29 @@ mod converters {
         }
     }
 
+    /// ```
+    /// use std::any::{Any, TypeId};
+    /// use intervals::{IntervalF, Inclusive, Exclusive};
+    /// let a: IntervalF<_, _, _> = (2.74..4.26).try_into().unwrap();
+    /// assert_eq!(a.type_id(), TypeId::of::<IntervalF<f64, Inclusive, Exclusive>>());
+    /// assert_eq!(a.left().val, 2.74);
+    /// assert_eq!(a.right().val, 4.26);
+    /// ```
     impl<T: FloatCore> TryFrom<std::ops::Range<T>> for Interval<NotNan<T>, Inclusive, Exclusive> {
         type Error = crate::Error;
         fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {
             Self::try_new(Inclusive.at(r.start), Exclusive.at(r.end))?.ok_or(IntervalIsEmpty.into())
         }
     }
+
+    /// ```
+    /// use std::any::{Any, TypeId};
+    /// use intervals::{IntervalF, Inclusive, Exclusive};
+    /// let a: IntervalF<_, _, _> = (2.74..=4.26).try_into().unwrap();
+    /// assert_eq!(a.type_id(), TypeId::of::<IntervalF<f64, Inclusive, Inclusive>>());
+    /// assert_eq!(a.left().val, 2.74);
+    /// assert_eq!(a.right().val, 4.26);
+    /// ```
     impl<T: FloatCore> TryFrom<std::ops::RangeInclusive<T>> for Interval<NotNan<T>, Inclusive> {
         type Error = crate::Error;
         fn try_from(r: std::ops::RangeInclusive<T>) -> Result<Self, Self::Error> {
