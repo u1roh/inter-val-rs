@@ -223,6 +223,12 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
         )
     }
 
+    /// ```
+    /// use intervals::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(0).to(Exclusive.at(3)).unwrap();
+    /// let b = Inclusive.at(5).to(Exclusive.at(8)).unwrap();
+    /// assert_eq!(a.enclosure(b), Inclusive.at(0).to(Exclusive.at(8)).unwrap());
+    /// ```
     pub fn enclosure(self, other: Self) -> Self {
         Self {
             left: self.left.union(other.left),
@@ -230,6 +236,12 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
         }
     }
 
+    /// ```
+    /// use intervals::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(0).to(Exclusive.at(3)).unwrap();
+    /// let b = Inclusive.at(5).to(Exclusive.at(8)).unwrap();
+    /// assert_eq!(a.gap(b), Inclusive.at(3).to(Exclusive.at(5)));
+    /// ```
     pub fn gap(self, other: Self) -> Option<Interval<T, R::Flip, L::Flip>>
     where
         L::Flip: BoundaryOf<Right>,
