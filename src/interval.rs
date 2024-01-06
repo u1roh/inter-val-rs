@@ -37,6 +37,7 @@ where
 }
 
 /// Interval like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `PartialOrd` type.
+///
 /// * `T`: Scalar type. `T` should implements `PartialOrd`. `NaN` safety is not guaranteed when `T` is floating point type.
 /// * `L`: Left boundary type. Specify one of [`Inclusive`], [`Exclusive`], or [`BoundType`](crate::BoundType).
 /// * `R`: Right boundary type. Specify one of [`Inclusive`] [`Exclusive`], or [`BoundType`](crate::BoundType).
@@ -45,6 +46,8 @@ where
 /// * `Interval<T, Inclusive, Exclusive>` represents a right half-open interval, i.e., *[a, b)*.
 /// * `Interval<T, Exclusive, Inclusive>` represents a left half-open interval, i.e., *(a, b]*.
 /// * `Interval<T, BoundType>` represents any of the above.
+///
+/// This type is considered as an interval on ℝ (real number line) even if an integer type is specified for `T`.
 ///
 /// ```
 /// use kd_interval::{Interval, Exclusive, Inclusive, BoundType};
@@ -96,6 +99,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// assert!(Interval::try_new(Inclusive.at(3), Exclusive.at(0)).is_none()); // [3, 0) is empty.
     /// assert!(Interval::try_new(Inclusive.at(3), Exclusive.at(3)).is_none()); // [3, 3) is empty.
     /// assert!(Interval::try_new(Inclusive.at(3), Inclusive.at(3)).is_some()); // [3, 3] is not empty.
+    /// assert!(Interval::try_new(Exclusive.at(0), Exclusive.at(1)).is_some()); // (0, 1) is not empty.
     /// ```
     pub fn try_new(left: Bound<T, L>, right: Bound<T, R>) -> Option<Self> {
         Self::new_(left.into(), right.into())
