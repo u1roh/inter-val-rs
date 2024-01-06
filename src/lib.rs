@@ -89,13 +89,5 @@ impl<T: PartialOrd, B: BoundaryOf<Left>> Bound<T, B> {
 #[error("left boundary must be less than or equal to right boundary")]
 pub struct IntervalIsEmpty;
 
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("infallible")]
-    Infallible(#[from] std::convert::Infallible),
-    #[error("left boundary must be less than or equal to right boundary")]
-    IntervalIsEmpty(#[from] IntervalIsEmpty),
-}
-
 pub type ClosedInterval<T> = Interval<T, Inclusive>;
 pub type OpenInterval<T> = Interval<T, Exclusive>;

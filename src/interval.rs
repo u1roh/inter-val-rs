@@ -346,6 +346,23 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
+    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(0).to(Exclusive.at(3));  // [0, 3)
+    /// let b = Inclusive.at(1).to(Exclusive.at(5));  // [1, 5)
+    /// let c = Inclusive.at(8).to(Exclusive.at(10)); // [8, 10)
+    /// let enc = Interval::hull_many(vec![a, b, c]).unwrap(); // [0, 10)
+    /// assert_eq!(enc.left().limit, 0);
+    /// assert_eq!(enc.right().limit, 10);
+    /// ```
+    pub fn hull_many(items: impl IntoIterator<Item = Self>) -> Option<Self> {
+        let mut items = items.into_iter();
+        let first = items.next()?;
+        Some(items.fold(first, |acc, item| acc.hull(item)))
+    }
+}
+
+impl<T: PartialOrd + Clone> Interval<T, Inclusive, Inclusive> {
+    /// ```
     /// use kd_interval::Interval;
     /// let span = Interval::enclosure(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
     /// assert_eq!(span.min(), 2);
@@ -355,10 +372,18 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// assert_eq!(span.inf(), 2.3);
     /// assert_eq!(span.sup(), 9.2);
     /// ```
-    pub fn enclosure<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
+    pub fn enclosure(items: impl IntoIterator<Item = T>) -> Option<Self> {
         let mut items = items.into_iter();
-        let first = items.next()?.into();
-        Some(items.fold(first, |acc, item| acc.hull(item.into())))
+        let mut left = items.next()?;
+        let mut right = left.clone();
+        for x in items {
+            if x < left {
+                left = x;
+            } else if right < x {
+                right = x;
+            }
+        }
+        Some(Inclusive.at(left).to(Inclusive.at(right)))
     }
 }
 
