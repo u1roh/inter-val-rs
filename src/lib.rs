@@ -2,7 +2,7 @@
 //!
 //! # Usage
 //! ```
-//! use intervals::{Inclusive, Exclusive, Interval};
+//! use kd_interval::{Inclusive, Exclusive, Interval};
 //!
 //! // Closed interval of i32
 //! let a = Inclusive.at(0).to(Inclusive.at(10)).unwrap();  // [0, 10]

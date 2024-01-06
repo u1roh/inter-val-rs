@@ -48,7 +48,7 @@ impl<const N: usize, T: Ord + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
 
     pub fn union(&self, other: &Self) -> Self {
         Self(std::array::from_fn(|i| {
-            self[i].clone().enclosure(other[i].clone())
+            self[i].clone().hull(other[i].clone())
         }))
     }
 

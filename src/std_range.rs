@@ -42,7 +42,7 @@ mod converters {
 
     /// ```
     /// use std::any::{Any, TypeId};
-    /// use intervals::{Interval, Inclusive, Exclusive};
+    /// use kd_interval::{Interval, Inclusive, Exclusive};
     /// let a: Interval<_, _, _> = (2..4).try_into().unwrap();
     /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Inclusive, Exclusive>>());
     /// assert_eq!(a.left().val, 2);
@@ -57,7 +57,7 @@ mod converters {
 
     /// ```
     /// use std::any::{Any, TypeId};
-    /// use intervals::{Interval, Inclusive};
+    /// use kd_interval::{Interval, Inclusive};
     /// let a: Interval<_, _, _> = (2..=4).try_into().unwrap();
     /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Inclusive, Inclusive>>());
     /// assert_eq!(a.left().val, 2);
@@ -73,7 +73,7 @@ mod converters {
 
     /// ```
     /// use std::any::{Any, TypeId};
-    /// use intervals::{IntervalF, Inclusive, Exclusive};
+    /// use kd_interval::{IntervalF, Inclusive, Exclusive};
     /// let a: IntervalF<_, _, _> = (2.74..4.26).try_into().unwrap();
     /// assert_eq!(a.type_id(), TypeId::of::<IntervalF<f64, Inclusive, Exclusive>>());
     /// assert_eq!(a.left().val, 2.74);
@@ -88,7 +88,7 @@ mod converters {
 
     /// ```
     /// use std::any::{Any, TypeId};
-    /// use intervals::{IntervalF, Inclusive, Exclusive};
+    /// use kd_interval::{IntervalF, Inclusive, Exclusive};
     /// let a: IntervalF<_, _, _> = (2.74..=4.26).try_into().unwrap();
     /// assert_eq!(a.type_id(), TypeId::of::<IntervalF<f64, Inclusive, Inclusive>>());
     /// assert_eq!(a.left().val, 2.74);
@@ -103,7 +103,7 @@ mod converters {
     }
 
     /// ```
-    /// use intervals::{Interval, Inclusive, Exclusive};
+    /// use kd_interval::{Interval, Inclusive, Exclusive};
     /// let src = Inclusive.at(0).to(Exclusive.at(10)).unwrap();
     /// let dst: std::ops::Range<i32> = src.into();
     /// assert_eq!(dst.start, 0);
@@ -116,7 +116,7 @@ mod converters {
     }
 
     /// ```
-    /// use intervals::{Interval, Inclusive};
+    /// use kd_interval::{Interval, Inclusive};
     /// let src = Inclusive.at(0).to(Inclusive.at(10)).unwrap();
     /// let dst: std::ops::RangeInclusive<i32> = src.into();
     /// assert_eq!(dst.start(), &0);
