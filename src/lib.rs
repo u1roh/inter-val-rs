@@ -5,14 +5,14 @@
 //! use kd_interval::{Inclusive, Exclusive, Interval};
 //!
 //! // Closed interval of i32
-//! let a = Inclusive.at(0).to(Inclusive.at(10)).unwrap();  // [0, 10]
-//! let b = Inclusive.at(5).to(Inclusive.at(15)).unwrap();  // [5, 15]
+//! let a = Inclusive.at(0).to(Inclusive.at(10));  // [0, 10]
+//! let b = Inclusive.at(5).to(Inclusive.at(15));  // [5, 15]
 //! let c = a.intersection(b).unwrap(); // [0, 10] ∩ [5, 15] = [5, 10]
 //! assert_eq!(c.min(), 5);
 //! assert_eq!(c.max(), 10);
 //!
 //! // Half-open interval of f64
-//! let a = Inclusive.at(1.23).to(Exclusive.at(4.56)).unwrap();   // [1.23, 4.56)
+//! let a = Inclusive.at(1.23).to(Exclusive.at(4.56));   // [1.23, 4.56)
 //! assert_eq!(a.inf(), 1.23);
 //! assert_eq!(a.sup(), 4.56);
 //! assert!(a.contains(&1.23));
@@ -71,7 +71,10 @@ impl BoundType {
 }
 
 impl<T: PartialOrd, B: BoundaryOf<Left>> Bound<T, B> {
-    pub fn to<R: BoundaryOf<Right>>(self, right: Bound<T, R>) -> Option<Interval<T, B, R>> {
+    pub fn try_to<R: BoundaryOf<Right>>(self, right: Bound<T, R>) -> Option<Interval<T, B, R>> {
+        Interval::try_new(self, right)
+    }
+    pub fn to<R: BoundaryOf<Right>>(self, right: Bound<T, R>) -> Interval<T, B, R> {
         Interval::new(self, right)
     }
 }

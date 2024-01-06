@@ -50,7 +50,7 @@ mod converters {
     impl<T: PartialOrd> TryFrom<std::ops::Range<T>> for Interval<T, Inclusive, Exclusive> {
         type Error = IntervalIsEmpty;
         fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {
-            Self::new(r.start.into(), r.end.into()).ok_or(IntervalIsEmpty)
+            Self::try_new(r.start.into(), r.end.into()).ok_or(IntervalIsEmpty)
         }
     }
 
@@ -66,13 +66,13 @@ mod converters {
         type Error = IntervalIsEmpty;
         fn try_from(r: std::ops::RangeInclusive<T>) -> Result<Self, Self::Error> {
             let (left, right) = r.into_inner();
-            Self::new(left.into(), right.into()).ok_or(IntervalIsEmpty)
+            Self::try_new(left.into(), right.into()).ok_or(IntervalIsEmpty)
         }
     }
 
     /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};
-    /// let src = Inclusive.at(0).to(Exclusive.at(10)).unwrap();
+    /// let src = Inclusive.at(0).to(Exclusive.at(10));
     /// let dst: std::ops::Range<i32> = src.into();
     /// assert_eq!(dst.start, 0);
     /// assert_eq!(dst.end, 10);
@@ -85,7 +85,7 @@ mod converters {
 
     /// ```
     /// use kd_interval::{Interval, Inclusive};
-    /// let src = Inclusive.at(0).to(Inclusive.at(10)).unwrap();
+    /// let src = Inclusive.at(0).to(Inclusive.at(10));
     /// let dst: std::ops::RangeInclusive<i32> = src.into();
     /// assert_eq!(dst.start(), &0);
     /// assert_eq!(dst.end(), &10);

@@ -19,7 +19,7 @@ impl<T> From<T> for Bound<T, Exclusive> {
 
 /// ```
 /// use kd_interval::{BoundType, Inclusive, Interval};
-/// let src: Interval<i32, Inclusive> = Inclusive.at(0).to(Inclusive.at(10)).unwrap();
+/// let src: Interval<i32, Inclusive> = Inclusive.at(0).to(Inclusive.at(10));
 /// let dst: Interval<i32, BoundType> = src.into();
 /// assert_eq!(dst.left().bound_type, BoundType::Inclusive);
 /// assert_eq!(dst.right().bound_type, BoundType::Inclusive);
@@ -32,7 +32,7 @@ impl<T> From<Interval<T, Inclusive>> for Interval<T, BoundType> {
 
 /// ```
 /// use kd_interval::{BoundType, Exclusive, Interval};
-/// let src: Interval<i32, Exclusive> = Exclusive.at(0).to(Exclusive.at(10)).unwrap();
+/// let src: Interval<i32, Exclusive> = Exclusive.at(0).to(Exclusive.at(10));
 /// let dst: Interval<i32, BoundType> = src.into();
 /// assert_eq!(dst.left().bound_type, BoundType::Exclusive);
 /// assert_eq!(dst.right().bound_type, BoundType::Exclusive);
@@ -45,7 +45,7 @@ impl<T> From<Interval<T, Exclusive>> for Interval<T, BoundType> {
 
 /// ```
 /// use kd_interval::{BoundType, Inclusive, Exclusive, Interval};
-/// let src: Interval<i32, Inclusive, Exclusive> = Inclusive.at(0).to(Exclusive.at(10)).unwrap();
+/// let src: Interval<i32, Inclusive, Exclusive> = Inclusive.at(0).to(Exclusive.at(10));
 /// let dst: Interval<i32, BoundType> = src.into();
 /// assert_eq!(dst.left().bound_type, BoundType::Inclusive);
 /// assert_eq!(dst.right().bound_type, BoundType::Exclusive);
@@ -58,7 +58,7 @@ impl<T> From<Interval<T, Inclusive, Exclusive>> for Interval<T, BoundType> {
 
 /// ```
 /// use kd_interval::{BoundType, Inclusive, Exclusive, Interval};
-/// let src: Interval<i32, Exclusive, Inclusive> = Exclusive.at(0).to(Inclusive.at(10)).unwrap();
+/// let src: Interval<i32, Exclusive, Inclusive> = Exclusive.at(0).to(Inclusive.at(10));
 /// let dst: Interval<i32, BoundType> = src.into();
 /// assert_eq!(dst.left().bound_type, BoundType::Exclusive);
 /// assert_eq!(dst.right().bound_type, BoundType::Inclusive);
@@ -78,6 +78,6 @@ impl<T> From<Interval<T, Exclusive, Inclusive>> for Interval<T, BoundType> {
 /// assert_eq!(a.right().limit, 3);
 impl<T: PartialOrd + Clone> From<T> for Interval<T, Inclusive> {
     fn from(t: T) -> Self {
-        Self::new(t.clone().into(), t.into()).unwrap()
+        Self::new(t.clone().into(), t.into())
     }
 }
