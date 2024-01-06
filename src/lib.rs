@@ -52,6 +52,9 @@ impl Inclusive {
             bound_type: self,
         }
     }
+    pub fn between<T: PartialOrd>(a: T, b: T) -> Interval<T, Self, Self> {
+        Interval::between(a, b)
+    }
 }
 impl Exclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
@@ -59,6 +62,9 @@ impl Exclusive {
             limit: t,
             bound_type: self,
         }
+    }
+    pub fn try_between<T: PartialOrd>(a: T, b: T) -> Option<Interval<T, Self, Self>> {
+        Interval::try_between(a, b)
     }
 }
 impl BoundType {
@@ -78,15 +84,6 @@ impl<T: PartialOrd, B: BoundaryOf<Left>> Bound<T, B> {
         Interval::new(self, right)
     }
 }
-
-// impl<T: Float, B: BoundaryOf<Left>> Bound<T, B> {
-//     pub fn to<R: BoundaryOf<Right>>(
-//         self,
-//         right: Bound<T, R>,
-//     ) -> Result<Interval<T, B, R>, Error> {
-//         Interval::try_new(self, right)?.ok_or(IntervalIsEmpty.into())
-//     }
-// }
 
 #[derive(Debug, thiserror::Error)]
 #[error("left boundary must be less than or equal to right boundary")]

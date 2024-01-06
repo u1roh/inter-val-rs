@@ -133,14 +133,46 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
 
     /// ```
     /// use kd_interval::{Interval, Exclusive, Inclusive};
-    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::between(-2, 5).unwrap();
+    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::try_between(-2, 5).unwrap();
     /// assert_eq!(a, Inclusive.at(-2).to(Exclusive.at(5)));
+    ///
+    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::try_between(3, -1).unwrap();
+    /// assert_eq!(a, Inclusive.at(-1).to(Exclusive.at(3))); // Swaps left and right.
+    ///
+    /// assert!(Interval::<i32, Inclusive, Exclusive>::try_between(1, 1).is_none()); // [1, 1) is empty.
+    /// assert!(Interval::<i32, Inclusive, Inclusive>::try_between(1, 1).is_some()); // [1, 1] is not empty.
     /// ```
-    pub fn between(left: T, right: T) -> Option<Self>
+    pub fn try_between(a: T, b: T) -> Option<Self>
     where
         T: Into<Bound<T, L>> + Into<Bound<T, R>>,
     {
-        Self::try_new(left.into(), right.into())
+        if a < b {
+            Self::try_new(a.into(), b.into())
+        } else {
+            Self::try_new(b.into(), a.into())
+        }
+    }
+
+    /// ```
+    /// use kd_interval::{Interval, Exclusive, Inclusive};
+    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::between(-2, 5);
+    /// assert_eq!(a, Inclusive.at(-2).to(Exclusive.at(5)));
+    ///
+    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::between(3, -1);
+    /// assert_eq!(a, Inclusive.at(-1).to(Exclusive.at(3))); // Swaps left and right.
+    ///
+    /// // Closed interval (bounded by `Inclusive`) never panics.
+    /// Interval::<i32, Inclusive, Inclusive>::between(1, 1); // Doesn't panic since [1, 1] is not empty.
+    /// ```
+    /// ```should_panic
+    /// # use kd_interval::{Interval, Exclusive, Inclusive};
+    /// Interval::<i32, Inclusive, Exclusive>::between(1, 1); // Panics since [1, 1) is empty.
+    /// ```
+    pub fn between(a: T, b: T) -> Self
+    where
+        T: Into<Bound<T, L>> + Into<Bound<T, R>>,
+    {
+        Self::try_between(a, b).unwrap()
     }
 
     /// ```
