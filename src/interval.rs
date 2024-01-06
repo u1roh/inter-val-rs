@@ -268,14 +268,17 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// let a = Inclusive.at(0).to(Exclusive.at(3));
     /// let b = Inclusive.at(1).to(Exclusive.at(4));
     /// let c = Inclusive.at(3).to(Exclusive.at(5));
-    /// assert_eq!(a.intersection(a), Some(a));
-    /// assert_eq!(a.intersection(b), Some(Inclusive.at(1).to(Exclusive.at(3))));
-    /// assert_eq!(a.intersection(c), None);
+    /// assert_eq!(a.intersection(&a), Some(a));
+    /// assert_eq!(a.intersection(&b), Some(Inclusive.at(1).to(Exclusive.at(3))));
+    /// assert_eq!(a.intersection(&c), None);
     /// ```
-    pub fn intersection(self, other: Self) -> Option<Self> {
+    pub fn intersection(&self, other: &Self) -> Option<Self>
+    where
+        T: Clone,
+    {
         Self::new_(
-            self.left.intersection(other.left),
-            self.right.intersection(other.right),
+            self.left.intersection(&other.left).clone(),
+            self.right.intersection(&other.right).clone(),
         )
     }
 
@@ -283,12 +286,15 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// use kd_interval::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));
     /// let b = Inclusive.at(5).to(Exclusive.at(8));
-    /// assert_eq!(a.span(b), Inclusive.at(0).to(Exclusive.at(8)));
+    /// assert_eq!(a.span(&b), Inclusive.at(0).to(Exclusive.at(8)));
     /// ```
-    pub fn span(self, other: Self) -> Self {
+    pub fn span(&self, other: &Self) -> Self
+    where
+        T: Clone,
+    {
         Self {
-            left: self.left.union(other.left),
-            right: self.right.union(other.right),
+            left: self.left.union(&other.left).clone(),
+            right: self.right.union(&other.right).clone(),
         }
     }
 
@@ -312,37 +318,38 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// use kd_interval::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));
     /// let b = Inclusive.at(5).to(Exclusive.at(8));
-    /// assert_eq!(a.gap(b).unwrap(), Inclusive.at(3).to(Exclusive.at(5)));
+    /// assert_eq!(a.gap(&b).unwrap(), Inclusive.at(3).to(Exclusive.at(5)));
     /// ```
-    pub fn gap(self, other: Self) -> Option<Interval<T, R::Flip, L::Flip>>
+    pub fn gap(&self, other: &Self) -> Option<Interval<T, R::Flip, L::Flip>>
     where
+        T: Clone,
         L::Flip: BoundaryOf<Right>,
         R::Flip: BoundaryOf<Left>,
     {
-        Interval::new_(self.right.flip(), other.left.flip())
-            .or(Interval::new_(other.right.flip(), self.left.flip()))
+        Interval::new_(self.right.clone().flip(), other.left.clone().flip())
+            .or_else(|| Interval::new_(other.right.clone().flip(), self.left.clone().flip()))
     }
 
     /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));
     /// let b = Inclusive.at(5).to(Exclusive.at(8));
-    /// let union = a.union(b);
-    /// assert_eq!(union.span, a.span(b));
-    /// assert_eq!(union.gap, a.gap(b));
+    /// let union = a.union(&b);
+    /// assert_eq!(union.span, a.span(&b));
+    /// assert_eq!(union.gap, a.gap(&b));
     /// let union_ints: Vec<Interval<_, _, _>> = union.into_iter().collect();
     /// assert_eq!(union_ints.len(), 2);
     /// assert_eq!(union_ints[0], a);
     /// assert_eq!(union_ints[1], b);
     /// ```
-    pub fn union(self, other: Self) -> IntervalUnion<T, L, R>
+    pub fn union(&self, other: &Self) -> IntervalUnion<T, L, R>
     where
         T: Clone,
         L::Flip: BoundaryOf<Right>,
         R::Flip: BoundaryOf<Left>,
     {
         IntervalUnion {
-            gap: self.clone().gap(other.clone()),
+            gap: self.gap(other),
             span: self.span(other),
         }
     }
@@ -370,10 +377,15 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// assert_eq!(enc.left().limit, 0);
     /// assert_eq!(enc.right().limit, 10);
     /// ```
-    pub fn span_many(items: impl IntoIterator<Item = Self>) -> Option<Self> {
+    pub fn span_many<A: std::borrow::Borrow<Self>>(
+        items: impl IntoIterator<Item = A>,
+    ) -> Option<Self>
+    where
+        T: Clone,
+    {
         let mut items = items.into_iter();
-        let first = items.next()?;
-        Some(items.fold(first, |acc, item| acc.span(item)))
+        let first = items.next()?.borrow().clone();
+        Some(items.fold(first, |acc, item| acc.span(item.borrow())))
     }
 
     /// ```
@@ -473,11 +485,11 @@ impl<T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// let a = Inclusive.at(0.0).to(Inclusive.at(1.0));
     /// let b = Inclusive.at(0.0).to(Inclusive.at(2.0));
     /// let c = Inclusive.at(1.0).to(Inclusive.at(2.0));
-    /// assert_eq!(a.iou(a), 1.0);
-    /// assert_eq!(a.iou(b), 0.5);
-    /// assert_eq!(a.iou(c), 0.0);
+    /// assert_eq!(a.iou(&a), 1.0);
+    /// assert_eq!(a.iou(&b), 0.5);
+    /// assert_eq!(a.iou(&c), 0.0);
     /// ```
-    pub fn iou(self, other: Self) -> T {
+    pub fn iou(&self, other: &Self) -> T {
         self.intersection(other)
             .map(|intersection| {
                 let union = self.span(other);

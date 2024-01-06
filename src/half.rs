@@ -64,6 +64,13 @@ impl<T, B: Flip, LR: Flip> Flip for HalfBounded<T, B, LR> {
     }
 }
 
+pub(crate) fn partial_min<T: PartialOrd>(a: T, b: T) -> T {
+    if a < b {
+        a
+    } else {
+        b
+    }
+}
 pub(crate) fn partial_max<T: PartialOrd>(a: T, b: T) -> T {
     if a > b {
         a
@@ -71,11 +78,13 @@ pub(crate) fn partial_max<T: PartialOrd>(a: T, b: T) -> T {
         b
     }
 }
-pub(crate) fn partial_min<T: PartialOrd>(a: T, b: T) -> T {
-    if a < b {
-        a
-    } else {
-        b
+
+impl<T: PartialOrd, B: BoundaryOf<LR>, LR> HalfBounded<T, B, LR> {
+    fn min<'a>(&'a self, other: &'a Self) -> &'a Self {
+        partial_min(self, other)
+    }
+    fn max<'a>(&'a self, other: &'a Self) -> &'a Self {
+        partial_max(self, other)
     }
 }
 
@@ -86,11 +95,11 @@ impl<T: PartialOrd, B: BoundaryOf<Left>> LeftBounded<T, B> {
     pub fn contains(&self, t: &T) -> bool {
         self.bound_type.less(&self.limit, t)
     }
-    pub fn intersection(self, other: Self) -> Self {
-        partial_max(self, other)
+    pub fn intersection<'a>(&'a self, other: &'a Self) -> &'a Self {
+        self.max(other)
     }
-    pub fn union(self, other: Self) -> Self {
-        partial_min(self, other)
+    pub fn union<'a>(&'a self, other: &'a Self) -> &'a Self {
+        self.min(other)
     }
 
     pub fn hull(self, t: T) -> Self {
@@ -120,11 +129,11 @@ impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
     pub fn contains(&self, t: &T) -> bool {
         self.bound_type.greater(&self.limit, t)
     }
-    pub fn intersection(self, other: Self) -> Self {
-        partial_min(self, other)
+    pub fn intersection<'a>(&'a self, other: &'a Self) -> &'a Self {
+        self.min(other)
     }
-    pub fn union(self, other: Self) -> Self {
-        partial_max(self, other)
+    pub fn union<'a>(&'a self, other: &'a Self) -> &'a Self {
+        self.max(other)
     }
 
     pub fn hull(self, t: T) -> Self {

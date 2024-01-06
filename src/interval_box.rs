@@ -66,13 +66,13 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
     pub fn intersection(&self, other: &Self) -> Option<Self> {
         let mut dst = self.clone();
         for i in 0..N {
-            dst[i] = dst[i].clone().intersection(other[i].clone())?;
+            dst[i] = dst[i].clone().intersection(&other[i])?;
         }
         Some(dst)
     }
 
     pub fn span(&self, other: &Self) -> Self {
-        std::array::from_fn(|i| self[i].clone().span(other[i].clone())).into()
+        std::array::from_fn(|i| self[i].clone().span(&other[i])).into()
     }
 
     pub fn span_many<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {

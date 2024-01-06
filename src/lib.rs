@@ -7,7 +7,7 @@
 //! // Closed interval of i32
 //! let a = Inclusive.at(0).to(Inclusive.at(10));  // [0, 10]
 //! let b = Inclusive.at(5).to(Inclusive.at(15));  // [5, 15]
-//! let c = a.intersection(b).unwrap(); // [0, 10] ∩ [5, 15] = [5, 10]
+//! let c = a.intersection(&b).unwrap(); // [0, 10] ∩ [5, 15] = [5, 10]
 //! assert_eq!(c.min(), 5);
 //! assert_eq!(c.max(), 10);
 //!
