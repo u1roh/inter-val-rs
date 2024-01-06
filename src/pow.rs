@@ -1,22 +1,22 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::bound_type::{Left, Right};
-use crate::ndim::NDim;
+use crate::kd::Kd;
 use crate::traits::{BoundaryOf, Maximum, Minimum};
 use crate::{Exclusive, Inclusive, Interval, LeftBounded, RightBounded};
 
 impl<const N: usize, T: Ord + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
-    NDim<N, Interval<T, L, R>>
+    Kd<N, Interval<T, L, R>>
 {
-    pub fn left(&self) -> NDim<N, &LeftBounded<T, L>> {
+    pub fn left(&self) -> Kd<N, &LeftBounded<T, L>> {
         std::array::from_fn(|i| self[i].left()).into()
     }
 
-    pub fn right(&self) -> NDim<N, &RightBounded<T, R>> {
+    pub fn right(&self) -> Kd<N, &RightBounded<T, R>> {
         std::array::from_fn(|i| self[i].right()).into()
     }
 
-    pub fn contains(&self, t: &NDim<N, T>) -> bool {
+    pub fn contains(&self, t: &Kd<N, T>) -> bool {
         self.iter().zip(t.iter()).all(|(i, t)| i.contains(t))
     }
 
@@ -24,14 +24,14 @@ impl<const N: usize, T: Ord + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
         self.iter().zip(other.iter()).all(|(i, o)| i.includes(o))
     }
 
-    pub fn min_val(&self) -> NDim<N, T>
+    pub fn min_val(&self) -> Kd<N, T>
     where
         LeftBounded<T, L>: Minimum<T>,
     {
         std::array::from_fn(|i| self[i].min()).into()
     }
 
-    pub fn max_val(&self) -> NDim<N, T>
+    pub fn max_val(&self) -> Kd<N, T>
     where
         RightBounded<T, R>: Maximum<T>,
     {
@@ -60,18 +60,18 @@ impl<const N: usize, T: Ord + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
 }
 
 impl<const N: usize, T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
-    NDim<N, Interval<NotNan<T>, L, R>>
+    Kd<N, Interval<NotNan<T>, L, R>>
 {
-    pub fn inf(&self) -> NDim<N, NotNan<T>> {
+    pub fn inf(&self) -> Kd<N, NotNan<T>> {
         std::array::from_fn(|i| self[i].inf()).into()
     }
-    pub fn sup(&self) -> NDim<N, NotNan<T>> {
+    pub fn sup(&self) -> Kd<N, NotNan<T>> {
         std::array::from_fn(|i| self[i].sup()).into()
     }
-    pub fn center(&self) -> NDim<N, T> {
+    pub fn center(&self) -> Kd<N, T> {
         std::array::from_fn(|i| self[i].center()).into()
     }
-    pub fn size(&self) -> NDim<N, T> {
+    pub fn size(&self) -> Kd<N, T> {
         std::array::from_fn(|i| self[i].measure()).into()
     }
     pub fn measure(&self) -> NotNan<T> {
@@ -79,10 +79,10 @@ impl<const N: usize, T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
             .map(|item| item.measure())
             .fold(NotNan::new(T::one()).unwrap(), |a, b| a * b)
     }
-    pub fn closure(self) -> NDim<N, Interval<NotNan<T>, Inclusive>> {
+    pub fn closure(self) -> Kd<N, Interval<NotNan<T>, Inclusive>> {
         std::array::from_fn(|i| self[i].closure()).into()
     }
-    pub fn interior(self) -> Option<NDim<N, Interval<NotNan<T>, Exclusive>>> {
+    pub fn interior(self) -> Option<Kd<N, Interval<NotNan<T>, Exclusive>>> {
         let interiors: [_; N] = std::array::from_fn(|i| self[i].interior());
         interiors
             .iter()
