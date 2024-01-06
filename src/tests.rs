@@ -24,7 +24,7 @@ fn it_works() {
     // let _i = Interval::<NotNan<_>, Inclusive, Inclusive>::not_nan(1.23, 4.56).unwrap();
     let _i = Interval::<_, Inclusive, Inclusive>::new((1.23).into(), (4.56).into()).unwrap();
 
-    let i = Interval::enclosure_of_items([3, 9, 2, 5]).unwrap();
+    let i = Interval::enclosure([3, 9, 2, 5]).unwrap();
     assert_eq!(i.left().limit, 2);
     assert_eq!(i.right().limit, 9);
 }
@@ -48,7 +48,7 @@ fn new_interval() {
     assert!(!a.contains(&-1));
 
     let a = Interval::new(BoundType::Exclusive.at(0), BoundType::Exclusive.at(3)).unwrap();
-    assert_typeid::<Interval<i32>>(&a);
+    assert_typeid::<Interval<i32, BoundType>>(&a);
     assert!(!a.contains(&0));
     assert!(a.contains(&1));
     assert!(!a.contains(&3));

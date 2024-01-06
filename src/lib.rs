@@ -20,7 +20,7 @@
 //! assert!(a.contains(&(4.56 - 0.000000000000001)));
 //!
 //! // Enclosure
-//! let a = Interval::enclosure_of_items(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
+//! let a = Interval::enclosure(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
 //! assert_eq!(a.min(), 2);
 //! assert_eq!(a.max(), 9);
 //! ```

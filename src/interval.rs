@@ -36,24 +36,24 @@ where
     left.contains(&right.limit) && right.contains(&left.limit)
 }
 
-/// Interval like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `Ord` type.
+/// Interval like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `PartialOrd` type.
 /// * `T`: Scalar type. `T` should implements `PartialOrd`. `NaN` safety is not guaranteed when `T` is floating point type.
 /// * `L`: Left boundary type. Specify one of [`Inclusive`], [`Exclusive`], or [`BoundType`](crate::BoundType).
 /// * `R`: Right boundary type. Specify one of [`Inclusive`] [`Exclusive`], or [`BoundType`](crate::BoundType).
-/// * `Interval<T, Inclusive>` represents a closed interval, i.e., *[a, b]*.
-/// * `Interval<T, Exclusive>` represents a open interval, i.e., *(a, b)*.
+/// * `Interval<T>` (= `Interval<T, Inclusive, Inclusive>`) represents a closed interval, i.e., *[a, b]*.
+/// * `Interval<T, Exclusive>` (= `Interval<T, Exclusive, Exclusive>`) represents a open interval, i.e., *(a, b)*.
 /// * `Interval<T, Inclusive, Exclusive>` represents a right half-open interval, i.e., *[a, b)*.
 /// * `Interval<T, Exclusive, Inclusive>` represents a left half-open interval, i.e., *(a, b]*.
-/// * `Interval<T>` (= `Interval<T, BoundType, BoundType>`) represents any of the above.
+/// * `Interval<T, BoundType>` represents any of the above.
 ///
 /// ```
 /// use kd_interval::{Interval, Exclusive, Inclusive, BoundType};
 /// assert_eq!(std::mem::size_of::<Interval<i32, Inclusive>>(), std::mem::size_of::<i32>() * 2);
 /// assert_eq!(std::mem::size_of::<Interval<f64, Exclusive>>(), std::mem::size_of::<f64>() * 2);
-/// assert!(std::mem::size_of::<Interval<i32>>() > (std::mem::size_of::<i32>() + std::mem::size_of::<BoundType>()) * 2);
+/// assert!(std::mem::size_of::<Interval<i32, BoundType>>() > (std::mem::size_of::<i32>() + std::mem::size_of::<BoundType>()) * 2);
 /// ```
 #[derive(Debug, Clone, Copy)]
-pub struct Interval<T, L = crate::BoundType, R = L> {
+pub struct Interval<T, L = Inclusive, R = L> {
     pub(crate) left: LeftBounded<T, L>,
     pub(crate) right: RightBounded<T, R>,
 }
@@ -285,15 +285,15 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
 
     /// ```
     /// use kd_interval::Interval;
-    /// let span = Interval::enclosure_of_items(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
+    /// let span = Interval::enclosure(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
     /// assert_eq!(span.min(), 2);
     /// assert_eq!(span.max(), 9);
     ///
-    /// let span = Interval::enclosure_of_items(vec![3.1, 9.2, 2.3, 5.4]).unwrap(); // [2.3, 9.2]
+    /// let span = Interval::enclosure(vec![3.1, 9.2, 2.3, 5.4]).unwrap(); // [2.3, 9.2]
     /// assert_eq!(span.inf(), 2.3);
     /// assert_eq!(span.sup(), 9.2);
     /// ```
-    pub fn enclosure_of_items<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
+    pub fn enclosure<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
         let mut items = items.into_iter();
         let first = items.next()?.into();
         Some(items.fold(first, |acc, item| acc.hull(item.into())))
