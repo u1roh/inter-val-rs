@@ -39,7 +39,7 @@ where
 }
 
 /// Interval like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `Ord` type.
-/// * `T`: Scalar type. `T` should implements `Ord`. Use [`T`](crate::ordered_float::NotNan) for floating point numbers.
+/// * `T`: Scalar type. `T` should implements `PartialOrd`. `NaN` safety is not guaranteed when `T` is floating point type.
 /// * `L`: Left boundary type. Specify one of [`Inclusive`], [`Exclusive`], or [`BoundType`](crate::BoundType).
 /// * `R`: Right boundary type. Specify one of [`Inclusive`] [`Exclusive`], or [`BoundType`](crate::BoundType).
 /// * `Interval<T, Inclusive>` represents a closed interval, i.e., *[a, b]*.
@@ -103,34 +103,6 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
         Self::new_(left.into(), right.into())
     }
 
-    // /// ```
-    // /// use kd_interval::{Interval, Exclusive, Inclusive};
-    // /// let a = Interval::try_new(Inclusive.at(-1.0), Exclusive.at(1.0)).unwrap();
-    // /// assert!(a.contains(&-1.0));
-    // /// assert!(!a.contains(&1.0));
-    // ///
-    // /// let a = Interval::<_, Exclusive, Inclusive>::try_new(1.23.into(), 4.56.into())
-    // ///     .unwrap()
-    // ///     .unwrap();
-    // /// assert!(!a.contains(&1.23));
-    // /// assert!(a.contains(&1.23000000000001));
-    // /// assert!(a.contains(&4.56));
-    // /// ```
-    // pub fn try_new<T2>(left: Bound<T2, L>, right: Bound<T2, R>) -> Result<Option<Self>, T::Error>
-    // where
-    //     T: Scalar<T2>,
-    // {
-    //     let left = Bound {
-    //         limit: T::scalar_try_from(left.limit)?,
-    //         bound_type: left.bound_type,
-    //     };
-    //     let right = Bound {
-    //         limit: T::scalar_try_from(right.limit)?,
-    //         bound_type: right.bound_type,
-    //     };
-    //     Ok(Self::new(left, right))
-    // }
-
     /// ```
     /// use kd_interval::{Interval, Exclusive, Inclusive};
     /// let a: Interval<i32, Inclusive, Exclusive> = Interval::between(-2, 5).unwrap();
@@ -142,21 +114,6 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     {
         Self::new(left.into(), right.into())
     }
-
-    // /// ```
-    // /// use kd_interval::{Interval, Exclusive, Inclusive};
-    // /// let a: Interval<f64, Inclusive, Exclusive> = Interval::try_between(-1.0, 1.0).unwrap();
-    // /// assert_eq!(a, Inclusive.at(-1.0).to(Exclusive.at(1.0)).unwrap());
-    // /// ```
-    // pub fn try_between<T2>(left: T2, right: T2) -> Result<Option<Self>, T::Error>
-    // where
-    //     T: Scalar<T2> + Into<Bound<T, L>> + Into<Bound<T, R>>,
-    // {
-    //     Ok(Self::new(
-    //         T::scalar_try_from(left)?.into(),
-    //         T::scalar_try_from(right)?.into(),
-    //     ))
-    // }
 
     /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};
@@ -217,26 +174,6 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     {
         Self::new_(self.left.dilate(delta.clone()), self.right.dilate(delta)).unwrap()
     }
-
-    // /// ```
-    // /// use kd_interval::{Inclusive, Exclusive};
-    // /// let a = Inclusive.at(0.0).to(Exclusive.at(10.0)).unwrap();
-    // /// assert_eq!(a.try_dilate(2.0).unwrap(), Inclusive.at(-2.0).to(Exclusive.at(12.0)).unwrap());
-    // /// assert_eq!(a.try_dilate(-1.5).unwrap(), Inclusive.at(1.5).to(Exclusive.at(8.5)).unwrap());
-    // /// assert!(a.try_dilate(-6.0).is_err());
-    // /// ```
-    // pub fn try_dilate<X>(self, delta: X) -> Result<Self, crate::Error>
-    // where
-    //     T: Scalar<X>,
-    //     crate::Error: From<T::Error>,
-    //     X: Clone + std::ops::Add<Output = X> + std::ops::Sub<Output = X>,
-    // {
-    //     Self::new_(
-    //         self.left.try_dilate(delta.clone())?,
-    //         self.right.try_dilate(delta)?,
-    //     )
-    //     .ok_or(crate::IntervalIsEmpty.into())
-    // }
 
     /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};

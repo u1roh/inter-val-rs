@@ -70,37 +70,6 @@ mod converters {
         }
     }
 
-    // /// ```
-    // /// use std::any::{Any, TypeId};
-    // /// use kd_interval::{Interval, Inclusive, Exclusive};
-    // /// let a: Interval<_, _, _> = (2.74..4.26).try_into().unwrap();
-    // /// assert_eq!(a.type_id(), TypeId::of::<Interval<f64, Inclusive, Exclusive>>());
-    // /// assert_eq!(a.left().limit, 2.74);
-    // /// assert_eq!(a.right().limit, 4.26);
-    // /// ```
-    // impl<T: FloatCore> TryFrom<std::ops::Range<T>> for Interval<T, Inclusive, Exclusive> {
-    //     type Error = crate::Error;
-    //     fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {
-    //         Self::try_new(Inclusive.at(r.start), Exclusive.at(r.end))?.ok_or(IntervalIsEmpty.into())
-    //     }
-    // }
-
-    // /// ```
-    // /// use std::any::{Any, TypeId};
-    // /// use kd_interval::{Interval, Inclusive, Exclusive};
-    // /// let a: Interval<_, _, _> = (2.74..=4.26).try_into().unwrap();
-    // /// assert_eq!(a.type_id(), TypeId::of::<Interval<f64, Inclusive, Inclusive>>());
-    // /// assert_eq!(a.left().limit, 2.74);
-    // /// assert_eq!(a.right().limit, 4.26);
-    // /// ```
-    // impl<T: FloatCore> TryFrom<std::ops::RangeInclusive<T>> for Interval<T, Inclusive> {
-    //     type Error = crate::Error;
-    //     fn try_from(r: std::ops::RangeInclusive<T>) -> Result<Self, Self::Error> {
-    //         let (left, right) = r.into_inner();
-    //         Self::try_new(Inclusive.at(left), Inclusive.at(right))?.ok_or(IntervalIsEmpty.into())
-    //     }
-    // }
-
     /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};
     /// let src = Inclusive.at(0).to(Exclusive.at(10)).unwrap();

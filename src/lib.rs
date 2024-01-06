@@ -47,7 +47,6 @@ pub use half::{HalfBounded, LeftBounded, RightBounded};
 pub use interval::Interval;
 pub use interval_box::Box;
 pub use kd::Kd;
-pub use traits::Scalar;
 
 impl Inclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {

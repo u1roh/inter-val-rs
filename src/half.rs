@@ -2,7 +2,7 @@ use ordered_float::FloatCore;
 
 use crate::{
     bound_type::{Left, Right},
-    traits::{Boundary, BoundaryOf, Flip, IntoGeneral, Maximum, Minimum, Scalar},
+    traits::{Boundary, BoundaryOf, Flip, IntoGeneral, Maximum, Minimum},
     Bound, BoundType, Exclusive, Inclusive,
 };
 
@@ -105,18 +105,6 @@ impl<T: PartialOrd, B: BoundaryOf<Left>> LeftBounded<T, B> {
         }
         .into()
     }
-
-    pub fn try_dilate<X>(self, delta: X) -> Result<Self, T::Error>
-    where
-        T: Scalar<X>,
-        X: std::ops::Sub<Output = X>,
-    {
-        Ok(Bound {
-            limit: T::scalar_try_from(self.0.limit.scalar_into() - delta)?,
-            bound_type: self.0.bound_type,
-        }
-        .into())
-    }
 }
 
 impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
@@ -142,18 +130,6 @@ impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
             bound_type: self.0.bound_type,
         }
         .into()
-    }
-
-    pub fn try_dilate<X>(self, delta: X) -> Result<Self, T::Error>
-    where
-        T: Scalar<X>,
-        X: std::ops::Add<Output = X>,
-    {
-        Ok(Bound {
-            limit: T::scalar_try_from(self.0.limit.scalar_into() + delta)?,
-            bound_type: self.0.bound_type,
-        }
-        .into())
     }
 }
 
