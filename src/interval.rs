@@ -1,4 +1,4 @@
-use ordered_float::{FloatCore, FloatIsNan, NotNan};
+use ordered_float::FloatCore;
 
 use crate::bound_type::{Left, Right};
 use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum, Scalar};
@@ -39,7 +39,7 @@ where
 }
 
 /// Interval like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `Ord` type.
-/// * `T`: Scalar type. `T` should implements `Ord`. Use [`NotNan<T>`](crate::ordered_float::NotNan) for floating point numbers.
+/// * `T`: Scalar type. `T` should implements `Ord`. Use [`T`](crate::ordered_float::NotNan) for floating point numbers.
 /// * `L`: Left boundary type. Specify one of [`Inclusive`], [`Exclusive`], or [`BoundType`](crate::BoundType).
 /// * `R`: Right boundary type. Specify one of [`Inclusive`] [`Exclusive`], or [`BoundType`](crate::BoundType).
 /// * `Interval<T, Inclusive>` represents a closed interval, i.e., *[a, b]*.
@@ -103,33 +103,33 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
         Self::new_(left.into(), right.into())
     }
 
-    /// ```
-    /// use kd_interval::{IntervalF, Exclusive, Inclusive};
-    /// let a = IntervalF::try_new(Inclusive.at(-1.0), Exclusive.at(1.0)).unwrap().unwrap();
-    /// assert!(a.contains(&-1.0));
-    /// assert!(!a.contains(&1.0));
-    ///
-    /// let a = IntervalF::<_, Exclusive, Inclusive>::try_new(1.23.into(), 4.56.into())
-    ///     .unwrap()
-    ///     .unwrap();
-    /// assert!(!a.contains(&1.23));
-    /// assert!(a.contains(&1.23000000000001));
-    /// assert!(a.contains(&4.56));
-    /// ```
-    pub fn try_new<T2>(left: Bound<T2, L>, right: Bound<T2, R>) -> Result<Option<Self>, T::Error>
-    where
-        T: Scalar<T2>,
-    {
-        let left = Bound {
-            limit: T::scalar_try_from(left.limit)?,
-            bound_type: left.bound_type,
-        };
-        let right = Bound {
-            limit: T::scalar_try_from(right.limit)?,
-            bound_type: right.bound_type,
-        };
-        Ok(Self::new(left, right))
-    }
+    // /// ```
+    // /// use kd_interval::{IntervalF, Exclusive, Inclusive};
+    // /// let a = IntervalF::try_new(Inclusive.at(-1.0), Exclusive.at(1.0)).unwrap().unwrap();
+    // /// assert!(a.contains(&-1.0));
+    // /// assert!(!a.contains(&1.0));
+    // ///
+    // /// let a = IntervalF::<_, Exclusive, Inclusive>::try_new(1.23.into(), 4.56.into())
+    // ///     .unwrap()
+    // ///     .unwrap();
+    // /// assert!(!a.contains(&1.23));
+    // /// assert!(a.contains(&1.23000000000001));
+    // /// assert!(a.contains(&4.56));
+    // /// ```
+    // pub fn try_new<T2>(left: Bound<T2, L>, right: Bound<T2, R>) -> Result<Option<Self>, T::Error>
+    // where
+    //     T: Scalar<T2>,
+    // {
+    //     let left = Bound {
+    //         limit: T::scalar_try_from(left.limit)?,
+    //         bound_type: left.bound_type,
+    //     };
+    //     let right = Bound {
+    //         limit: T::scalar_try_from(right.limit)?,
+    //         bound_type: right.bound_type,
+    //     };
+    //     Ok(Self::new(left, right))
+    // }
 
     /// ```
     /// use kd_interval::{Interval, Exclusive, Inclusive};
@@ -361,29 +361,29 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 }
 
-impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>, L, R> {
-    /// ```
-    /// use kd_interval::{Interval, Exclusive, Inclusive};
-    /// let a = Interval::float_new(Inclusive.at(-1.0), Exclusive.at(1.0)).unwrap().unwrap();
-    /// assert!(a.contains(&-1.0));
-    /// assert!(!a.contains(&1.0));
-    /// ```
-    pub fn float_new(left: Bound<T, L>, right: Bound<T, R>) -> Result<Option<Self>, FloatIsNan> {
-        Self::try_new(left, right)
-    }
+impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
+    // /// ```
+    // /// use kd_interval::{Interval, Exclusive, Inclusive};
+    // /// let a = Interval::float_new(Inclusive.at(-1.0), Exclusive.at(1.0)).unwrap().unwrap();
+    // /// assert!(a.contains(&-1.0));
+    // /// assert!(!a.contains(&1.0));
+    // /// ```
+    // pub fn float_new(left: Bound<T, L>, right: Bound<T, R>) -> Result<Option<Self>, FloatIsNan> {
+    //     Self::new(left, right)
+    // }
 
-    /// ```
-    /// use kd_interval::{Interval, Exclusive, Inclusive};
-    /// let a: Interval<_, Inclusive, Exclusive> = Interval::float_between(-1.0, 1.0).unwrap().unwrap();
-    /// assert!(a.contains(&-1.0));
-    /// assert!(!a.contains(&1.0));
-    /// ```
-    pub fn float_between(left: T, right: T) -> Result<Option<Self>, FloatIsNan>
-    where
-        T: Into<Bound<T, L>> + Into<Bound<T, R>>,
-    {
-        Self::float_new(left.into(), right.into())
-    }
+    // /// ```
+    // /// use kd_interval::{Interval, Exclusive, Inclusive};
+    // /// let a: Interval<_, Inclusive, Exclusive> = Interval::float_between(-1.0, 1.0).unwrap().unwrap();
+    // /// assert!(a.contains(&-1.0));
+    // /// assert!(!a.contains(&1.0));
+    // /// ```
+    // pub fn float_between(left: T, right: T) -> Result<Option<Self>, FloatIsNan>
+    // where
+    //     T: Into<Bound<T, L>> + Into<Bound<T, R>>,
+    // {
+    //     Self::float_new(left.into(), right.into())
+    // }
 
     /// ```
     /// use kd_interval::{Interval, Exclusive, Inclusive};
@@ -395,7 +395,7 @@ impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>
     /// assert_eq!(b.inf(), -1.0);
     /// assert!(!b.contains(&-1.0));
     /// ```
-    pub fn inf(&self) -> NotNan<T> {
+    pub fn inf(&self) -> T {
         self.left.inf()
     }
 
@@ -409,7 +409,7 @@ impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>
     /// assert_eq!(b.sup(), 1.0);
     /// assert!(!b.contains(&1.0));
     /// ```
-    pub fn sup(&self) -> NotNan<T> {
+    pub fn sup(&self) -> T {
         self.right.sup()
     }
 
@@ -422,7 +422,7 @@ impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>
     /// assert!(a.measure().is_nan());
     /// ```
     pub fn measure(&self) -> T {
-        *self.right.limit - *self.left.limit
+        self.right.limit - self.left.limit
     }
 
     /// ```
@@ -434,16 +434,16 @@ impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>
     /// assert!(a.center().is_nan());
     /// ```
     pub fn center(&self) -> T {
-        (*self.left.limit + *self.right.limit) / (T::one() + T::one())
+        (self.left.limit + self.right.limit) / (T::one() + T::one())
     }
 
-    pub fn closure(self) -> Interval<NotNan<T>, Inclusive> {
+    pub fn closure(self) -> Interval<T, Inclusive> {
         Interval {
             left: self.left.closure(),
             right: self.right.closure(),
         }
     }
-    pub fn interior(self) -> Option<Interval<NotNan<T>, Exclusive>> {
+    pub fn interior(self) -> Option<Interval<T, Exclusive>> {
         Interval::<_, Exclusive>::new_(self.left.interior(), self.right.interior())
     }
 
@@ -467,7 +467,7 @@ impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>
     }
 }
 
-impl<T: FloatCore> Interval<NotNan<T>, Inclusive, Inclusive> {
+impl<T: FloatCore> Interval<T, Inclusive, Inclusive> {
     /// ```
     /// use kd_interval::IntervalF;
     /// let span = IntervalF::enclosure_of_floats(vec![3.1, 9.2, 2.3, 5.4]).unwrap().unwrap(); // [2.3, 9.2]
@@ -475,17 +475,16 @@ impl<T: FloatCore> Interval<NotNan<T>, Inclusive, Inclusive> {
     /// assert_eq!(span.sup(), 9.2);
     /// assert!(IntervalF::<f64, _, _>::enclosure_of_floats(vec![]).unwrap().is_none());
     /// ```
-    pub fn enclosure_of_floats(
-        floats: impl IntoIterator<Item = T>,
-    ) -> Result<Option<Self>, FloatIsNan> {
-        let mut inf = NotNan::new(T::infinity()).unwrap();
-        let mut sup = NotNan::new(T::neg_infinity()).unwrap();
-        for x in floats {
-            let x = NotNan::new(x)?;
-            inf = inf.min(x);
-            sup = sup.max(x);
-        }
-        Ok(Self::between(inf, sup))
+    pub fn enclosure_of_floats(floats: impl IntoIterator<Item = T>) -> Option<Self> {
+        Self::enclosure_of_items(floats)
+        // let mut inf = T::infinity();
+        // let mut sup = T::neg_infinity();
+        // for x in floats {
+        //     let x = NotNan::new(x)?;
+        //     inf = inf.min(x);
+        //     sup = sup.max(x);
+        // }
+        // Ok(Self::between(inf, sup))
     }
 }
 

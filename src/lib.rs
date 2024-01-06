@@ -36,7 +36,6 @@ mod tests;
 mod traits;
 
 use bound_type::{Left, Right};
-use ordered_float::{FloatCore, NotNan};
 use traits::BoundaryOf;
 
 // re-export ordered_float
@@ -81,14 +80,14 @@ impl<T: PartialOrd, B: BoundaryOf<Left>> Bound<T, B> {
     }
 }
 
-impl<T: FloatCore, B: BoundaryOf<Left>> Bound<T, B> {
-    pub fn float_to<R: BoundaryOf<Right>>(
-        self,
-        right: Bound<T, R>,
-    ) -> Result<Interval<NotNan<T>, B, R>, Error> {
-        Interval::try_new(self, right)?.ok_or(IntervalIsEmpty.into())
-    }
-}
+// impl<T: FloatCore, B: BoundaryOf<Left>> Bound<T, B> {
+//     pub fn float_to<R: BoundaryOf<Right>>(
+//         self,
+//         right: Bound<T, R>,
+//     ) -> Result<Interval<T, B, R>, Error> {
+//         Interval::try_new(self, right)?.ok_or(IntervalIsEmpty.into())
+//     }
+// }
 
 #[derive(Debug, thiserror::Error)]
 #[error("left boundary must be less than or equal to right boundary")]
@@ -106,7 +105,3 @@ pub enum Error {
 
 pub type ClosedInterval<T> = Interval<T, Inclusive>;
 pub type OpenInterval<T> = Interval<T, Exclusive>;
-
-pub type IntervalF<T, L = BoundType, R = L> = Interval<NotNan<T>, L, R>;
-pub type ClosedIntervalF<T> = ClosedInterval<NotNan<T>>;
-pub type OpenIntervalF<T> = OpenInterval<NotNan<T>>;

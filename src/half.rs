@@ -1,4 +1,4 @@
-use ordered_float::{FloatCore, NotNan};
+use ordered_float::FloatCore;
 
 use crate::{
     bound_type::{Left, Right},
@@ -196,18 +196,18 @@ impl<T: num::Integer + Clone> Maximum<T> for RightBounded<T, BoundType> {
     }
 }
 
-impl<T: FloatCore, B: Boundary> LeftBounded<NotNan<T>, B> {
-    pub fn inf(&self) -> NotNan<T> {
+impl<T: FloatCore, B: Boundary> LeftBounded<T, B> {
+    pub fn inf(&self) -> T {
         self.limit
     }
-    pub fn closure(self) -> LeftBounded<NotNan<T>, Inclusive> {
+    pub fn closure(self) -> LeftBounded<T, Inclusive> {
         Bound {
             limit: self.limit,
             bound_type: Inclusive,
         }
         .into()
     }
-    pub fn interior(self) -> LeftBounded<NotNan<T>, Exclusive> {
+    pub fn interior(self) -> LeftBounded<T, Exclusive> {
         Bound {
             limit: self.limit,
             bound_type: Exclusive,
@@ -215,18 +215,18 @@ impl<T: FloatCore, B: Boundary> LeftBounded<NotNan<T>, B> {
         .into()
     }
 }
-impl<T: FloatCore, B: Boundary> RightBounded<NotNan<T>, B> {
-    pub fn sup(&self) -> NotNan<T> {
+impl<T: FloatCore, B: Boundary> RightBounded<T, B> {
+    pub fn sup(&self) -> T {
         self.limit
     }
-    pub fn closure(self) -> RightBounded<NotNan<T>, Inclusive> {
+    pub fn closure(self) -> RightBounded<T, Inclusive> {
         Bound {
             limit: self.limit,
             bound_type: Inclusive,
         }
         .into()
     }
-    pub fn interior(self) -> RightBounded<NotNan<T>, Exclusive> {
+    pub fn interior(self) -> RightBounded<T, Exclusive> {
         Bound {
             limit: self.limit,
             bound_type: Exclusive,

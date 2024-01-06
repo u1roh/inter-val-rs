@@ -1,4 +1,4 @@
-use ordered_float::{FloatCore, NotNan};
+use ordered_float::FloatCore;
 
 use crate::bound_type::{Left, Right};
 use crate::kd::Kd;
@@ -84,13 +84,11 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
     }
 }
 
-impl<const N: usize, T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
-    Box<N, NotNan<T>, L, R>
-{
-    pub fn inf(&self) -> Kd<N, NotNan<T>> {
+impl<const N: usize, T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Box<N, T, L, R> {
+    pub fn inf(&self) -> Kd<N, T> {
         std::array::from_fn(|i| self[i].inf()).into()
     }
-    pub fn sup(&self) -> Kd<N, NotNan<T>> {
+    pub fn sup(&self) -> Kd<N, T> {
         std::array::from_fn(|i| self[i].sup()).into()
     }
     pub fn center(&self) -> Kd<N, T> {
@@ -99,15 +97,15 @@ impl<const N: usize, T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
     pub fn size(&self) -> Kd<N, T> {
         std::array::from_fn(|i| self[i].measure()).into()
     }
-    pub fn measure(&self) -> NotNan<T> {
+    pub fn measure(&self) -> T {
         self.iter()
             .map(|item| item.measure())
-            .fold(NotNan::new(T::one()).unwrap(), |a, b| a * b)
+            .fold(T::one(), |a, b| a * b)
     }
-    pub fn closure(self) -> Kd<N, Interval<NotNan<T>, Inclusive>> {
+    pub fn closure(self) -> Kd<N, Interval<T, Inclusive>> {
         std::array::from_fn(|i| self[i].closure()).into()
     }
-    pub fn interior(self) -> Option<Kd<N, Interval<NotNan<T>, Exclusive>>> {
+    pub fn interior(self) -> Option<Kd<N, Interval<T, Exclusive>>> {
         let interiors: [_; N] = std::array::from_fn(|i| self[i].interior());
         interiors
             .iter()

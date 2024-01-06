@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::traits::{Boundary, BoundaryOf, Flip, IntoGeneral, Scalar};
+use crate::traits::{Boundary, BoundaryOf, Flip, IntoGeneral};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Inclusive;
