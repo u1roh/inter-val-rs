@@ -25,7 +25,7 @@
 //! assert_eq!(a.max(), 9);
 //! ```
 mod bound;
-mod bounding;
+mod bound_type;
 mod converters;
 mod half;
 mod interval;
@@ -35,7 +35,7 @@ mod std_range;
 mod tests;
 mod traits;
 
-use bounding::{Left, Right};
+use bound_type::{Left, Right};
 use ordered_float::{FloatCore, NotNan};
 use traits::BoundaryOf;
 
@@ -43,7 +43,7 @@ use traits::BoundaryOf;
 pub use ordered_float;
 
 pub use bound::Bound;
-pub use bounding::{Bounding, Exclusive, Inclusive};
+pub use bound_type::{BoundType, Exclusive, Inclusive};
 pub use half::{HalfBounded, LeftBounded, RightBounded};
 pub use interval::Interval;
 pub use traits::Scalar;
@@ -55,7 +55,7 @@ impl Inclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
         Bound {
             limit: t,
-            bounding: self,
+            bound_type: self,
         }
     }
 }
@@ -63,15 +63,15 @@ impl Exclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
         Bound {
             limit: t,
-            bounding: self,
+            bound_type: self,
         }
     }
 }
-impl Bounding {
+impl BoundType {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
         Bound {
             limit: t,
-            bounding: self,
+            bound_type: self,
         }
     }
 }
@@ -108,12 +108,12 @@ pub enum Error {
 pub type ClosedInterval<T> = Interval<T, Inclusive>;
 pub type OpenInterval<T> = Interval<T, Exclusive>;
 
-pub type IntervalF<T, L = Bounding, R = L> = Interval<NotNan<T>, L, R>;
+pub type IntervalF<T, L = BoundType, R = L> = Interval<NotNan<T>, L, R>;
 pub type ClosedIntervalF<T> = ClosedInterval<NotNan<T>>;
 pub type OpenIntervalF<T> = OpenInterval<NotNan<T>>;
 
-// pub type IntervalN<const N: usize, T, L = Bounding, R = L> = NDim<N, Interval<T, L, R>>;
-// pub type Interval2<T, L = Bounding, R = L> = IntervalN<2, T, L, R>;
-// pub type Interval3<T, L = Bounding, R = L> = IntervalN<3, T, L, R>;
-// pub type Interval4<T, L = Bounding, R = L> = IntervalN<4, T, L, R>;
+// pub type IntervalN<const N: usize, T, L = BoundType, R = L> = NDim<N, Interval<T, L, R>>;
+// pub type Interval2<T, L = BoundType, R = L> = IntervalN<2, T, L, R>;
+// pub type Interval3<T, L = BoundType, R = L> = IntervalN<3, T, L, R>;
+// pub type Interval4<T, L = BoundType, R = L> = IntervalN<4, T, L, R>;
 // pub type BoxN<const N: usize, T> = IntervalN<N, NotNan<T>, Inclusive>;

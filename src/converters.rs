@@ -4,7 +4,7 @@ impl<T> From<T> for Bound<T, Inclusive> {
     fn from(t: T) -> Self {
         Self {
             limit: t,
-            bounding: Inclusive,
+            bound_type: Inclusive,
         }
     }
 }
@@ -12,17 +12,17 @@ impl<T> From<T> for Bound<T, Exclusive> {
     fn from(t: T) -> Self {
         Self {
             limit: t,
-            bounding: Exclusive,
+            bound_type: Exclusive,
         }
     }
 }
 
 /// ```
-/// use kd_interval::{Bounding, Inclusive, Interval};
+/// use kd_interval::{BoundType, Inclusive, Interval};
 /// let src: Interval<i32, Inclusive> = Inclusive.at(0).to(Inclusive.at(10)).unwrap();
 /// let dst: Interval<i32> = src.into();
-/// assert_eq!(dst.left().bounding, Bounding::Inclusive);
-/// assert_eq!(dst.right().bounding, Bounding::Inclusive);
+/// assert_eq!(dst.left().bound_type, BoundType::Inclusive);
+/// assert_eq!(dst.right().bound_type, BoundType::Inclusive);
 /// ```
 impl<T> From<Interval<T, Inclusive>> for Interval<T> {
     fn from(i: Interval<T, Inclusive>) -> Self {
@@ -31,11 +31,11 @@ impl<T> From<Interval<T, Inclusive>> for Interval<T> {
 }
 
 /// ```
-/// use kd_interval::{Bounding, Exclusive, Interval};
+/// use kd_interval::{BoundType, Exclusive, Interval};
 /// let src: Interval<i32, Exclusive> = Exclusive.at(0).to(Exclusive.at(10)).unwrap();
 /// let dst: Interval<i32> = src.into();
-/// assert_eq!(dst.left().bounding, Bounding::Exclusive);
-/// assert_eq!(dst.right().bounding, Bounding::Exclusive);
+/// assert_eq!(dst.left().bound_type, BoundType::Exclusive);
+/// assert_eq!(dst.right().bound_type, BoundType::Exclusive);
 /// ```
 impl<T> From<Interval<T, Exclusive>> for Interval<T> {
     fn from(i: Interval<T, Exclusive>) -> Self {
@@ -44,11 +44,11 @@ impl<T> From<Interval<T, Exclusive>> for Interval<T> {
 }
 
 /// ```
-/// use kd_interval::{Bounding, Inclusive, Exclusive, Interval};
+/// use kd_interval::{BoundType, Inclusive, Exclusive, Interval};
 /// let src: Interval<i32, Inclusive, Exclusive> = Inclusive.at(0).to(Exclusive.at(10)).unwrap();
 /// let dst: Interval<i32> = src.into();
-/// assert_eq!(dst.left().bounding, Bounding::Inclusive);
-/// assert_eq!(dst.right().bounding, Bounding::Exclusive);
+/// assert_eq!(dst.left().bound_type, BoundType::Inclusive);
+/// assert_eq!(dst.right().bound_type, BoundType::Exclusive);
 /// ```
 impl<T> From<Interval<T, Inclusive, Exclusive>> for Interval<T> {
     fn from(i: Interval<T, Inclusive, Exclusive>) -> Self {
@@ -57,11 +57,11 @@ impl<T> From<Interval<T, Inclusive, Exclusive>> for Interval<T> {
 }
 
 /// ```
-/// use kd_interval::{Bounding, Inclusive, Exclusive, Interval};
+/// use kd_interval::{BoundType, Inclusive, Exclusive, Interval};
 /// let src: Interval<i32, Exclusive, Inclusive> = Exclusive.at(0).to(Inclusive.at(10)).unwrap();
 /// let dst: Interval<i32> = src.into();
-/// assert_eq!(dst.left().bounding, Bounding::Exclusive);
-/// assert_eq!(dst.right().bounding, Bounding::Inclusive);
+/// assert_eq!(dst.left().bound_type, BoundType::Exclusive);
+/// assert_eq!(dst.right().bound_type, BoundType::Inclusive);
 /// ```
 impl<T> From<Interval<T, Exclusive, Inclusive>> for Interval<T> {
     fn from(i: Interval<T, Exclusive, Inclusive>) -> Self {

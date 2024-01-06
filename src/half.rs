@@ -1,9 +1,9 @@
 use ordered_float::{FloatCore, NotNan};
 
 use crate::{
-    bounding::{Left, Right},
+    bound_type::{Left, Right},
     traits::{Boundary, BoundaryOf, Flip, IntoGeneral, Maximum, Minimum, Scalar},
-    Bound, Bounding, Exclusive, Inclusive,
+    Bound, BoundType, Exclusive, Inclusive,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -37,7 +37,7 @@ mod ordering {
 
     impl<T: Ord, B: BoundaryOf<LR>, LR> HalfBounded<T, B, LR> {
         fn ordering_key(&self) -> (&T, B::Ordered) {
-            (&self.limit, self.bounding.into_ordered())
+            (&self.limit, self.bound_type.into_ordered())
         }
     }
     impl<T: Ord, B: BoundaryOf<LR>, LR> PartialOrd for HalfBounded<T, B, LR> {
@@ -80,7 +80,7 @@ impl<T: Ord, B: BoundaryOf<Left>> LeftBounded<T, B> {
     where
         T: Scalar<T2>,
     {
-        self.bounding.less(&self.limit, t)
+        self.bound_type.less(&self.limit, t)
     }
     pub fn intersection(self, other: Self) -> Self {
         self.max(other)
@@ -95,7 +95,7 @@ impl<T: Ord, B: BoundaryOf<Left>> LeftBounded<T, B> {
     {
         Bound {
             limit: self.0.limit - delta,
-            bounding: self.0.bounding,
+            bound_type: self.0.bound_type,
         }
         .into()
     }
@@ -107,7 +107,7 @@ impl<T: Ord, B: BoundaryOf<Left>> LeftBounded<T, B> {
     {
         Ok(Bound {
             limit: T::scalar_try_from(self.0.limit.scalar_into() - delta)?,
-            bounding: self.0.bounding,
+            bound_type: self.0.bound_type,
         }
         .into())
     }
@@ -121,7 +121,7 @@ impl<T: Ord, B: BoundaryOf<Right>> RightBounded<T, B> {
     where
         T: Scalar<T2>,
     {
-        self.bounding.greater(&self.limit, t)
+        self.bound_type.greater(&self.limit, t)
     }
     pub fn intersection(self, other: Self) -> Self {
         self.min(other)
@@ -136,7 +136,7 @@ impl<T: Ord, B: BoundaryOf<Right>> RightBounded<T, B> {
     {
         Bound {
             limit: self.0.limit + delta,
-            bounding: self.0.bounding,
+            bound_type: self.0.bound_type,
         }
         .into()
     }
@@ -148,7 +148,7 @@ impl<T: Ord, B: BoundaryOf<Right>> RightBounded<T, B> {
     {
         Ok(Bound {
             limit: T::scalar_try_from(self.0.limit.scalar_into() + delta)?,
-            bounding: self.0.bounding,
+            bound_type: self.0.bound_type,
         }
         .into())
     }
@@ -176,19 +176,19 @@ impl<T: num::Integer + Clone> Maximum<T> for RightBounded<T, Exclusive> {
     }
 }
 
-impl<T: num::Integer + Clone> Minimum<T> for LeftBounded<T, Bounding> {
+impl<T: num::Integer + Clone> Minimum<T> for LeftBounded<T, BoundType> {
     fn minimum(&self) -> T {
-        match self.bounding {
-            Bounding::Inclusive => self.limit.clone(),
-            Bounding::Exclusive => self.limit.clone() + T::one(),
+        match self.bound_type {
+            BoundType::Inclusive => self.limit.clone(),
+            BoundType::Exclusive => self.limit.clone() + T::one(),
         }
     }
 }
-impl<T: num::Integer + Clone> Maximum<T> for RightBounded<T, Bounding> {
+impl<T: num::Integer + Clone> Maximum<T> for RightBounded<T, BoundType> {
     fn maximum(&self) -> T {
-        match self.bounding {
-            Bounding::Inclusive => self.limit.clone(),
-            Bounding::Exclusive => self.limit.clone() - T::one(),
+        match self.bound_type {
+            BoundType::Inclusive => self.limit.clone(),
+            BoundType::Exclusive => self.limit.clone() - T::one(),
         }
     }
 }
@@ -200,14 +200,14 @@ impl<T: FloatCore, B: Boundary> LeftBounded<NotNan<T>, B> {
     pub fn closure(self) -> LeftBounded<NotNan<T>, Inclusive> {
         Bound {
             limit: self.limit,
-            bounding: Inclusive,
+            bound_type: Inclusive,
         }
         .into()
     }
     pub fn interior(self) -> LeftBounded<NotNan<T>, Exclusive> {
         Bound {
             limit: self.limit,
-            bounding: Exclusive,
+            bound_type: Exclusive,
         }
         .into()
     }
@@ -219,14 +219,14 @@ impl<T: FloatCore, B: Boundary> RightBounded<NotNan<T>, B> {
     pub fn closure(self) -> RightBounded<NotNan<T>, Inclusive> {
         Bound {
             limit: self.limit,
-            bounding: Inclusive,
+            bound_type: Inclusive,
         }
         .into()
     }
     pub fn interior(self) -> RightBounded<NotNan<T>, Exclusive> {
         Bound {
             limit: self.limit,
-            bounding: Exclusive,
+            bound_type: Exclusive,
         }
         .into()
     }

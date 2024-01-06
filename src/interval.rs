@@ -1,6 +1,6 @@
 use ordered_float::{FloatCore, FloatIsNan, NotNan};
 
-use crate::bounding::{Left, Right};
+use crate::bound_type::{Left, Right};
 use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum, Scalar};
 use crate::{Bound, Exclusive, Inclusive, LeftBounded, RightBounded};
 
@@ -40,22 +40,22 @@ where
 
 /// Interval like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `Ord` type.
 /// * `T`: Scalar type. `T` should implements `Ord`. Use [`NotNan<T>`](crate::ordered_float::NotNan) for floating point numbers.
-/// * `L`: Left boundary type. Specify one of [`Inclusive`], [`Exclusive`], or [`Bounding`](crate::Bounding).
-/// * `R`: Right boundary type. Specify one of [`Inclusive`] [`Exclusive`], or [`Bounding`](crate::Bounding).
+/// * `L`: Left boundary type. Specify one of [`Inclusive`], [`Exclusive`], or [`BoundType`](crate::BoundType).
+/// * `R`: Right boundary type. Specify one of [`Inclusive`] [`Exclusive`], or [`BoundType`](crate::BoundType).
 /// * `Interval<T, Inclusive>` represents a closed interval, i.e., *[a, b]*.
 /// * `Interval<T, Exclusive>` represents a open interval, i.e., *(a, b)*.
 /// * `Interval<T, Inclusive, Exclusive>` represents a right half-open interval, i.e., *[a, b)*.
 /// * `Interval<T, Exclusive, Inclusive>` represents a left half-open interval, i.e., *(a, b]*.
-/// * `Interval<T>` (= `Interval<T, Bounding, Bounding>`) represents any of the above.
+/// * `Interval<T>` (= `Interval<T, BoundType, BoundType>`) represents any of the above.
 ///
 /// ```
-/// use kd_interval::{Interval, IntervalF, Exclusive, Inclusive, Bounding};
+/// use kd_interval::{Interval, IntervalF, Exclusive, Inclusive, BoundType};
 /// assert_eq!(std::mem::size_of::<Interval<i32, Inclusive>>(), std::mem::size_of::<i32>() * 2);
 /// assert_eq!(std::mem::size_of::<IntervalF<f64, Exclusive>>(), std::mem::size_of::<f64>() * 2);
-/// assert!(std::mem::size_of::<Interval<i32>>() > (std::mem::size_of::<i32>() + std::mem::size_of::<Bounding>()) * 2);
+/// assert!(std::mem::size_of::<Interval<i32>>() > (std::mem::size_of::<i32>() + std::mem::size_of::<BoundType>()) * 2);
 /// ```
 #[derive(Debug, Clone, Copy, Eq)]
-pub struct Interval<T, L = crate::Bounding, R = L> {
+pub struct Interval<T, L = crate::BoundType, R = L> {
     pub(crate) left: LeftBounded<T, L>,
     pub(crate) right: RightBounded<T, R>,
 }
@@ -80,7 +80,7 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// Create a new interval.
     /// ```
     /// use std::any::{Any, TypeId};
-    /// use kd_interval::{Interval, Bounding, Exclusive, Inclusive};
+    /// use kd_interval::{Interval, BoundType, Exclusive, Inclusive};
     ///
     /// let a: Interval<i32, Inclusive, Exclusive> = Interval::new(0.into(), 3.into()).unwrap();
     /// assert!(a.contains(&0));
@@ -90,8 +90,8 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// let a = Interval::new(Exclusive.at(0), Inclusive.at(3)).unwrap();
     /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Exclusive, Inclusive>>());
     ///
-    /// let a = Interval::new(Bounding::Exclusive.at(0), Bounding::Exclusive.at(3)).unwrap();
-    /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Bounding, Bounding>>());
+    /// let a = Interval::new(BoundType::Exclusive.at(0), BoundType::Exclusive.at(3)).unwrap();
+    /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, BoundType, BoundType>>());
     ///
     /// assert!(Interval::new(Inclusive.at(3), Exclusive.at(0)).is_none());
     /// assert!(Interval::new(Inclusive.at(3), Exclusive.at(3)).is_none());
@@ -120,11 +120,11 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     {
         let left = Bound {
             limit: T::scalar_try_from(left.limit)?,
-            bounding: left.bounding,
+            bound_type: left.bound_type,
         };
         let right = Bound {
             limit: T::scalar_try_from(right.limit)?,
-            bounding: right.bounding,
+            bound_type: right.bound_type,
         };
         Ok(Self::new(left, right))
     }
@@ -519,7 +519,7 @@ where
 }
 
 /// ```
-/// use kd_interval::{Interval, Exclusive, Inclusive, Bounding};
+/// use kd_interval::{Interval, Exclusive, Inclusive, BoundType};
 ///
 /// // Iterate Interval<i32, Exclusive, Inclusive>
 /// let items: Vec<_> = Exclusive.at(0).to(Inclusive.at(10)).unwrap().into_iter().collect();
@@ -527,8 +527,8 @@ where
 /// assert_eq!(items[0], 1);
 /// assert_eq!(items.last().unwrap(), &10);
 ///
-/// // Iterate Interval<i32, Bounding, Bounding>
-/// let items: Vec<_> = (Bounding::Exclusive.at(0).to(Bounding::Inclusive.at(10)))
+/// // Iterate Interval<i32, BoundType, BoundType>
+/// let items: Vec<_> = (BoundType::Exclusive.at(0).to(BoundType::Inclusive.at(10)))
 ///     .unwrap()
 ///     .into_iter()
 ///     .collect();

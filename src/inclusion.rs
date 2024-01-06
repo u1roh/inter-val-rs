@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::traits::{Boundary, BoundaryOf, Flip, IntoGeneral, Scalar};
+use crate::traits::{Boundary, BoundaryOf, Flip, IntoGeneral};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Inclusive;
@@ -9,7 +9,7 @@ pub struct Inclusive;
 pub struct Exclusive;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Bounding {
+pub enum BoundType {
     Inclusive,
     Exclusive,
 }
@@ -25,7 +25,7 @@ pub struct SideInclusion<B, S>(B, PhantomData<S>);
 
 mod ordering {
     use super::{Left, Right, SideInclusion};
-    use crate::{Bounding, Exclusive, Inclusive};
+    use crate::{BoundType, Exclusive, Inclusive};
 
     impl<B: PartialEq, S> PartialEq for SideInclusion<B, S> {
         fn eq(&self, other: &Self) -> bool {
@@ -55,30 +55,30 @@ mod ordering {
     impl_ord!((_lhs, _rhs): SideInclusion<Exclusive, Left> => std::cmp::Ordering::Equal);
     impl_ord!((_lhs, _rhs): SideInclusion<Inclusive, Right> => std::cmp::Ordering::Equal);
     impl_ord!((_lhs, _rhs): SideInclusion<Exclusive, Right> => std::cmp::Ordering::Equal);
-    impl_ord!((lhs, rhs): SideInclusion<Bounding, Left> => match (lhs.0, rhs.0) {
-        (Bounding::Inclusive, Bounding::Inclusive) => std::cmp::Ordering::Equal,
-        (Bounding::Inclusive, Bounding::Exclusive) => std::cmp::Ordering::Less,
-        (Bounding::Exclusive, Bounding::Inclusive) => std::cmp::Ordering::Greater,
-        (Bounding::Exclusive, Bounding::Exclusive) => std::cmp::Ordering::Equal,
+    impl_ord!((lhs, rhs): SideInclusion<BoundType, Left> => match (lhs.0, rhs.0) {
+        (BoundType::Inclusive, BoundType::Inclusive) => std::cmp::Ordering::Equal,
+        (BoundType::Inclusive, BoundType::Exclusive) => std::cmp::Ordering::Less,
+        (BoundType::Exclusive, BoundType::Inclusive) => std::cmp::Ordering::Greater,
+        (BoundType::Exclusive, BoundType::Exclusive) => std::cmp::Ordering::Equal,
     });
-    impl_ord!((lhs, rhs): SideInclusion<Bounding, Right> => match (lhs.0, rhs.0) {
-        (Bounding::Inclusive, Bounding::Inclusive) => std::cmp::Ordering::Equal,
-        (Bounding::Inclusive, Bounding::Exclusive) => std::cmp::Ordering::Greater,
-        (Bounding::Exclusive, Bounding::Inclusive) => std::cmp::Ordering::Less,
-        (Bounding::Exclusive, Bounding::Exclusive) => std::cmp::Ordering::Equal,
+    impl_ord!((lhs, rhs): SideInclusion<BoundType, Right> => match (lhs.0, rhs.0) {
+        (BoundType::Inclusive, BoundType::Inclusive) => std::cmp::Ordering::Equal,
+        (BoundType::Inclusive, BoundType::Exclusive) => std::cmp::Ordering::Greater,
+        (BoundType::Exclusive, BoundType::Inclusive) => std::cmp::Ordering::Less,
+        (BoundType::Exclusive, BoundType::Exclusive) => std::cmp::Ordering::Equal,
     });
 }
 
 impl IntoGeneral for Inclusive {
-    type General = Bounding;
+    type General = BoundType;
     fn into_general(self) -> Self::General {
-        Bounding::Inclusive
+        BoundType::Inclusive
     }
 }
 impl IntoGeneral for Exclusive {
-    type General = Bounding;
+    type General = BoundType;
     fn into_general(self) -> Self::General {
-        Bounding::Exclusive
+        BoundType::Exclusive
     }
 }
 
@@ -94,7 +94,7 @@ impl Flip for Exclusive {
         Inclusive
     }
 }
-impl Flip for Bounding {
+impl Flip for BoundType {
     type Flip = Self;
     fn flip(self) -> Self {
         match self {
@@ -117,32 +117,20 @@ impl Flip for Right {
 }
 
 impl Boundary for Inclusive {
-    fn less<S: Scalar<T>, T>(&self, this: &S, t: &T) -> bool {
-        this.scalar_le(t)
-    }
-    fn greater<S: Scalar<T>, T>(&self, this: &S, t: &T) -> bool {
-        this.scalar_ge(t)
+    fn less<T: Ord>(&self, this: &T, t: &T) -> bool {
+        this <= t
     }
 }
 impl Boundary for Exclusive {
-    fn less<S: Scalar<T>, T>(&self, this: &S, t: &T) -> bool {
-        this.scalar_lt(t)
-    }
-    fn greater<S: Scalar<T>, T>(&self, this: &S, t: &T) -> bool {
-        this.scalar_gt(t)
+    fn less<T: Ord>(&self, this: &T, t: &T) -> bool {
+        this < t
     }
 }
-impl Boundary for Bounding {
-    fn less<S: Scalar<T>, T>(&self, this: &S, t: &T) -> bool {
+impl Boundary for BoundType {
+    fn less<T: Ord>(&self, s: &T, t: &T) -> bool {
         match self {
-            Bounding::Inclusive => this.scalar_le(t),
-            Bounding::Exclusive => this.scalar_lt(t),
-        }
-    }
-    fn greater<S: Scalar<T>, T>(&self, this: &S, t: &T) -> bool {
-        match self {
-            Bounding::Inclusive => this.scalar_ge(t),
-            Bounding::Exclusive => this.scalar_gt(t),
+            BoundType::Inclusive => s <= t,
+            BoundType::Exclusive => s < t,
         }
     }
 }
@@ -165,7 +153,7 @@ where
         SideInclusion(self, PhantomData)
     }
 }
-impl<LR> BoundaryOf<LR> for Bounding
+impl<LR> BoundaryOf<LR> for BoundType
 where
     SideInclusion<Self, LR>: Ord,
 {
