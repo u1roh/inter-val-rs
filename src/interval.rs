@@ -375,20 +375,21 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
         let first = items.next()?;
         Some(items.fold(first, |acc, item| acc.span(item)))
     }
-}
 
-impl<T: PartialOrd + Clone> Interval<T, Inclusive, Inclusive> {
     /// ```
     /// use kd_interval::Interval;
-    /// let span = Interval::hull_many(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
-    /// assert_eq!(span.min(), 2);
-    /// assert_eq!(span.max(), 9);
+    /// let hull = Interval::<_>::hull_many(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
+    /// assert_eq!(hull.min(), 2);
+    /// assert_eq!(hull.max(), 9);
     ///
-    /// let span = Interval::hull_many(vec![3.1, 9.2, 2.3, 5.4]).unwrap(); // [2.3, 9.2]
-    /// assert_eq!(span.inf(), 2.3);
-    /// assert_eq!(span.sup(), 9.2);
+    /// let hull = Interval::<_>::hull_many(vec![3.1, 9.2, 2.3, 5.4]).unwrap(); // [2.3, 9.2]
+    /// assert_eq!(hull.inf(), 2.3);
+    /// assert_eq!(hull.sup(), 9.2);
     /// ```
-    pub fn hull_many(items: impl IntoIterator<Item = T>) -> Option<Self> {
+    pub fn hull_many(items: impl IntoIterator<Item = T>) -> Option<Self>
+    where
+        T: Clone + Into<Bound<T, L>> + Into<Bound<T, R>>,
+    {
         let mut items = items.into_iter();
         let mut left = items.next()?;
         let mut right = left.clone();
@@ -399,7 +400,7 @@ impl<T: PartialOrd + Clone> Interval<T, Inclusive, Inclusive> {
                 right = x;
             }
         }
-        Some(Inclusive.at(left).to(Inclusive.at(right)))
+        Self::try_new(left.into(), right.into())
     }
 }
 

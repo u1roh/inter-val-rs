@@ -24,7 +24,7 @@ fn it_works() {
     // let _i = Interval::<NotNan<_>, Inclusive, Inclusive>::not_nan(1.23, 4.56);
     let _i = Interval::<_, Inclusive, Inclusive>::new((1.23).into(), (4.56).into());
 
-    let i = Interval::hull_many([3, 9, 2, 5]).unwrap();
+    let i = Interval::<_>::hull_many([3, 9, 2, 5]).unwrap();
     assert_eq!(i.left().limit, 2);
     assert_eq!(i.right().limit, 9);
 }

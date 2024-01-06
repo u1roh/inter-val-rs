@@ -20,7 +20,7 @@
 //! assert!(a.contains(&(4.56 - 0.000000000000001)));
 //!
 //! // Hull
-//! let a = Interval::hull_many(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
+//! let a = Interval::<_>::hull_many(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
 //! assert_eq!(a.min(), 2);
 //! assert_eq!(a.max(), 9);
 //! ```
@@ -55,6 +55,11 @@ impl Inclusive {
     pub fn between<T: PartialOrd>(a: T, b: T) -> Interval<T, Self, Self> {
         Interval::between(a, b)
     }
+    pub fn hull<T: PartialOrd + Clone>(
+        items: impl IntoIterator<Item = T>,
+    ) -> Option<Interval<T, Self, Self>> {
+        Interval::hull_many(items)
+    }
 }
 impl Exclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
@@ -66,12 +71,24 @@ impl Exclusive {
     pub fn try_between<T: PartialOrd>(a: T, b: T) -> Option<Interval<T, Self, Self>> {
         Interval::try_between(a, b)
     }
+    pub fn hull<T: PartialOrd + Clone>(
+        items: impl IntoIterator<Item = T>,
+    ) -> Option<Interval<T, Self, Self>> {
+        Interval::hull_many(items)
+    }
 }
 impl BoundType {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
         Bound {
             limit: t,
             bound_type: self,
+        }
+    }
+    pub fn try_between<T: PartialOrd>(self, a: T, b: T) -> Option<Interval<T, Self, Self>> {
+        if a <= b {
+            Interval::try_new(self.at(a), self.at(b))
+        } else {
+            Interval::try_new(self.at(b), self.at(a))
         }
     }
 }
