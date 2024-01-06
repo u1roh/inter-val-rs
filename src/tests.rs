@@ -26,8 +26,8 @@ fn it_works() {
         Interval::<NotNan<_>, Inclusive, Inclusive>::try_new((1.23).into(), (4.56).into()).unwrap();
 
     let i = Interval::enclosure_of_items([3, 9, 2, 5]).unwrap();
-    assert_eq!(i.left().val, 2);
-    assert_eq!(i.right().val, 9);
+    assert_eq!(i.left().limit, 2);
+    assert_eq!(i.right().limit, 9);
 }
 
 fn assert_typeid<T: 'static>(a: &dyn Any) {

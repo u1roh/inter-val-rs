@@ -54,7 +54,7 @@ pub use traits::Scalar;
 impl Inclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
         Bound {
-            val: t,
+            limit: t,
             bounding: self,
         }
     }
@@ -62,7 +62,7 @@ impl Inclusive {
 impl Exclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
         Bound {
-            val: t,
+            limit: t,
             bounding: self,
         }
     }
@@ -70,7 +70,7 @@ impl Exclusive {
 impl Bounding {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
         Bound {
-            val: t,
+            limit: t,
             bounding: self,
         }
     }

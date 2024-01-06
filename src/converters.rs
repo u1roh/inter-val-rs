@@ -3,7 +3,7 @@ use crate::{traits::IntoGeneral, Bound, Exclusive, Inclusive, Interval};
 impl<T> From<T> for Bound<T, Inclusive> {
     fn from(t: T) -> Self {
         Self {
-            val: t,
+            limit: t,
             bounding: Inclusive,
         }
     }
@@ -11,7 +11,7 @@ impl<T> From<T> for Bound<T, Inclusive> {
 impl<T> From<T> for Bound<T, Exclusive> {
     fn from(t: T) -> Self {
         Self {
-            val: t,
+            limit: t,
             bounding: Exclusive,
         }
     }
@@ -74,8 +74,8 @@ impl<T> From<Interval<T, Exclusive, Inclusive>> for Interval<T> {
 /// use kd_interval::{Inclusive, Interval};
 /// let a: Interval<_, _, _> = 3.into();
 /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Inclusive, Inclusive>>());
-/// assert_eq!(a.left().val, 3);
-/// assert_eq!(a.right().val, 3);
+/// assert_eq!(a.left().limit, 3);
+/// assert_eq!(a.right().limit, 3);
 impl<T: Ord + Clone> From<T> for Interval<T, Inclusive> {
     fn from(t: T) -> Self {
         Self::new(t.clone().into(), t.into()).unwrap()

@@ -4,7 +4,7 @@ mod impl_range_bounds {
 
     impl<T: Ord> RangeBounds<T> for LeftBounded<T, Inclusive> {
         fn start_bound(&self) -> Bound<&T> {
-            Bound::Included(&self.val)
+            Bound::Included(&self.limit)
         }
         fn end_bound(&self) -> Bound<&T> {
             Bound::Unbounded
@@ -12,7 +12,7 @@ mod impl_range_bounds {
     }
     impl<T: Ord> RangeBounds<T> for LeftBounded<T, Exclusive> {
         fn start_bound(&self) -> Bound<&T> {
-            Bound::Excluded(&self.val)
+            Bound::Excluded(&self.limit)
         }
         fn end_bound(&self) -> Bound<&T> {
             Bound::Unbounded
@@ -23,7 +23,7 @@ mod impl_range_bounds {
             Bound::Unbounded
         }
         fn end_bound(&self) -> Bound<&T> {
-            Bound::Included(&self.val)
+            Bound::Included(&self.limit)
         }
     }
     impl<T: Ord> RangeBounds<T> for RightBounded<T, Exclusive> {
@@ -31,7 +31,7 @@ mod impl_range_bounds {
             Bound::Unbounded
         }
         fn end_bound(&self) -> Bound<&T> {
-            Bound::Excluded(&self.val)
+            Bound::Excluded(&self.limit)
         }
     }
 }
@@ -45,8 +45,8 @@ mod converters {
     /// use kd_interval::{Interval, Inclusive, Exclusive};
     /// let a: Interval<_, _, _> = (2..4).try_into().unwrap();
     /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Inclusive, Exclusive>>());
-    /// assert_eq!(a.left().val, 2);
-    /// assert_eq!(a.right().val, 4);
+    /// assert_eq!(a.left().limit, 2);
+    /// assert_eq!(a.right().limit, 4);
     /// ```
     impl<T: Ord> TryFrom<std::ops::Range<T>> for Interval<T, Inclusive, Exclusive> {
         type Error = IntervalIsEmpty;
@@ -60,8 +60,8 @@ mod converters {
     /// use kd_interval::{Interval, Inclusive};
     /// let a: Interval<_, _, _> = (2..=4).try_into().unwrap();
     /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Inclusive, Inclusive>>());
-    /// assert_eq!(a.left().val, 2);
-    /// assert_eq!(a.right().val, 4);
+    /// assert_eq!(a.left().limit, 2);
+    /// assert_eq!(a.right().limit, 4);
     /// ```
     impl<T: Ord> TryFrom<std::ops::RangeInclusive<T>> for Interval<T, Inclusive> {
         type Error = IntervalIsEmpty;
@@ -76,8 +76,8 @@ mod converters {
     /// use kd_interval::{IntervalF, Inclusive, Exclusive};
     /// let a: IntervalF<_, _, _> = (2.74..4.26).try_into().unwrap();
     /// assert_eq!(a.type_id(), TypeId::of::<IntervalF<f64, Inclusive, Exclusive>>());
-    /// assert_eq!(a.left().val, 2.74);
-    /// assert_eq!(a.right().val, 4.26);
+    /// assert_eq!(a.left().limit, 2.74);
+    /// assert_eq!(a.right().limit, 4.26);
     /// ```
     impl<T: FloatCore> TryFrom<std::ops::Range<T>> for Interval<NotNan<T>, Inclusive, Exclusive> {
         type Error = crate::Error;
@@ -91,8 +91,8 @@ mod converters {
     /// use kd_interval::{IntervalF, Inclusive, Exclusive};
     /// let a: IntervalF<_, _, _> = (2.74..=4.26).try_into().unwrap();
     /// assert_eq!(a.type_id(), TypeId::of::<IntervalF<f64, Inclusive, Inclusive>>());
-    /// assert_eq!(a.left().val, 2.74);
-    /// assert_eq!(a.right().val, 4.26);
+    /// assert_eq!(a.left().limit, 2.74);
+    /// assert_eq!(a.right().limit, 4.26);
     /// ```
     impl<T: FloatCore> TryFrom<std::ops::RangeInclusive<T>> for Interval<NotNan<T>, Inclusive> {
         type Error = crate::Error;
@@ -111,7 +111,7 @@ mod converters {
     /// ```
     impl<T> From<Interval<T, Inclusive, Exclusive>> for std::ops::Range<T> {
         fn from(i: Interval<T, Inclusive, Exclusive>) -> Self {
-            i.left.0.val..i.right.0.val
+            i.left.0.limit..i.right.0.limit
         }
     }
 
@@ -124,7 +124,7 @@ mod converters {
     /// ```
     impl<T> From<Interval<T, Inclusive, Inclusive>> for std::ops::RangeInclusive<T> {
         fn from(i: Interval<T, Inclusive, Inclusive>) -> Self {
-            i.left.0.val..=i.right.0.val
+            i.left.0.limit..=i.right.0.limit
         }
     }
 }

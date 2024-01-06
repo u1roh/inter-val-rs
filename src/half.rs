@@ -37,7 +37,7 @@ mod ordering {
 
     impl<T: Ord, B: BoundaryOf<LR>, LR> HalfBounded<T, B, LR> {
         fn ordering_key(&self) -> (&T, B::Ordered) {
-            (&self.val, self.bounding.into_ordered())
+            (&self.limit, self.bounding.into_ordered())
         }
     }
     impl<T: Ord, B: BoundaryOf<LR>, LR> PartialOrd for HalfBounded<T, B, LR> {
@@ -74,13 +74,13 @@ impl<T, B: Flip, LR: Flip> Flip for HalfBounded<T, B, LR> {
 
 impl<T: Ord, B: BoundaryOf<Left>> LeftBounded<T, B> {
     pub fn includes(&self, other: &Self) -> bool {
-        self.val <= other.val
+        self.limit <= other.limit
     }
     pub fn contains<T2>(&self, t: &T2) -> bool
     where
         T: Scalar<T2>,
     {
-        self.bounding.less(&self.val, t)
+        self.bounding.less(&self.limit, t)
     }
     pub fn intersection(self, other: Self) -> Self {
         self.max(other)
@@ -94,7 +94,7 @@ impl<T: Ord, B: BoundaryOf<Left>> LeftBounded<T, B> {
         T: std::ops::Sub<Output = T>,
     {
         Bound {
-            val: self.0.val - delta,
+            limit: self.0.limit - delta,
             bounding: self.0.bounding,
         }
         .into()
@@ -106,7 +106,7 @@ impl<T: Ord, B: BoundaryOf<Left>> LeftBounded<T, B> {
         X: std::ops::Sub<Output = X>,
     {
         Ok(Bound {
-            val: T::scalar_try_from(self.0.val.scalar_into() - delta)?,
+            limit: T::scalar_try_from(self.0.limit.scalar_into() - delta)?,
             bounding: self.0.bounding,
         }
         .into())
@@ -115,13 +115,13 @@ impl<T: Ord, B: BoundaryOf<Left>> LeftBounded<T, B> {
 
 impl<T: Ord, B: BoundaryOf<Right>> RightBounded<T, B> {
     pub fn includes(&self, other: &Self) -> bool {
-        other.val <= self.val
+        other.limit <= self.limit
     }
     pub fn contains<T2>(&self, t: &T2) -> bool
     where
         T: Scalar<T2>,
     {
-        self.bounding.greater(&self.val, t)
+        self.bounding.greater(&self.limit, t)
     }
     pub fn intersection(self, other: Self) -> Self {
         self.min(other)
@@ -135,7 +135,7 @@ impl<T: Ord, B: BoundaryOf<Right>> RightBounded<T, B> {
         T: std::ops::Add<Output = T>,
     {
         Bound {
-            val: self.0.val + delta,
+            limit: self.0.limit + delta,
             bounding: self.0.bounding,
         }
         .into()
@@ -147,7 +147,7 @@ impl<T: Ord, B: BoundaryOf<Right>> RightBounded<T, B> {
         X: std::ops::Add<Output = X>,
     {
         Ok(Bound {
-            val: T::scalar_try_from(self.0.val.scalar_into() + delta)?,
+            limit: T::scalar_try_from(self.0.limit.scalar_into() + delta)?,
             bounding: self.0.bounding,
         }
         .into())
@@ -156,57 +156,57 @@ impl<T: Ord, B: BoundaryOf<Right>> RightBounded<T, B> {
 
 impl<T: Clone> Minimum<T> for LeftBounded<T, Inclusive> {
     fn minimum(&self) -> T {
-        self.val.clone()
+        self.limit.clone()
     }
 }
 impl<T: Clone> Maximum<T> for RightBounded<T, Inclusive> {
     fn maximum(&self) -> T {
-        self.val.clone()
+        self.limit.clone()
     }
 }
 
 impl<T: num::Integer + Clone> Minimum<T> for LeftBounded<T, Exclusive> {
     fn minimum(&self) -> T {
-        self.val.clone() + T::one()
+        self.limit.clone() + T::one()
     }
 }
 impl<T: num::Integer + Clone> Maximum<T> for RightBounded<T, Exclusive> {
     fn maximum(&self) -> T {
-        self.val.clone() - T::one()
+        self.limit.clone() - T::one()
     }
 }
 
 impl<T: num::Integer + Clone> Minimum<T> for LeftBounded<T, Bounding> {
     fn minimum(&self) -> T {
         match self.bounding {
-            Bounding::Inclusive => self.val.clone(),
-            Bounding::Exclusive => self.val.clone() + T::one(),
+            Bounding::Inclusive => self.limit.clone(),
+            Bounding::Exclusive => self.limit.clone() + T::one(),
         }
     }
 }
 impl<T: num::Integer + Clone> Maximum<T> for RightBounded<T, Bounding> {
     fn maximum(&self) -> T {
         match self.bounding {
-            Bounding::Inclusive => self.val.clone(),
-            Bounding::Exclusive => self.val.clone() - T::one(),
+            Bounding::Inclusive => self.limit.clone(),
+            Bounding::Exclusive => self.limit.clone() - T::one(),
         }
     }
 }
 
 impl<T: FloatCore, B: Boundary> LeftBounded<NotNan<T>, B> {
     pub fn inf(&self) -> NotNan<T> {
-        self.val
+        self.limit
     }
     pub fn closure(self) -> LeftBounded<NotNan<T>, Inclusive> {
         Bound {
-            val: self.val,
+            limit: self.limit,
             bounding: Inclusive,
         }
         .into()
     }
     pub fn interior(self) -> LeftBounded<NotNan<T>, Exclusive> {
         Bound {
-            val: self.val,
+            limit: self.limit,
             bounding: Exclusive,
         }
         .into()
@@ -214,18 +214,18 @@ impl<T: FloatCore, B: Boundary> LeftBounded<NotNan<T>, B> {
 }
 impl<T: FloatCore, B: Boundary> RightBounded<NotNan<T>, B> {
     pub fn sup(&self) -> NotNan<T> {
-        self.val
+        self.limit
     }
     pub fn closure(self) -> RightBounded<NotNan<T>, Inclusive> {
         Bound {
-            val: self.val,
+            limit: self.limit,
             bounding: Inclusive,
         }
         .into()
     }
     pub fn interior(self) -> RightBounded<NotNan<T>, Exclusive> {
         Bound {
-            val: self.val,
+            limit: self.limit,
             bounding: Exclusive,
         }
         .into()

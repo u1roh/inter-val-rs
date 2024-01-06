@@ -35,7 +35,7 @@ where
     L: BoundaryOf<Left>,
     R: BoundaryOf<Right>,
 {
-    left.contains(&right.val) && right.contains(&left.val)
+    left.contains(&right.limit) && right.contains(&left.limit)
 }
 
 /// Interval like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `Ord` type.
@@ -119,11 +119,11 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
         T: Scalar<T2>,
     {
         let left = Bound {
-            val: T::scalar_try_from(left.val)?,
+            limit: T::scalar_try_from(left.limit)?,
             bounding: left.bounding,
         };
         let right = Bound {
-            val: T::scalar_try_from(right.val)?,
+            limit: T::scalar_try_from(right.limit)?,
             bounding: right.bounding,
         };
         Ok(Self::new(left, right))
@@ -423,7 +423,7 @@ impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>
     /// assert!(a.measure().is_nan());
     /// ```
     pub fn measure(&self) -> T {
-        *self.right.val - *self.left.val
+        *self.right.limit - *self.left.limit
     }
 
     /// ```
@@ -435,7 +435,7 @@ impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>
     /// assert!(a.center().is_nan());
     /// ```
     pub fn center(&self) -> T {
-        (*self.left.val + *self.right.val) / (T::one() + T::one())
+        (*self.left.limit + *self.right.limit) / (T::one() + T::one())
     }
 
     pub fn closure(self) -> Interval<NotNan<T>, Inclusive> {
