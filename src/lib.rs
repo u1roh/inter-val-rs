@@ -38,9 +38,6 @@ mod traits;
 use bound_type::{Left, Right};
 use traits::BoundaryOf;
 
-// re-export ordered_float
-pub use ordered_float;
-
 pub use bound::Bound;
 pub use bound_type::{BoundType, Exclusive, Inclusive};
 pub use half::{HalfBounded, LeftBounded, RightBounded};
@@ -79,7 +76,7 @@ impl<T: PartialOrd, B: BoundaryOf<Left>> Bound<T, B> {
     }
 }
 
-// impl<T: FloatCore, B: BoundaryOf<Left>> Bound<T, B> {
+// impl<T: Float, B: BoundaryOf<Left>> Bound<T, B> {
 //     pub fn to<R: BoundaryOf<Right>>(
 //         self,
 //         right: Bound<T, R>,
@@ -96,8 +93,6 @@ pub struct IntervalIsEmpty;
 pub enum Error {
     #[error("infallible")]
     Infallible(#[from] std::convert::Infallible),
-    #[error("float is NaN")]
-    FloatIsNan(#[from] ordered_float::FloatIsNan),
     #[error("left boundary must be less than or equal to right boundary")]
     IntervalIsEmpty(#[from] IntervalIsEmpty),
 }

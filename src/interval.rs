@@ -1,5 +1,3 @@
-use ordered_float::FloatCore;
-
 use crate::bound_type::{Left, Right};
 use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum};
 use crate::{Bound, Exclusive, Inclusive, LeftBounded, RightBounded};
@@ -290,6 +288,10 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// let span = Interval::enclosure_of_items(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
     /// assert_eq!(span.min(), 2);
     /// assert_eq!(span.max(), 9);
+    ///
+    /// let span = Interval::enclosure_of_items(vec![3.1, 9.2, 2.3, 5.4]).unwrap(); // [2.3, 9.2]
+    /// assert_eq!(span.inf(), 2.3);
+    /// assert_eq!(span.sup(), 9.2);
     /// ```
     pub fn enclosure_of_items<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
         let mut items = items.into_iter();
@@ -298,30 +300,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 }
 
-impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
-    // /// ```
-    // /// use kd_interval::{Interval, Exclusive, Inclusive};
-    // /// let a = Interval::new(Inclusive.at(-1.0), Exclusive.at(1.0)).unwrap();
-    // /// assert!(a.contains(&-1.0));
-    // /// assert!(!a.contains(&1.0));
-    // /// ```
-    // pub fn new(left: Bound<T, L>, right: Bound<T, R>) -> Result<Option<Self>, FloatIsNan> {
-    //     Self::new(left, right)
-    // }
-
-    // /// ```
-    // /// use kd_interval::{Interval, Exclusive, Inclusive};
-    // /// let a: Interval<_, Inclusive, Exclusive> = Interval::float_between(-1.0, 1.0).unwrap();
-    // /// assert!(a.contains(&-1.0));
-    // /// assert!(!a.contains(&1.0));
-    // /// ```
-    // pub fn float_between(left: T, right: T) -> Result<Option<Self>, FloatIsNan>
-    // where
-    //     T: Into<Bound<T, L>> + Into<Bound<T, R>>,
-    // {
-    //     Self::new(left.into(), right.into())
-    // }
-
+impl<T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// ```
     /// use kd_interval::{Interval, Exclusive, Inclusive};
     /// let a = Interval::new(Inclusive.at(-1.0), Inclusive.at(1.0)).unwrap();
@@ -401,27 +380,6 @@ impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> 
                 intersection.measure() / union.measure()
             })
             .unwrap_or(T::zero())
-    }
-}
-
-impl<T: FloatCore> Interval<T, Inclusive, Inclusive> {
-    /// ```
-    /// use kd_interval::Interval;
-    /// let span = Interval::enclosure_of_floats(vec![3.1, 9.2, 2.3, 5.4]).unwrap(); // [2.3, 9.2]
-    /// assert_eq!(span.inf(), 2.3);
-    /// assert_eq!(span.sup(), 9.2);
-    /// assert!(Interval::<f64, _, _>::enclosure_of_floats(vec![]).is_none());
-    /// ```
-    pub fn enclosure_of_floats(floats: impl IntoIterator<Item = T>) -> Option<Self> {
-        Self::enclosure_of_items(floats)
-        // let mut inf = T::infinity();
-        // let mut sup = T::neg_infinity();
-        // for x in floats {
-        //     let x = NotNan::new(x)?;
-        //     inf = inf.min(x);
-        //     sup = sup.max(x);
-        // }
-        // Ok(Self::between(inf, sup))
     }
 }
 

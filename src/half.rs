@@ -1,5 +1,3 @@
-use ordered_float::FloatCore;
-
 use crate::{
     bound_type::{Left, Right},
     traits::{Boundary, BoundaryOf, Flip, IntoGeneral, Maximum, Minimum},
@@ -172,7 +170,7 @@ impl<T: num::Integer + Clone> Maximum<T> for RightBounded<T, BoundType> {
     }
 }
 
-impl<T: FloatCore, B: Boundary> LeftBounded<T, B> {
+impl<T: num::Float, B: Boundary> LeftBounded<T, B> {
     pub fn inf(&self) -> T {
         self.limit
     }
@@ -191,7 +189,7 @@ impl<T: FloatCore, B: Boundary> LeftBounded<T, B> {
         .into()
     }
 }
-impl<T: FloatCore, B: Boundary> RightBounded<T, B> {
+impl<T: num::Float, B: Boundary> RightBounded<T, B> {
     pub fn sup(&self) -> T {
         self.limit
     }

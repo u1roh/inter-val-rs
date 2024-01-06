@@ -1,5 +1,3 @@
-use ordered_float::FloatCore;
-
 use crate::bound_type::{Left, Right};
 use crate::kd::Kd;
 use crate::traits::{BoundaryOf, Maximum, Minimum};
@@ -84,7 +82,7 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
     }
 }
 
-impl<const N: usize, T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Box<N, T, L, R> {
+impl<const N: usize, T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Box<N, T, L, R> {
     pub fn inf(&self) -> Kd<N, T> {
         std::array::from_fn(|i| self[i].inf()).into()
     }
