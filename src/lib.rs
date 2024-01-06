@@ -31,6 +31,7 @@ mod half;
 mod interval;
 mod interval_box;
 mod kd;
+mod nullable;
 mod std_range;
 mod tests;
 mod traits;
@@ -44,6 +45,7 @@ pub use half::{HalfBounded, LeftBounded, RightBounded};
 pub use interval::Interval;
 pub use interval_box::Box;
 pub use kd::Kd;
+pub use nullable::Nullable;
 
 impl Inclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
@@ -94,11 +96,11 @@ impl BoundType {
 }
 
 impl<T: PartialOrd, B: BoundaryOf<Left>> Bound<T, B> {
-    pub fn try_to<R: BoundaryOf<Right>>(self, right: Bound<T, R>) -> Option<Interval<T, B, R>> {
-        Interval::try_new(self, right)
+    pub fn to<R: BoundaryOf<Right>>(self, r: Bound<T, R>) -> Interval<T, B, R> {
+        Interval::new(self, r)
     }
-    pub fn to<R: BoundaryOf<Right>>(self, right: Bound<T, R>) -> Interval<T, B, R> {
-        Interval::new(self, right)
+    pub fn try_to<R: BoundaryOf<Right>>(self, r: Bound<T, R>) -> Option<Interval<T, B, R>> {
+        Interval::try_new(self, r)
     }
 }
 

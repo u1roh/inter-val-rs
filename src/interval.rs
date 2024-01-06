@@ -369,13 +369,17 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// use kd_interval::{Interval, Inclusive, Exclusive, Nullable};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));  // [0, 3)
     /// let b = Inclusive.at(1).to(Exclusive.at(5));  // [1, 5)
     /// let c = Inclusive.at(8).to(Exclusive.at(10)); // [8, 10)
-    /// let enc = Interval::span_many(vec![a, b, c]).unwrap(); // [0, 10)
-    /// assert_eq!(enc.left().limit, 0);
-    /// assert_eq!(enc.right().limit, 10);
+    /// let span = Interval::span_many(vec![a, b, c]).unwrap(); // [0, 10)
+    /// assert_eq!(span.left().limit, 0);
+    /// assert_eq!(span.right().limit, 10);
+    ///
+    /// // Sum for Nullable<Interval> can be used as well.
+    /// let sum: Nullable<Interval<_, _, _>> = vec![a, b, c].into_iter().sum();
+    /// assert_eq!(sum.unwrap(), span);
     /// ```
     pub fn span_many<A: std::borrow::Borrow<Self>>(
         items: impl IntoIterator<Item = A>,
@@ -389,7 +393,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::Interval;
+    /// use kd_interval::{Interval, Nullable};
     /// let hull = Interval::<_>::hull_many(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
     /// assert_eq!(hull.min(), 2);
     /// assert_eq!(hull.max(), 9);
@@ -397,6 +401,10 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// let hull = Interval::<_>::hull_many(vec![3.1, 9.2, 2.3, 5.4]).unwrap(); // [2.3, 9.2]
     /// assert_eq!(hull.inf(), 2.3);
     /// assert_eq!(hull.sup(), 9.2);
+    ///
+    /// // Sum for Nullable<Interval> can be used as well.
+    /// let a: Nullable<Interval<i32>> = vec![1, 6, 2, 8, 3].into_iter().sum();
+    /// assert_eq!(a.unwrap(), Interval::between(1, 8));
     /// ```
     pub fn hull_many(items: impl IntoIterator<Item = T>) -> Option<Self>
     where
@@ -555,9 +563,3 @@ where
         self.minimum()..=self.maximum()
     }
 }
-
-// impl<T, L, R> std::iter::Sum for Interval<T, L, R> {
-//     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-//         Self::hull_many(iter).unwrap()
-//     }
-// }
