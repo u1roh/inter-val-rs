@@ -83,10 +83,10 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
 }
 
 impl<const N: usize, T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Box<N, T, L, R> {
-    pub fn inf(&self) -> Kd<N, T> {
+    pub fn inf(&self) -> Kd<N, &T> {
         std::array::from_fn(|i| self[i].inf()).into()
     }
-    pub fn sup(&self) -> Kd<N, T> {
+    pub fn sup(&self) -> Kd<N, &T> {
         std::array::from_fn(|i| self[i].sup()).into()
     }
     pub fn center(&self) -> Kd<N, T> {

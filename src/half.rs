@@ -1,6 +1,6 @@
 use crate::{
     bound_type::{Left, Right},
-    traits::{Boundary, BoundaryOf, Flip, IntoGeneral, Maximum, Minimum},
+    traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum},
     Bound, BoundType, Exclusive, Inclusive,
 };
 
@@ -120,6 +120,26 @@ impl<T: PartialOrd, B: BoundaryOf<Left>> LeftBounded<T, B> {
         }
         .into()
     }
+
+    pub fn inf(&self) -> &T {
+        &self.limit
+    }
+
+    pub fn closure(self) -> LeftBounded<T, Inclusive> {
+        Bound {
+            limit: self.0.limit,
+            bound_type: Inclusive,
+        }
+        .into()
+    }
+
+    pub fn interior(self) -> LeftBounded<T, Exclusive> {
+        Bound {
+            limit: self.0.limit,
+            bound_type: Exclusive,
+        }
+        .into()
+    }
 }
 
 impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
@@ -151,6 +171,26 @@ impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
         Bound {
             limit: self.0.limit + delta,
             bound_type: self.0.bound_type,
+        }
+        .into()
+    }
+
+    pub fn sup(&self) -> &T {
+        &self.limit
+    }
+
+    pub fn closure(self) -> RightBounded<T, Inclusive> {
+        Bound {
+            limit: self.0.limit,
+            bound_type: Inclusive,
+        }
+        .into()
+    }
+
+    pub fn interior(self) -> RightBounded<T, Exclusive> {
+        Bound {
+            limit: self.0.limit,
+            bound_type: Exclusive,
         }
         .into()
     }
@@ -192,44 +232,5 @@ impl<T: num::Integer + Clone> Maximum<T> for RightBounded<T, BoundType> {
             BoundType::Inclusive => self.limit.clone(),
             BoundType::Exclusive => self.limit.clone() - T::one(),
         }
-    }
-}
-
-impl<T: num::Float, B: Boundary> LeftBounded<T, B> {
-    pub fn inf(&self) -> T {
-        self.limit
-    }
-    pub fn closure(self) -> LeftBounded<T, Inclusive> {
-        Bound {
-            limit: self.limit,
-            bound_type: Inclusive,
-        }
-        .into()
-    }
-    pub fn interior(self) -> LeftBounded<T, Exclusive> {
-        Bound {
-            limit: self.limit,
-            bound_type: Exclusive,
-        }
-        .into()
-    }
-}
-impl<T: num::Float, B: Boundary> RightBounded<T, B> {
-    pub fn sup(&self) -> T {
-        self.limit
-    }
-    pub fn closure(self) -> RightBounded<T, Inclusive> {
-        Bound {
-            limit: self.limit,
-            bound_type: Inclusive,
-        }
-        .into()
-    }
-    pub fn interior(self) -> RightBounded<T, Exclusive> {
-        Bound {
-            limit: self.limit,
-            bound_type: Exclusive,
-        }
-        .into()
     }
 }

@@ -13,8 +13,8 @@
 //!
 //! // Half-open interval of f64
 //! let a = Inclusive.at(1.23).to(Exclusive.at(4.56));   // [1.23, 4.56)
-//! assert_eq!(a.inf(), 1.23);
-//! assert_eq!(a.sup(), 4.56);
+//! assert_eq!(a.inf(), &1.23);
+//! assert_eq!(a.sup(), &4.56);
 //! assert!(a.contains(&1.23));
 //! assert!(!a.contains(&4.56));
 //! assert!(a.contains(&(4.56 - 0.000000000000001)));
