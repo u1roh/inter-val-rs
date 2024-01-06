@@ -72,9 +72,9 @@ mod converters {
 
     // /// ```
     // /// use std::any::{Any, TypeId};
-    // /// use kd_interval::{IntervalF, Inclusive, Exclusive};
-    // /// let a: IntervalF<_, _, _> = (2.74..4.26).try_into().unwrap();
-    // /// assert_eq!(a.type_id(), TypeId::of::<IntervalF<f64, Inclusive, Exclusive>>());
+    // /// use kd_interval::{Interval, Inclusive, Exclusive};
+    // /// let a: Interval<_, _, _> = (2.74..4.26).try_into().unwrap();
+    // /// assert_eq!(a.type_id(), TypeId::of::<Interval<f64, Inclusive, Exclusive>>());
     // /// assert_eq!(a.left().limit, 2.74);
     // /// assert_eq!(a.right().limit, 4.26);
     // /// ```
@@ -87,9 +87,9 @@ mod converters {
 
     // /// ```
     // /// use std::any::{Any, TypeId};
-    // /// use kd_interval::{IntervalF, Inclusive, Exclusive};
-    // /// let a: IntervalF<_, _, _> = (2.74..=4.26).try_into().unwrap();
-    // /// assert_eq!(a.type_id(), TypeId::of::<IntervalF<f64, Inclusive, Inclusive>>());
+    // /// use kd_interval::{Interval, Inclusive, Exclusive};
+    // /// let a: Interval<_, _, _> = (2.74..=4.26).try_into().unwrap();
+    // /// assert_eq!(a.type_id(), TypeId::of::<Interval<f64, Inclusive, Inclusive>>());
     // /// assert_eq!(a.left().limit, 2.74);
     // /// assert_eq!(a.right().limit, 4.26);
     // /// ```

@@ -12,7 +12,7 @@
 //! assert_eq!(c.max(), 10);
 //!
 //! // Half-open interval of f64
-//! let a = Inclusive.at(1.23).float_to(Exclusive.at(4.56)).unwrap();   // [1.23, 4.56)
+//! let a = Inclusive.at(1.23).to(Exclusive.at(4.56)).unwrap();   // [1.23, 4.56)
 //! assert_eq!(a.inf(), 1.23);
 //! assert_eq!(a.sup(), 4.56);
 //! assert!(a.contains(&1.23));
@@ -81,7 +81,7 @@ impl<T: PartialOrd, B: BoundaryOf<Left>> Bound<T, B> {
 }
 
 // impl<T: FloatCore, B: BoundaryOf<Left>> Bound<T, B> {
-//     pub fn float_to<R: BoundaryOf<Right>>(
+//     pub fn to<R: BoundaryOf<Right>>(
 //         self,
 //         right: Bound<T, R>,
 //     ) -> Result<Interval<T, B, R>, Error> {
