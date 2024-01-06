@@ -32,7 +32,9 @@ impl<const N: usize, T, L, R> From<[Interval<T, L, R>; N]> for Box<N, T, L, R> {
     }
 }
 
-impl<const N: usize, T: Ord + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Box<N, T, L, R> {
+impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
+    Box<N, T, L, R>
+{
     pub fn left(&self) -> Kd<N, &LeftBounded<T, L>> {
         std::array::from_fn(|i| self[i].left()).into()
     }

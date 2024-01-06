@@ -117,17 +117,17 @@ impl Flip for Right {
 }
 
 impl Boundary for Inclusive {
-    fn less<T: Ord>(&self, this: &T, t: &T) -> bool {
+    fn less<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
         this <= t
     }
 }
 impl Boundary for Exclusive {
-    fn less<T: Ord>(&self, this: &T, t: &T) -> bool {
+    fn less<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
         this < t
     }
 }
 impl Boundary for BoundType {
-    fn less<T: Ord>(&self, s: &T, t: &T) -> bool {
+    fn less<T: PartialOrd>(&self, s: &T, t: &T) -> bool {
         match self {
             BoundType::Inclusive => s <= t,
             BoundType::Exclusive => s < t,

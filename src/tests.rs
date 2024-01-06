@@ -80,10 +80,10 @@ fn range_into_interval() {
     assert_typeid::<Interval<i32, Inclusive, Inclusive>>(&a);
 
     let a: Interval<_, _, _> = (1.23..4.56).try_into().unwrap();
-    assert_typeid::<Interval<NotNan<f64>, Inclusive, Exclusive>>(&a);
+    assert_typeid::<Interval<f64, Inclusive, Exclusive>>(&a);
 
     let a: Interval<_, _, _> = (1.23..=4.56).try_into().unwrap();
-    assert_typeid::<Interval<NotNan<f64>, Inclusive, Inclusive>>(&a);
+    assert_typeid::<Interval<f64, Inclusive, Inclusive>>(&a);
 }
 
 #[test]

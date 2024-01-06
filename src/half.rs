@@ -28,26 +28,20 @@ mod ordering {
     use super::HalfBounded;
     use crate::traits::BoundaryOf;
 
-    impl<T: Eq, B: Eq, LR> PartialEq for HalfBounded<T, B, LR> {
+    impl<T: PartialEq, B: Eq, LR> PartialEq for HalfBounded<T, B, LR> {
         fn eq(&self, other: &Self) -> bool {
             self.0 == other.0
         }
     }
-    impl<T: Eq, B: Eq, LR> Eq for HalfBounded<T, B, LR> {}
 
-    impl<T: Ord, B: BoundaryOf<LR>, LR> HalfBounded<T, B, LR> {
+    impl<T: PartialOrd, B: BoundaryOf<LR>, LR> HalfBounded<T, B, LR> {
         fn ordering_key(&self) -> (&T, B::Ordered) {
             (&self.limit, self.bound_type.into_ordered())
         }
     }
-    impl<T: Ord, B: BoundaryOf<LR>, LR> PartialOrd for HalfBounded<T, B, LR> {
+    impl<T: PartialOrd, B: BoundaryOf<LR>, LR> PartialOrd for HalfBounded<T, B, LR> {
         fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-            Some(self.cmp(other))
-        }
-    }
-    impl<T: Ord, B: BoundaryOf<LR>, LR> Ord for HalfBounded<T, B, LR> {
-        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-            self.ordering_key().cmp(&other.ordering_key())
+            self.ordering_key().partial_cmp(&other.ordering_key())
         }
     }
 }
@@ -72,21 +66,33 @@ impl<T, B: Flip, LR: Flip> Flip for HalfBounded<T, B, LR> {
     }
 }
 
-impl<T: Ord, B: BoundaryOf<Left>> LeftBounded<T, B> {
+pub(crate) fn partial_max<T: PartialOrd>(a: T, b: T) -> T {
+    if a > b {
+        a
+    } else {
+        b
+    }
+}
+pub(crate) fn partial_min<T: PartialOrd>(a: T, b: T) -> T {
+    if a < b {
+        a
+    } else {
+        b
+    }
+}
+
+impl<T: PartialOrd, B: BoundaryOf<Left>> LeftBounded<T, B> {
     pub fn includes(&self, other: &Self) -> bool {
         self.limit <= other.limit
     }
-    pub fn contains<T2>(&self, t: &T2) -> bool
-    where
-        T: Scalar<T2>,
-    {
+    pub fn contains(&self, t: &T) -> bool {
         self.bound_type.less(&self.limit, t)
     }
     pub fn intersection(self, other: Self) -> Self {
-        self.max(other)
+        partial_max(self, other)
     }
     pub fn union(self, other: Self) -> Self {
-        self.min(other)
+        partial_min(self, other)
     }
 
     pub fn dilate(self, delta: T) -> Self
@@ -113,21 +119,18 @@ impl<T: Ord, B: BoundaryOf<Left>> LeftBounded<T, B> {
     }
 }
 
-impl<T: Ord, B: BoundaryOf<Right>> RightBounded<T, B> {
+impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
     pub fn includes(&self, other: &Self) -> bool {
         other.limit <= self.limit
     }
-    pub fn contains<T2>(&self, t: &T2) -> bool
-    where
-        T: Scalar<T2>,
-    {
+    pub fn contains(&self, t: &T) -> bool {
         self.bound_type.greater(&self.limit, t)
     }
     pub fn intersection(self, other: Self) -> Self {
-        self.min(other)
+        partial_min(self, other)
     }
     pub fn union(self, other: Self) -> Self {
-        self.max(other)
+        partial_max(self, other)
     }
 
     pub fn dilate(self, delta: T) -> Self

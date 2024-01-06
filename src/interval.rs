@@ -31,7 +31,7 @@ impl<T, L: Flip, R: Flip> IntoIterator for IntervalUnion<T, L, R> {
 
 fn is_valid_interval<T, L, R>(left: &LeftBounded<T, L>, right: &RightBounded<T, R>) -> bool
 where
-    T: Ord,
+    T: PartialOrd,
     L: BoundaryOf<Left>,
     R: BoundaryOf<Right>,
 {
@@ -54,16 +54,18 @@ where
 /// assert_eq!(std::mem::size_of::<IntervalF<f64, Exclusive>>(), std::mem::size_of::<f64>() * 2);
 /// assert!(std::mem::size_of::<Interval<i32>>() > (std::mem::size_of::<i32>() + std::mem::size_of::<BoundType>()) * 2);
 /// ```
-#[derive(Debug, Clone, Copy, Eq)]
+#[derive(Debug, Clone, Copy)]
 pub struct Interval<T, L = crate::BoundType, R = L> {
     pub(crate) left: LeftBounded<T, L>,
     pub(crate) right: RightBounded<T, R>,
 }
-impl<T: Eq, L: Eq, R: Eq> PartialEq for Interval<T, L, R> {
+impl<T: PartialEq, L: Eq, R: Eq> PartialEq for Interval<T, L, R> {
     fn eq(&self, other: &Self) -> bool {
         self.left == other.left && self.right == other.right
     }
 }
+impl<T: Eq, L: Eq, R: Eq> Eq for Interval<T, L, R> {}
+
 impl<T, L, R> Interval<T, L, R> {
     pub fn left(&self) -> &LeftBounded<T, L> {
         &self.left
@@ -72,7 +74,7 @@ impl<T, L, R> Interval<T, L, R> {
         &self.right
     }
 }
-impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
+impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     fn new_(left: LeftBounded<T, L>, right: RightBounded<T, R>) -> Option<Self> {
         is_valid_interval(&left, &right).then_some(Self { left, right })
     }
@@ -198,11 +200,8 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// assert!(b.contains(&1.230000000001));
     /// assert!(b.contains(&4.56));
     /// ```
-    pub fn contains<X>(&self, x: &X) -> bool
-    where
-        T: Scalar<X>,
-    {
-        self.left.contains(x) && self.right.contains(x)
+    pub fn contains(&self, t: &T) -> bool {
+        self.left.contains(t) && self.right.contains(t)
     }
 
     /// ```
@@ -262,8 +261,8 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// assert!(!a.overlaps(&c) && !c.overlaps(&a));
     /// ```
     pub fn overlaps(&self, other: &Self) -> bool {
-        let left = std::cmp::max(&self.left, &other.left);
-        let right = std::cmp::min(&self.right, &other.right);
+        let left = crate::half::partial_max(&self.left, &other.left);
+        let right = crate::half::partial_min(&self.right, &other.right);
         is_valid_interval(left, right)
     }
 

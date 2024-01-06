@@ -41,6 +41,7 @@ pub trait Scalar<T>: Ord + Sized {
             .unwrap_or(false)
     }
 }
+
 impl<T: Ord> Scalar<T> for T {
     type Error = std::convert::Infallible;
     fn scalar_into(self) -> T {
@@ -67,8 +68,8 @@ impl<T: FloatCore> Scalar<T> for NotNan<T> {
 }
 
 pub trait Boundary: Flip + Eq + Copy {
-    fn less<S: Scalar<T>, T>(&self, this: &S, t: &T) -> bool;
-    fn greater<S: Scalar<T>, T>(&self, this: &S, t: &T) -> bool;
+    fn less<T: PartialOrd>(&self, this: &T, t: &T) -> bool;
+    fn greater<T: PartialOrd>(&self, this: &T, t: &T) -> bool;
 }
 
 pub trait BoundaryOf<LR>: Boundary {

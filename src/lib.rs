@@ -75,7 +75,7 @@ impl BoundType {
     }
 }
 
-impl<T: Ord, B: BoundaryOf<Left>> Bound<T, B> {
+impl<T: PartialOrd, B: BoundaryOf<Left>> Bound<T, B> {
     pub fn to<R: BoundaryOf<Right>>(self, right: Bound<T, R>) -> Option<Interval<T, B, R>> {
         Interval::new(self, right)
     }

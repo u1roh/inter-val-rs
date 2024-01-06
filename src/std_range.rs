@@ -2,7 +2,7 @@ mod impl_range_bounds {
     use crate::{Exclusive, Inclusive, LeftBounded, RightBounded};
     use std::ops::{Bound, RangeBounds};
 
-    impl<T: Ord> RangeBounds<T> for LeftBounded<T, Inclusive> {
+    impl<T: PartialOrd> RangeBounds<T> for LeftBounded<T, Inclusive> {
         fn start_bound(&self) -> Bound<&T> {
             Bound::Included(&self.limit)
         }
@@ -10,7 +10,7 @@ mod impl_range_bounds {
             Bound::Unbounded
         }
     }
-    impl<T: Ord> RangeBounds<T> for LeftBounded<T, Exclusive> {
+    impl<T: PartialOrd> RangeBounds<T> for LeftBounded<T, Exclusive> {
         fn start_bound(&self) -> Bound<&T> {
             Bound::Excluded(&self.limit)
         }
@@ -18,7 +18,7 @@ mod impl_range_bounds {
             Bound::Unbounded
         }
     }
-    impl<T: Ord> RangeBounds<T> for RightBounded<T, Inclusive> {
+    impl<T: PartialOrd> RangeBounds<T> for RightBounded<T, Inclusive> {
         fn start_bound(&self) -> Bound<&T> {
             Bound::Unbounded
         }
@@ -26,7 +26,7 @@ mod impl_range_bounds {
             Bound::Included(&self.limit)
         }
     }
-    impl<T: Ord> RangeBounds<T> for RightBounded<T, Exclusive> {
+    impl<T: PartialOrd> RangeBounds<T> for RightBounded<T, Exclusive> {
         fn start_bound(&self) -> Bound<&T> {
             Bound::Unbounded
         }
@@ -48,7 +48,7 @@ mod converters {
     /// assert_eq!(a.left().limit, 2);
     /// assert_eq!(a.right().limit, 4);
     /// ```
-    impl<T: Ord> TryFrom<std::ops::Range<T>> for Interval<T, Inclusive, Exclusive> {
+    impl<T: PartialOrd> TryFrom<std::ops::Range<T>> for Interval<T, Inclusive, Exclusive> {
         type Error = IntervalIsEmpty;
         fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {
             Self::new(r.start.into(), r.end.into()).ok_or(IntervalIsEmpty)
@@ -63,7 +63,7 @@ mod converters {
     /// assert_eq!(a.left().limit, 2);
     /// assert_eq!(a.right().limit, 4);
     /// ```
-    impl<T: Ord> TryFrom<std::ops::RangeInclusive<T>> for Interval<T, Inclusive> {
+    impl<T: PartialOrd> TryFrom<std::ops::RangeInclusive<T>> for Interval<T, Inclusive> {
         type Error = IntervalIsEmpty;
         fn try_from(r: std::ops::RangeInclusive<T>) -> Result<Self, Self::Error> {
             let (left, right) = r.into_inner();
