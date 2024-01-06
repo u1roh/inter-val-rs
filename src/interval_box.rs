@@ -5,9 +5,34 @@ use crate::kd::Kd;
 use crate::traits::{BoundaryOf, Maximum, Minimum};
 use crate::{Exclusive, Inclusive, Interval, LeftBounded, RightBounded};
 
-impl<const N: usize, T: Ord + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
-    Kd<N, Interval<T, L, R>>
-{
+#[derive(Debug, Clone, Copy, Eq)]
+pub struct Box<const N: usize, T, L = Inclusive, R = L>(Kd<N, Interval<T, L, R>>);
+
+impl<const N: usize, T: Eq, L: Eq, R: Eq> PartialEq for Box<N, T, L, R> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl<const N: usize, T, L, R> std::ops::Deref for Box<N, T, L, R> {
+    type Target = Kd<N, Interval<T, L, R>>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl<const N: usize, T, L, R> std::ops::DerefMut for Box<N, T, L, R> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl<const N: usize, T, L, R> From<[Interval<T, L, R>; N]> for Box<N, T, L, R> {
+    fn from(items: [Interval<T, L, R>; N]) -> Self {
+        Self(items.into())
+    }
+}
+
+impl<const N: usize, T: Ord + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Box<N, T, L, R> {
     pub fn left(&self) -> Kd<N, &LeftBounded<T, L>> {
         std::array::from_fn(|i| self[i].left()).into()
     }
@@ -24,14 +49,14 @@ impl<const N: usize, T: Ord + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
         self.iter().zip(other.iter()).all(|(i, o)| i.includes(o))
     }
 
-    pub fn min_val(&self) -> Kd<N, T>
+    pub fn min(&self) -> Kd<N, T>
     where
         LeftBounded<T, L>: Minimum<T>,
     {
         std::array::from_fn(|i| self[i].min()).into()
     }
 
-    pub fn max_val(&self) -> Kd<N, T>
+    pub fn max(&self) -> Kd<N, T>
     where
         RightBounded<T, R>: Maximum<T>,
     {
@@ -47,9 +72,7 @@ impl<const N: usize, T: Ord + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
     }
 
     pub fn union(&self, other: &Self) -> Self {
-        Self(std::array::from_fn(|i| {
-            self[i].clone().hull(other[i].clone())
-        }))
+        std::array::from_fn(|i| self[i].clone().hull(other[i].clone())).into()
     }
 
     pub fn bound<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
@@ -60,7 +83,7 @@ impl<const N: usize, T: Ord + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
 }
 
 impl<const N: usize, T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
-    Kd<N, Interval<NotNan<T>, L, R>>
+    Box<N, NotNan<T>, L, R>
 {
     pub fn inf(&self) -> Kd<N, NotNan<T>> {
         std::array::from_fn(|i| self[i].inf()).into()

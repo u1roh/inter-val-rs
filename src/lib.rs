@@ -29,8 +29,8 @@ mod bound_type;
 mod converters;
 mod half;
 mod interval;
+mod interval_box;
 mod kd;
-mod pow;
 mod std_range;
 mod tests;
 mod traits;
@@ -46,11 +46,9 @@ pub use bound::Bound;
 pub use bound_type::{BoundType, Exclusive, Inclusive};
 pub use half::{HalfBounded, LeftBounded, RightBounded};
 pub use interval::Interval;
+pub use interval_box::Box;
+pub use kd::Kd;
 pub use traits::Scalar;
-
-// Hidden for now
-// pub use kd::Kd;
-use kd::Kd;
 
 impl Inclusive {
     pub fn at<T>(self, t: T) -> Bound<T, Self> {
@@ -112,9 +110,3 @@ pub type OpenInterval<T> = Interval<T, Exclusive>;
 pub type IntervalF<T, L = BoundType, R = L> = Interval<NotNan<T>, L, R>;
 pub type ClosedIntervalF<T> = ClosedInterval<NotNan<T>>;
 pub type OpenIntervalF<T> = OpenInterval<NotNan<T>>;
-
-pub type IntervalN<const N: usize, T, L = BoundType, R = L> = Kd<N, Interval<T, L, R>>;
-// pub type Interval2<T, L = BoundType, R = L> = IntervalN<2, T, L, R>;
-// pub type Interval3<T, L = BoundType, R = L> = IntervalN<3, T, L, R>;
-// pub type Interval4<T, L = BoundType, R = L> = IntervalN<4, T, L, R>;
-// pub type BoxN<const N: usize, T> = IntervalN<N, NotNan<T>, Inclusive>;
