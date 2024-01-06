@@ -71,14 +71,14 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
         Some(dst)
     }
 
-    pub fn union(&self, other: &Self) -> Self {
-        std::array::from_fn(|i| self[i].clone().hull(other[i].clone())).into()
+    pub fn span(&self, other: &Self) -> Self {
+        std::array::from_fn(|i| self[i].clone().span(other[i].clone())).into()
     }
 
-    pub fn bound<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
+    pub fn span_many<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
         let mut items = items.into_iter();
         let first = items.next()?.into();
-        Some(items.fold(first, |acc, item| acc.union(&item.into())))
+        Some(items.fold(first, |acc, item| acc.span(&item.into())))
     }
 }
 

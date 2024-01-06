@@ -4,7 +4,7 @@ use crate::{Bound, Exclusive, Inclusive, LeftBounded, RightBounded};
 
 /// Return type of `Interval::union()`.
 pub struct IntervalUnion<T, L: Flip, R: Flip> {
-    pub hull: Interval<T, L, R>,
+    pub span: Interval<T, L, R>,
     pub gap: Option<Interval<T, R::Flip, L::Flip>>,
 }
 impl<T, L: Flip, R: Flip> IntoIterator for IntervalUnion<T, L, R> {
@@ -13,16 +13,16 @@ impl<T, L: Flip, R: Flip> IntoIterator for IntervalUnion<T, L, R> {
     fn into_iter(self) -> Self::IntoIter {
         if let Some(gap) = self.gap {
             let first = Interval {
-                left: self.hull.left,
+                left: self.span.left,
                 right: gap.left.flip(),
             };
             let second = Interval {
                 left: gap.right.flip(),
-                right: self.hull.right,
+                right: self.span.right,
             };
             vec![first, second].into_iter()
         } else {
-            vec![self.hull].into_iter()
+            vec![self.span].into_iter()
         }
     }
 }
@@ -283,12 +283,28 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// use kd_interval::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));
     /// let b = Inclusive.at(5).to(Exclusive.at(8));
-    /// assert_eq!(a.hull(b), Inclusive.at(0).to(Exclusive.at(8)));
+    /// assert_eq!(a.span(b), Inclusive.at(0).to(Exclusive.at(8)));
     /// ```
-    pub fn hull(self, other: Self) -> Self {
+    pub fn span(self, other: Self) -> Self {
         Self {
             left: self.left.union(other.left),
             right: self.right.union(other.right),
+        }
+    }
+
+    /// ```
+    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(0).to(Exclusive.at(3));
+    /// assert_eq!(a.hull(-2), Inclusive.at(-2).to(Exclusive.at(3)));
+    /// assert_eq!(a.hull(5), Inclusive.at(0).to(Exclusive.at(5)));
+    /// ```
+    pub fn hull(self, t: T) -> Self
+    where
+        T: Clone,
+    {
+        Self {
+            left: self.left.hull(t.clone()),
+            right: self.right.hull(t),
         }
     }
 
@@ -312,7 +328,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// let a = Inclusive.at(0).to(Exclusive.at(3));
     /// let b = Inclusive.at(5).to(Exclusive.at(8));
     /// let union = a.union(b);
-    /// assert_eq!(union.hull, a.hull(b));
+    /// assert_eq!(union.span, a.span(b));
     /// assert_eq!(union.gap, a.gap(b));
     /// let union_ints: Vec<Interval<_, _, _>> = union.into_iter().collect();
     /// assert_eq!(union_ints.len(), 2);
@@ -327,7 +343,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     {
         IntervalUnion {
             gap: self.clone().gap(other.clone()),
-            hull: self.hull(other),
+            span: self.span(other),
         }
     }
 
@@ -350,29 +366,29 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// let a = Inclusive.at(0).to(Exclusive.at(3));  // [0, 3)
     /// let b = Inclusive.at(1).to(Exclusive.at(5));  // [1, 5)
     /// let c = Inclusive.at(8).to(Exclusive.at(10)); // [8, 10)
-    /// let enc = Interval::hull_many(vec![a, b, c]).unwrap(); // [0, 10)
+    /// let enc = Interval::span_many(vec![a, b, c]).unwrap(); // [0, 10)
     /// assert_eq!(enc.left().limit, 0);
     /// assert_eq!(enc.right().limit, 10);
     /// ```
-    pub fn hull_many(items: impl IntoIterator<Item = Self>) -> Option<Self> {
+    pub fn span_many(items: impl IntoIterator<Item = Self>) -> Option<Self> {
         let mut items = items.into_iter();
         let first = items.next()?;
-        Some(items.fold(first, |acc, item| acc.hull(item)))
+        Some(items.fold(first, |acc, item| acc.span(item)))
     }
 }
 
 impl<T: PartialOrd + Clone> Interval<T, Inclusive, Inclusive> {
     /// ```
     /// use kd_interval::Interval;
-    /// let span = Interval::enclosure(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
+    /// let span = Interval::hull_many(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
     /// assert_eq!(span.min(), 2);
     /// assert_eq!(span.max(), 9);
     ///
-    /// let span = Interval::enclosure(vec![3.1, 9.2, 2.3, 5.4]).unwrap(); // [2.3, 9.2]
+    /// let span = Interval::hull_many(vec![3.1, 9.2, 2.3, 5.4]).unwrap(); // [2.3, 9.2]
     /// assert_eq!(span.inf(), 2.3);
     /// assert_eq!(span.sup(), 9.2);
     /// ```
-    pub fn enclosure(items: impl IntoIterator<Item = T>) -> Option<Self> {
+    pub fn hull_many(items: impl IntoIterator<Item = T>) -> Option<Self> {
         let mut items = items.into_iter();
         let mut left = items.next()?;
         let mut right = left.clone();
@@ -463,7 +479,7 @@ impl<T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     pub fn iou(self, other: Self) -> T {
         self.intersection(other)
             .map(|intersection| {
-                let union = self.hull(other);
+                let union = self.span(other);
                 intersection.measure() / union.measure()
             })
             .unwrap_or(T::zero())
@@ -526,3 +542,9 @@ where
         self.minimum()..=self.maximum()
     }
 }
+
+// impl<T, L, R> std::iter::Sum for Interval<T, L, R> {
+//     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+//         Self::hull_many(iter).unwrap()
+//     }
+// }

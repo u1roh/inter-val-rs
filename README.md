@@ -11,7 +11,7 @@ use kd_interval::{Inclusive, Exclusive, Interval};
 // Closed interval of i32
 let a = Inclusive.at(0).to(Inclusive.at(10));  // [0, 10]
 let b = Inclusive.at(5).to(Inclusive.at(15));  // [5, 15]
-let c = a.intersection(b); // [0, 10] ∩ [5, 15] = [5, 10]
+let c = a.intersection(b).unwrap(); // [0, 10] ∩ [5, 15] = [5, 10]
 assert_eq!(c.min(), 5);
 assert_eq!(c.max(), 10);
 
@@ -24,7 +24,7 @@ assert!(!a.contains(&4.56));
 assert!(a.contains(&(4.56 - 0.000000000000001)));
 
 // Enclosure
-let a = Interval::enclosure_of_items(vec![3, 9, 2, 5]); // [2, 9]
+let a = Interval::span_many(vec![3, 9, 2, 5]); // [2, 9]
 assert_eq!(a.min(), 2);
 assert_eq!(a.max(), 9);
 ```

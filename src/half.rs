@@ -93,6 +93,14 @@ impl<T: PartialOrd, B: BoundaryOf<Left>> LeftBounded<T, B> {
         partial_min(self, other)
     }
 
+    pub fn hull(self, t: T) -> Self {
+        Bound {
+            limit: partial_min(self.0.limit, t),
+            bound_type: self.0.bound_type,
+        }
+        .into()
+    }
+
     pub fn dilate(self, delta: T) -> Self
     where
         T: std::ops::Sub<Output = T>,
@@ -117,6 +125,14 @@ impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
     }
     pub fn union(self, other: Self) -> Self {
         partial_max(self, other)
+    }
+
+    pub fn hull(self, t: T) -> Self {
+        Bound {
+            limit: partial_max(self.0.limit, t),
+            bound_type: self.0.bound_type,
+        }
+        .into()
     }
 
     pub fn dilate(self, delta: T) -> Self
