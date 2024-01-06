@@ -2,7 +2,7 @@ mod impl_range_bounds {
     use crate::{Exclusive, Inclusive, LeftBounded, RightBounded};
     use std::ops::{Bound, RangeBounds};
 
-    impl<T: Ord> RangeBounds<T> for LeftBounded<T, Inclusive> {
+    impl<T: PartialOrd> RangeBounds<T> for LeftBounded<T, Inclusive> {
         fn start_bound(&self) -> Bound<&T> {
             Bound::Included(&self.limit)
         }
@@ -10,7 +10,7 @@ mod impl_range_bounds {
             Bound::Unbounded
         }
     }
-    impl<T: Ord> RangeBounds<T> for LeftBounded<T, Exclusive> {
+    impl<T: PartialOrd> RangeBounds<T> for LeftBounded<T, Exclusive> {
         fn start_bound(&self) -> Bound<&T> {
             Bound::Excluded(&self.limit)
         }
@@ -18,7 +18,7 @@ mod impl_range_bounds {
             Bound::Unbounded
         }
     }
-    impl<T: Ord> RangeBounds<T> for RightBounded<T, Inclusive> {
+    impl<T: PartialOrd> RangeBounds<T> for RightBounded<T, Inclusive> {
         fn start_bound(&self) -> Bound<&T> {
             Bound::Unbounded
         }
@@ -26,7 +26,7 @@ mod impl_range_bounds {
             Bound::Included(&self.limit)
         }
     }
-    impl<T: Ord> RangeBounds<T> for RightBounded<T, Exclusive> {
+    impl<T: PartialOrd> RangeBounds<T> for RightBounded<T, Exclusive> {
         fn start_bound(&self) -> Bound<&T> {
             Bound::Unbounded
         }
@@ -38,7 +38,6 @@ mod impl_range_bounds {
 
 mod converters {
     use crate::{Exclusive, Inclusive, Interval, IntervalIsEmpty};
-    use ordered_float::{FloatCore, NotNan};
 
     /// ```
     /// use std::any::{Any, TypeId};
@@ -48,10 +47,10 @@ mod converters {
     /// assert_eq!(a.left().limit, 2);
     /// assert_eq!(a.right().limit, 4);
     /// ```
-    impl<T: Ord> TryFrom<std::ops::Range<T>> for Interval<T, Inclusive, Exclusive> {
+    impl<T: PartialOrd> TryFrom<std::ops::Range<T>> for Interval<T, Inclusive, Exclusive> {
         type Error = IntervalIsEmpty;
         fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {
-            Self::new(r.start.into(), r.end.into()).ok_or(IntervalIsEmpty)
+            Self::try_new(r.start.into(), r.end.into()).ok_or(IntervalIsEmpty)
         }
     }
 
@@ -63,48 +62,17 @@ mod converters {
     /// assert_eq!(a.left().limit, 2);
     /// assert_eq!(a.right().limit, 4);
     /// ```
-    impl<T: Ord> TryFrom<std::ops::RangeInclusive<T>> for Interval<T, Inclusive> {
+    impl<T: PartialOrd> TryFrom<std::ops::RangeInclusive<T>> for Interval<T, Inclusive> {
         type Error = IntervalIsEmpty;
         fn try_from(r: std::ops::RangeInclusive<T>) -> Result<Self, Self::Error> {
             let (left, right) = r.into_inner();
-            Self::new(left.into(), right.into()).ok_or(IntervalIsEmpty)
-        }
-    }
-
-    /// ```
-    /// use std::any::{Any, TypeId};
-    /// use kd_interval::{IntervalF, Inclusive, Exclusive};
-    /// let a: IntervalF<_, _, _> = (2.74..4.26).try_into().unwrap();
-    /// assert_eq!(a.type_id(), TypeId::of::<IntervalF<f64, Inclusive, Exclusive>>());
-    /// assert_eq!(a.left().limit, 2.74);
-    /// assert_eq!(a.right().limit, 4.26);
-    /// ```
-    impl<T: FloatCore> TryFrom<std::ops::Range<T>> for Interval<NotNan<T>, Inclusive, Exclusive> {
-        type Error = crate::Error;
-        fn try_from(r: std::ops::Range<T>) -> Result<Self, Self::Error> {
-            Self::try_new(Inclusive.at(r.start), Exclusive.at(r.end))?.ok_or(IntervalIsEmpty.into())
-        }
-    }
-
-    /// ```
-    /// use std::any::{Any, TypeId};
-    /// use kd_interval::{IntervalF, Inclusive, Exclusive};
-    /// let a: IntervalF<_, _, _> = (2.74..=4.26).try_into().unwrap();
-    /// assert_eq!(a.type_id(), TypeId::of::<IntervalF<f64, Inclusive, Inclusive>>());
-    /// assert_eq!(a.left().limit, 2.74);
-    /// assert_eq!(a.right().limit, 4.26);
-    /// ```
-    impl<T: FloatCore> TryFrom<std::ops::RangeInclusive<T>> for Interval<NotNan<T>, Inclusive> {
-        type Error = crate::Error;
-        fn try_from(r: std::ops::RangeInclusive<T>) -> Result<Self, Self::Error> {
-            let (left, right) = r.into_inner();
-            Self::try_new(Inclusive.at(left), Inclusive.at(right))?.ok_or(IntervalIsEmpty.into())
+            Self::try_new(left.into(), right.into()).ok_or(IntervalIsEmpty)
         }
     }
 
     /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};
-    /// let src = Inclusive.at(0).to(Exclusive.at(10)).unwrap();
+    /// let src = Inclusive.at(0).to(Exclusive.at(10));
     /// let dst: std::ops::Range<i32> = src.into();
     /// assert_eq!(dst.start, 0);
     /// assert_eq!(dst.end, 10);
@@ -117,7 +85,7 @@ mod converters {
 
     /// ```
     /// use kd_interval::{Interval, Inclusive};
-    /// let src = Inclusive.at(0).to(Inclusive.at(10)).unwrap();
+    /// let src = Inclusive.at(0).to(Inclusive.at(10));
     /// let dst: std::ops::RangeInclusive<i32> = src.into();
     /// assert_eq!(dst.start(), &0);
     /// assert_eq!(dst.end(), &10);

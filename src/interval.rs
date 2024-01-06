@@ -1,12 +1,10 @@
-use ordered_float::{FloatCore, FloatIsNan, NotNan};
-
 use crate::bound_type::{Left, Right};
-use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum, Scalar};
+use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum};
 use crate::{Bound, Exclusive, Inclusive, LeftBounded, RightBounded};
 
 /// Return type of `Interval::union()`.
 pub struct IntervalUnion<T, L: Flip, R: Flip> {
-    pub hull: Interval<T, L, R>,
+    pub span: Interval<T, L, R>,
     pub gap: Option<Interval<T, R::Flip, L::Flip>>,
 }
 impl<T, L: Flip, R: Flip> IntoIterator for IntervalUnion<T, L, R> {
@@ -15,55 +13,57 @@ impl<T, L: Flip, R: Flip> IntoIterator for IntervalUnion<T, L, R> {
     fn into_iter(self) -> Self::IntoIter {
         if let Some(gap) = self.gap {
             let first = Interval {
-                left: self.hull.left,
+                left: self.span.left,
                 right: gap.left.flip(),
             };
             let second = Interval {
                 left: gap.right.flip(),
-                right: self.hull.right,
+                right: self.span.right,
             };
             vec![first, second].into_iter()
         } else {
-            vec![self.hull].into_iter()
+            vec![self.span].into_iter()
         }
     }
 }
 
 fn is_valid_interval<T, L, R>(left: &LeftBounded<T, L>, right: &RightBounded<T, R>) -> bool
 where
-    T: Ord,
+    T: PartialOrd,
     L: BoundaryOf<Left>,
     R: BoundaryOf<Right>,
 {
     left.contains(&right.limit) && right.contains(&left.limit)
 }
 
-/// Interval like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `Ord` type.
-/// * `T`: Scalar type. `T` should implements `Ord`. Use [`NotNan<T>`](crate::ordered_float::NotNan) for floating point numbers.
+/// Interval like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `PartialOrd` type.
+/// * `T`: Scalar type. `T` should implements `PartialOrd`. `NaN` safety is not guaranteed when `T` is floating point type.
 /// * `L`: Left boundary type. Specify one of [`Inclusive`], [`Exclusive`], or [`BoundType`](crate::BoundType).
 /// * `R`: Right boundary type. Specify one of [`Inclusive`] [`Exclusive`], or [`BoundType`](crate::BoundType).
-/// * `Interval<T, Inclusive>` represents a closed interval, i.e., *[a, b]*.
-/// * `Interval<T, Exclusive>` represents a open interval, i.e., *(a, b)*.
+/// * `Interval<T>` (= `Interval<T, Inclusive, Inclusive>`) represents a closed interval, i.e., *[a, b]*.
+/// * `Interval<T, Exclusive>` (= `Interval<T, Exclusive, Exclusive>`) represents a open interval, i.e., *(a, b)*.
 /// * `Interval<T, Inclusive, Exclusive>` represents a right half-open interval, i.e., *[a, b)*.
 /// * `Interval<T, Exclusive, Inclusive>` represents a left half-open interval, i.e., *(a, b]*.
-/// * `Interval<T>` (= `Interval<T, BoundType, BoundType>`) represents any of the above.
+/// * `Interval<T, BoundType>` represents any of the above.
 ///
 /// ```
-/// use kd_interval::{Interval, IntervalF, Exclusive, Inclusive, BoundType};
+/// use kd_interval::{Interval, Exclusive, Inclusive, BoundType};
 /// assert_eq!(std::mem::size_of::<Interval<i32, Inclusive>>(), std::mem::size_of::<i32>() * 2);
-/// assert_eq!(std::mem::size_of::<IntervalF<f64, Exclusive>>(), std::mem::size_of::<f64>() * 2);
-/// assert!(std::mem::size_of::<Interval<i32>>() > (std::mem::size_of::<i32>() + std::mem::size_of::<BoundType>()) * 2);
+/// assert_eq!(std::mem::size_of::<Interval<f64, Exclusive>>(), std::mem::size_of::<f64>() * 2);
+/// assert!(std::mem::size_of::<Interval<i32, BoundType>>() > (std::mem::size_of::<i32>() + std::mem::size_of::<BoundType>()) * 2);
 /// ```
-#[derive(Debug, Clone, Copy, Eq)]
-pub struct Interval<T, L = crate::BoundType, R = L> {
+#[derive(Debug, Clone, Copy)]
+pub struct Interval<T, L = Inclusive, R = L> {
     pub(crate) left: LeftBounded<T, L>,
     pub(crate) right: RightBounded<T, R>,
 }
-impl<T: Eq, L: Eq, R: Eq> PartialEq for Interval<T, L, R> {
+impl<T: PartialEq, L: Eq, R: Eq> PartialEq for Interval<T, L, R> {
     fn eq(&self, other: &Self) -> bool {
         self.left == other.left && self.right == other.right
     }
 }
+impl<T: Eq, L: Eq, R: Eq> Eq for Interval<T, L, R> {}
+
 impl<T, L, R> Interval<T, L, R> {
     pub fn left(&self) -> &LeftBounded<T, L> {
         &self.left
@@ -72,95 +72,114 @@ impl<T, L, R> Interval<T, L, R> {
         &self.right
     }
 }
-impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
+impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     fn new_(left: LeftBounded<T, L>, right: RightBounded<T, R>) -> Option<Self> {
         is_valid_interval(&left, &right).then_some(Self { left, right })
     }
 
-    /// Create a new interval.
+    /// Try to create a new interval. Return `None` if the interval is empty.
     /// ```
     /// use std::any::{Any, TypeId};
     /// use kd_interval::{Interval, BoundType, Exclusive, Inclusive};
     ///
-    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::new(0.into(), 3.into()).unwrap();
+    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::try_new(0.into(), 3.into()).unwrap();
     /// assert!(a.contains(&0));
     /// assert!(a.contains(&2));
     /// assert!(!a.contains(&3));
     ///
-    /// let a = Interval::new(Exclusive.at(0), Inclusive.at(3)).unwrap();
+    /// let a = Interval::try_new(Exclusive.at(0), Inclusive.at(3)).unwrap();
     /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Exclusive, Inclusive>>());
     ///
-    /// let a = Interval::new(BoundType::Exclusive.at(0), BoundType::Exclusive.at(3)).unwrap();
+    /// let a = Interval::try_new(BoundType::Exclusive.at(0), BoundType::Exclusive.at(3)).unwrap();
     /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, BoundType, BoundType>>());
     ///
-    /// assert!(Interval::new(Inclusive.at(3), Exclusive.at(0)).is_none());
-    /// assert!(Interval::new(Inclusive.at(3), Exclusive.at(3)).is_none());
-    /// assert!(Interval::new(Inclusive.at(3), Inclusive.at(3)).is_some());
+    /// assert!(Interval::try_new(Inclusive.at(3), Exclusive.at(0)).is_none()); // [3, 0) is empty.
+    /// assert!(Interval::try_new(Inclusive.at(3), Exclusive.at(3)).is_none()); // [3, 3) is empty.
+    /// assert!(Interval::try_new(Inclusive.at(3), Inclusive.at(3)).is_some()); // [3, 3] is not empty.
     /// ```
-    pub fn new(left: Bound<T, L>, right: Bound<T, R>) -> Option<Self> {
+    pub fn try_new(left: Bound<T, L>, right: Bound<T, R>) -> Option<Self> {
         Self::new_(left.into(), right.into())
     }
 
+    /// Create a new interval. Panics if the interval is empty.
     /// ```
-    /// use kd_interval::{IntervalF, Exclusive, Inclusive};
-    /// let a = IntervalF::try_new(Inclusive.at(-1.0), Exclusive.at(1.0)).unwrap().unwrap();
-    /// assert!(a.contains(&-1.0));
-    /// assert!(!a.contains(&1.0));
+    /// use std::any::{Any, TypeId};
+    /// use kd_interval::{Interval, BoundType, Exclusive, Inclusive};
     ///
-    /// let a = IntervalF::<_, Exclusive, Inclusive>::try_new(1.23.into(), 4.56.into())
-    ///     .unwrap()
-    ///     .unwrap();
-    /// assert!(!a.contains(&1.23));
-    /// assert!(a.contains(&1.23000000000001));
-    /// assert!(a.contains(&4.56));
+    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::new(0.into(), 3.into());
+    /// assert!(a.contains(&0));
+    /// assert!(a.contains(&2));
+    /// assert!(!a.contains(&3));
+    ///
+    /// let a = Interval::new(Exclusive.at(0), Inclusive.at(3));
+    /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Exclusive, Inclusive>>());
+    ///
+    /// let a = Interval::new(BoundType::Exclusive.at(0), BoundType::Exclusive.at(3));
+    /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, BoundType, BoundType>>());
     /// ```
-    pub fn try_new<T2>(left: Bound<T2, L>, right: Bound<T2, R>) -> Result<Option<Self>, T::Error>
-    where
-        T: Scalar<T2>,
-    {
-        let left = Bound {
-            limit: T::scalar_try_from(left.limit)?,
-            bound_type: left.bound_type,
-        };
-        let right = Bound {
-            limit: T::scalar_try_from(right.limit)?,
-            bound_type: right.bound_type,
-        };
-        Ok(Self::new(left, right))
+    ///
+    /// # Panics
+    /// ```should_panic
+    /// # use kd_interval::{Interval, Exclusive, Inclusive};
+    /// Interval::new(Inclusive.at(3), Exclusive.at(0)); // [3, 0) is empty.
+    /// ```
+    /// ```should_panic
+    /// # use kd_interval::{Interval, Exclusive, Inclusive};
+    /// Interval::new(Inclusive.at(3), Exclusive.at(3)); // [3, 3) is empty.
+    /// ```
+    pub fn new(left: Bound<T, L>, right: Bound<T, R>) -> Self {
+        Self::try_new(left, right).expect("Invalid interval: left must be less than right.")
     }
 
     /// ```
     /// use kd_interval::{Interval, Exclusive, Inclusive};
-    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::between(-2, 5).unwrap();
-    /// assert_eq!(a, Inclusive.at(-2).to(Exclusive.at(5)).unwrap());
+    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::try_between(-2, 5).unwrap();
+    /// assert_eq!(a, Inclusive.at(-2).to(Exclusive.at(5)));
+    ///
+    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::try_between(3, -1).unwrap();
+    /// assert_eq!(a, Inclusive.at(-1).to(Exclusive.at(3))); // Swaps left and right.
+    ///
+    /// assert!(Interval::<i32, Inclusive, Exclusive>::try_between(1, 1).is_none()); // [1, 1) is empty.
+    /// assert!(Interval::<i32, Inclusive, Inclusive>::try_between(1, 1).is_some()); // [1, 1] is not empty.
     /// ```
-    pub fn between(left: T, right: T) -> Option<Self>
+    pub fn try_between(a: T, b: T) -> Option<Self>
     where
         T: Into<Bound<T, L>> + Into<Bound<T, R>>,
     {
-        Self::new(left.into(), right.into())
+        if a < b {
+            Self::try_new(a.into(), b.into())
+        } else {
+            Self::try_new(b.into(), a.into())
+        }
     }
 
     /// ```
-    /// use kd_interval::{IntervalF, Exclusive, Inclusive};
-    /// let a: IntervalF<f64, Inclusive, Exclusive> = IntervalF::try_between(-1.0, 1.0).unwrap().unwrap();
-    /// assert_eq!(a, Inclusive.at(-1.0).float_to(Exclusive.at(1.0)).unwrap());
+    /// use kd_interval::{Interval, Exclusive, Inclusive};
+    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::between(-2, 5);
+    /// assert_eq!(a, Inclusive.at(-2).to(Exclusive.at(5)));
+    ///
+    /// let a: Interval<i32, Inclusive, Exclusive> = Interval::between(3, -1);
+    /// assert_eq!(a, Inclusive.at(-1).to(Exclusive.at(3))); // Swaps left and right.
+    ///
+    /// // Closed interval (bounded by `Inclusive`) never panics.
+    /// Interval::<i32, Inclusive, Inclusive>::between(1, 1); // Doesn't panic since [1, 1] is not empty.
     /// ```
-    pub fn try_between<T2>(left: T2, right: T2) -> Result<Option<Self>, T::Error>
+    /// ```should_panic
+    /// # use kd_interval::{Interval, Exclusive, Inclusive};
+    /// Interval::<i32, Inclusive, Exclusive>::between(1, 1); // Panics since [1, 1) is empty.
+    /// ```
+    pub fn between(a: T, b: T) -> Self
     where
-        T: Scalar<T2> + Into<Bound<T, L>> + Into<Bound<T, R>>,
+        T: Into<Bound<T, L>> + Into<Bound<T, R>>,
     {
-        Ok(Self::new(
-            T::scalar_try_from(left)?.into(),
-            T::scalar_try_from(right)?.into(),
-        ))
+        Self::try_between(a, b).unwrap()
     }
 
     /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};
-    /// let a = Inclusive.at(4).to(Inclusive.at(7)).unwrap();
-    /// let b = Exclusive.at(4).to(Inclusive.at(7)).unwrap();
-    /// let c = Inclusive.at(1.23).float_to(Inclusive.at(4.56)).unwrap();
+    /// let a = Inclusive.at(4).to(Inclusive.at(7));
+    /// let b = Exclusive.at(4).to(Inclusive.at(7));
+    /// let c = Inclusive.at(1.23).to(Inclusive.at(4.56));
     /// assert_eq!(a.min(), 4);
     /// assert_eq!(b.min(), 5);
     /// assert_eq!(c.min(), 1.23);
@@ -174,9 +193,9 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
 
     /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};
-    /// let a = Inclusive.at(4).to(Inclusive.at(7)).unwrap();
-    /// let b = Inclusive.at(4).to(Exclusive.at(7)).unwrap();
-    /// let c = Inclusive.at(1.23).float_to(Inclusive.at(4.56)).unwrap();
+    /// let a = Inclusive.at(4).to(Inclusive.at(7));
+    /// let b = Inclusive.at(4).to(Exclusive.at(7));
+    /// let c = Inclusive.at(1.23).to(Inclusive.at(4.56));
     /// assert_eq!(a.max(), 7);
     /// assert_eq!(b.max(), 6);
     /// assert_eq!(c.max(), 4.56);
@@ -190,26 +209,23 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
 
     /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};
-    /// let a = Inclusive.at(4).to(Exclusive.at(7)).unwrap();
-    /// let b = Exclusive.at(1.23).float_to(Inclusive.at(4.56)).unwrap();
+    /// let a = Inclusive.at(4).to(Exclusive.at(7));
+    /// let b = Exclusive.at(1.23).to(Inclusive.at(4.56));
     /// assert!(a.contains(&4));
     /// assert!(!a.contains(&7));
     /// assert!(!b.contains(&1.23));
     /// assert!(b.contains(&1.230000000001));
     /// assert!(b.contains(&4.56));
     /// ```
-    pub fn contains<X>(&self, x: &X) -> bool
-    where
-        T: Scalar<X>,
-    {
-        self.left.contains(x) && self.right.contains(x)
+    pub fn contains(&self, t: &T) -> bool {
+        self.left.contains(t) && self.right.contains(t)
     }
 
     /// ```
     /// use kd_interval::{Inclusive, Exclusive};
-    /// let a = Inclusive.at(4).to(Exclusive.at(7)).unwrap();
-    /// assert_eq!(a.dilate(2), Inclusive.at(2).to(Exclusive.at(9)).unwrap());
-    /// assert_eq!(a.dilate(-1), Inclusive.at(5).to(Exclusive.at(6)).unwrap());
+    /// let a = Inclusive.at(4).to(Exclusive.at(7));
+    /// assert_eq!(a.dilate(2), Inclusive.at(2).to(Exclusive.at(9)));
+    /// assert_eq!(a.dilate(-1), Inclusive.at(5).to(Exclusive.at(6)));
     /// assert!(std::panic::catch_unwind(|| a.dilate(-2)).is_err());
     /// ```
     pub fn dilate(self, delta: T) -> Self
@@ -220,30 +236,10 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     }
 
     /// ```
-    /// use kd_interval::{Inclusive, Exclusive};
-    /// let a = Inclusive.at(0.0).float_to(Exclusive.at(10.0)).unwrap();
-    /// assert_eq!(a.try_dilate(2.0).unwrap(), Inclusive.at(-2.0).float_to(Exclusive.at(12.0)).unwrap());
-    /// assert_eq!(a.try_dilate(-1.5).unwrap(), Inclusive.at(1.5).float_to(Exclusive.at(8.5)).unwrap());
-    /// assert!(a.try_dilate(-6.0).is_err());
-    /// ```
-    pub fn try_dilate<X>(self, delta: X) -> Result<Self, crate::Error>
-    where
-        T: Scalar<X>,
-        crate::Error: From<T::Error>,
-        X: Clone + std::ops::Add<Output = X> + std::ops::Sub<Output = X>,
-    {
-        Self::new_(
-            self.left.try_dilate(delta.clone())?,
-            self.right.try_dilate(delta)?,
-        )
-        .ok_or(crate::IntervalIsEmpty.into())
-    }
-
-    /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};
-    /// let a = Inclusive.at(0).to(Exclusive.at(3)).unwrap();
-    /// let b = Inclusive.at(0).to(Exclusive.at(4)).unwrap();
-    /// let c = Inclusive.at(1).to(Exclusive.at(4)).unwrap();
+    /// let a = Inclusive.at(0).to(Exclusive.at(3));
+    /// let b = Inclusive.at(0).to(Exclusive.at(4));
+    /// let c = Inclusive.at(1).to(Exclusive.at(4));
     /// assert!(a.includes(&a));
     /// assert!(!a.includes(&b) && b.includes(&a));
     /// assert!(!a.includes(&c) && !c.includes(&a));
@@ -254,84 +250,107 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
 
     /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};
-    /// let a = Inclusive.at(0).to(Exclusive.at(3)).unwrap();
-    /// let b = Inclusive.at(1).to(Exclusive.at(4)).unwrap();
-    /// let c = Inclusive.at(3).to(Exclusive.at(5)).unwrap();
+    /// let a = Inclusive.at(0).to(Exclusive.at(3));
+    /// let b = Inclusive.at(1).to(Exclusive.at(4));
+    /// let c = Inclusive.at(3).to(Exclusive.at(5));
     /// assert!(a.overlaps(&a));
     /// assert!(a.overlaps(&b) && b.overlaps(&a));
     /// assert!(!a.overlaps(&c) && !c.overlaps(&a));
     /// ```
     pub fn overlaps(&self, other: &Self) -> bool {
-        let left = std::cmp::max(&self.left, &other.left);
-        let right = std::cmp::min(&self.right, &other.right);
+        let left = crate::half::partial_max(&self.left, &other.left);
+        let right = crate::half::partial_min(&self.right, &other.right);
         is_valid_interval(left, right)
     }
 
     /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};
-    /// let a = Inclusive.at(0).to(Exclusive.at(3)).unwrap();
-    /// let b = Inclusive.at(1).to(Exclusive.at(4)).unwrap();
-    /// let c = Inclusive.at(3).to(Exclusive.at(5)).unwrap();
-    /// assert_eq!(a.intersection(a), Some(a));
-    /// assert_eq!(a.intersection(b), Inclusive.at(1).to(Exclusive.at(3)));
-    /// assert_eq!(a.intersection(c), None);
+    /// let a = Inclusive.at(0).to(Exclusive.at(3));
+    /// let b = Inclusive.at(1).to(Exclusive.at(4));
+    /// let c = Inclusive.at(3).to(Exclusive.at(5));
+    /// assert_eq!(a.intersection(&a), Some(a));
+    /// assert_eq!(a.intersection(&b), Some(Inclusive.at(1).to(Exclusive.at(3))));
+    /// assert_eq!(a.intersection(&c), None);
     /// ```
-    pub fn intersection(self, other: Self) -> Option<Self> {
+    pub fn intersection(&self, other: &Self) -> Option<Self>
+    where
+        T: Clone,
+    {
         Self::new_(
-            self.left.intersection(other.left),
-            self.right.intersection(other.right),
+            self.left.intersection(&other.left).clone(),
+            self.right.intersection(&other.right).clone(),
         )
     }
 
     /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};
-    /// let a = Inclusive.at(0).to(Exclusive.at(3)).unwrap();
-    /// let b = Inclusive.at(5).to(Exclusive.at(8)).unwrap();
-    /// assert_eq!(a.hull(b), Inclusive.at(0).to(Exclusive.at(8)).unwrap());
+    /// let a = Inclusive.at(0).to(Exclusive.at(3));
+    /// let b = Inclusive.at(5).to(Exclusive.at(8));
+    /// assert_eq!(a.span(&b), Inclusive.at(0).to(Exclusive.at(8)));
     /// ```
-    pub fn hull(self, other: Self) -> Self {
+    pub fn span(&self, other: &Self) -> Self
+    where
+        T: Clone,
+    {
         Self {
-            left: self.left.union(other.left),
-            right: self.right.union(other.right),
+            left: self.left.union(&other.left).clone(),
+            right: self.right.union(&other.right).clone(),
         }
     }
 
     /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};
-    /// let a = Inclusive.at(0).to(Exclusive.at(3)).unwrap();
-    /// let b = Inclusive.at(5).to(Exclusive.at(8)).unwrap();
-    /// assert_eq!(a.gap(b), Inclusive.at(3).to(Exclusive.at(5)));
+    /// let a = Inclusive.at(0).to(Exclusive.at(3));
+    /// assert_eq!(a.hull(-2), Inclusive.at(-2).to(Exclusive.at(3)));
+    /// assert_eq!(a.hull(5), Inclusive.at(0).to(Exclusive.at(5)));
     /// ```
-    pub fn gap(self, other: Self) -> Option<Interval<T, R::Flip, L::Flip>>
+    pub fn hull(self, t: T) -> Self
     where
-        L::Flip: BoundaryOf<Right>,
-        R::Flip: BoundaryOf<Left>,
+        T: Clone,
     {
-        Interval::new_(self.right.flip(), other.left.flip())
-            .or(Interval::new_(other.right.flip(), self.left.flip()))
+        Self {
+            left: self.left.hull(t.clone()),
+            right: self.right.hull(t),
+        }
     }
 
     /// ```
     /// use kd_interval::{Interval, Inclusive, Exclusive};
-    /// let a = Inclusive.at(0).to(Exclusive.at(3)).unwrap();
-    /// let b = Inclusive.at(5).to(Exclusive.at(8)).unwrap();
-    /// let union = a.union(b);
-    /// assert_eq!(union.hull, a.hull(b));
-    /// assert_eq!(union.gap, a.gap(b));
+    /// let a = Inclusive.at(0).to(Exclusive.at(3));
+    /// let b = Inclusive.at(5).to(Exclusive.at(8));
+    /// assert_eq!(a.gap(&b).unwrap(), Inclusive.at(3).to(Exclusive.at(5)));
+    /// ```
+    pub fn gap(&self, other: &Self) -> Option<Interval<T, R::Flip, L::Flip>>
+    where
+        T: Clone,
+        L::Flip: BoundaryOf<Right>,
+        R::Flip: BoundaryOf<Left>,
+    {
+        Interval::new_(self.right.clone().flip(), other.left.clone().flip())
+            .or_else(|| Interval::new_(other.right.clone().flip(), self.left.clone().flip()))
+    }
+
+    /// ```
+    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(0).to(Exclusive.at(3));
+    /// let b = Inclusive.at(5).to(Exclusive.at(8));
+    /// let union = a.union(&b);
+    /// assert_eq!(union.span, a.span(&b));
+    /// assert_eq!(union.gap, a.gap(&b));
     /// let union_ints: Vec<Interval<_, _, _>> = union.into_iter().collect();
     /// assert_eq!(union_ints.len(), 2);
     /// assert_eq!(union_ints[0], a);
     /// assert_eq!(union_ints[1], b);
     /// ```
-    pub fn union(self, other: Self) -> IntervalUnion<T, L, R>
+    pub fn union(&self, other: &Self) -> IntervalUnion<T, L, R>
     where
         T: Clone,
         L::Flip: BoundaryOf<Right>,
         R::Flip: BoundaryOf<Left>,
     {
         IntervalUnion {
-            gap: self.clone().gap(other.clone()),
-            hull: self.hull(other),
+            gap: self.gap(other),
+            span: self.span(other),
         }
     }
 
@@ -350,143 +369,133 @@ impl<T: Ord, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     }
 
     /// ```
-    /// use kd_interval::Interval;
-    /// let span = Interval::enclosure_of_items(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
-    /// assert_eq!(span.min(), 2);
-    /// assert_eq!(span.max(), 9);
+    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(0).to(Exclusive.at(3));  // [0, 3)
+    /// let b = Inclusive.at(1).to(Exclusive.at(5));  // [1, 5)
+    /// let c = Inclusive.at(8).to(Exclusive.at(10)); // [8, 10)
+    /// let enc = Interval::span_many(vec![a, b, c]).unwrap(); // [0, 10)
+    /// assert_eq!(enc.left().limit, 0);
+    /// assert_eq!(enc.right().limit, 10);
     /// ```
-    pub fn enclosure_of_items<A: Into<Self>>(items: impl IntoIterator<Item = A>) -> Option<Self> {
+    pub fn span_many<A: std::borrow::Borrow<Self>>(
+        items: impl IntoIterator<Item = A>,
+    ) -> Option<Self>
+    where
+        T: Clone,
+    {
         let mut items = items.into_iter();
-        let first = items.next()?.into();
-        Some(items.fold(first, |acc, item| acc.hull(item.into())))
+        let first = items.next()?.borrow().clone();
+        Some(items.fold(first, |acc, item| acc.span(item.borrow())))
+    }
+
+    /// ```
+    /// use kd_interval::Interval;
+    /// let hull = Interval::<_>::hull_many(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
+    /// assert_eq!(hull.min(), 2);
+    /// assert_eq!(hull.max(), 9);
+    ///
+    /// let hull = Interval::<_>::hull_many(vec![3.1, 9.2, 2.3, 5.4]).unwrap(); // [2.3, 9.2]
+    /// assert_eq!(hull.inf(), 2.3);
+    /// assert_eq!(hull.sup(), 9.2);
+    /// ```
+    pub fn hull_many(items: impl IntoIterator<Item = T>) -> Option<Self>
+    where
+        T: Clone + Into<Bound<T, L>> + Into<Bound<T, R>>,
+    {
+        let mut items = items.into_iter();
+        let mut left = items.next()?;
+        let mut right = left.clone();
+        for x in items {
+            if x < left {
+                left = x;
+            } else if right < x {
+                right = x;
+            }
+        }
+        Self::try_new(left.into(), right.into())
     }
 }
 
-impl<T: FloatCore, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<NotNan<T>, L, R> {
+impl<T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// ```
     /// use kd_interval::{Interval, Exclusive, Inclusive};
-    /// let a = Interval::float_new(Inclusive.at(-1.0), Exclusive.at(1.0)).unwrap().unwrap();
-    /// assert!(a.contains(&-1.0));
-    /// assert!(!a.contains(&1.0));
-    /// ```
-    pub fn float_new(left: Bound<T, L>, right: Bound<T, R>) -> Result<Option<Self>, FloatIsNan> {
-        Self::try_new(left, right)
-    }
-
-    /// ```
-    /// use kd_interval::{Interval, Exclusive, Inclusive};
-    /// let a: Interval<_, Inclusive, Exclusive> = Interval::float_between(-1.0, 1.0).unwrap().unwrap();
-    /// assert!(a.contains(&-1.0));
-    /// assert!(!a.contains(&1.0));
-    /// ```
-    pub fn float_between(left: T, right: T) -> Result<Option<Self>, FloatIsNan>
-    where
-        T: Into<Bound<T, L>> + Into<Bound<T, R>>,
-    {
-        Self::float_new(left.into(), right.into())
-    }
-
-    /// ```
-    /// use kd_interval::{Interval, Exclusive, Inclusive};
-    /// let a = Interval::float_new(Inclusive.at(-1.0), Inclusive.at(1.0)).unwrap().unwrap();
+    /// let a = Interval::new(Inclusive.at(-1.0), Inclusive.at(1.0));
     /// assert_eq!(a.inf(), -1.0);
     /// assert!(a.contains(&-1.0));
     ///
-    /// let b = Interval::float_new(Exclusive.at(-1.0), Inclusive.at(1.0)).unwrap().unwrap();
+    /// let b = Interval::new(Exclusive.at(-1.0), Inclusive.at(1.0));
     /// assert_eq!(b.inf(), -1.0);
     /// assert!(!b.contains(&-1.0));
     /// ```
-    pub fn inf(&self) -> NotNan<T> {
+    pub fn inf(&self) -> T {
         self.left.inf()
     }
 
     /// ```
     /// use kd_interval::{Interval, Exclusive, Inclusive};
-    /// let a = Interval::float_new(Inclusive.at(-1.0), Inclusive.at(1.0)).unwrap().unwrap();
+    /// let a = Interval::new(Inclusive.at(-1.0), Inclusive.at(1.0));
     /// assert_eq!(a.sup(), 1.0);
     /// assert!(a.contains(&1.0));
     ///
-    /// let b = Interval::float_new(Inclusive.at(-1.0), Exclusive.at(1.0)).unwrap().unwrap();
+    /// let b = Interval::new(Inclusive.at(-1.0), Exclusive.at(1.0));
     /// assert_eq!(b.sup(), 1.0);
     /// assert!(!b.contains(&1.0));
     /// ```
-    pub fn sup(&self) -> NotNan<T> {
+    pub fn sup(&self) -> T {
         self.right.sup()
     }
 
     /// ```
     /// use kd_interval::{Interval, Inclusive};
-    /// let a = Inclusive.at(2.1).float_to(Inclusive.at(5.3)).unwrap();
+    /// let a = Inclusive.at(2.1).to(Inclusive.at(5.3));
     /// assert_eq!(a.measure(), 5.3 - 2.1);
     ///
-    /// let a = Inclusive.at(std::f64::INFINITY).float_to(Inclusive.at(std::f64::INFINITY)).unwrap();
+    /// let a = Inclusive.at(std::f64::INFINITY).to(Inclusive.at(std::f64::INFINITY));
     /// assert!(a.measure().is_nan());
     /// ```
     pub fn measure(&self) -> T {
-        *self.right.limit - *self.left.limit
+        self.right.limit - self.left.limit
     }
 
     /// ```
     /// use kd_interval::{Interval, Inclusive};
-    /// let a = Inclusive.at(2.1).float_to(Inclusive.at(5.3)).unwrap();
+    /// let a = Inclusive.at(2.1).to(Inclusive.at(5.3));
     /// assert_eq!(a.center(), (2.1 + 5.3) / 2.0);
     ///
-    /// let a = Inclusive.at(std::f64::NEG_INFINITY).float_to(Inclusive.at(std::f64::INFINITY)).unwrap();
+    /// let a = Inclusive.at(std::f64::NEG_INFINITY).to(Inclusive.at(std::f64::INFINITY));
     /// assert!(a.center().is_nan());
     /// ```
     pub fn center(&self) -> T {
-        (*self.left.limit + *self.right.limit) / (T::one() + T::one())
+        (self.left.limit + self.right.limit) / (T::one() + T::one())
     }
 
-    pub fn closure(self) -> Interval<NotNan<T>, Inclusive> {
+    pub fn closure(self) -> Interval<T, Inclusive> {
         Interval {
             left: self.left.closure(),
             right: self.right.closure(),
         }
     }
-    pub fn interior(self) -> Option<Interval<NotNan<T>, Exclusive>> {
+    pub fn interior(self) -> Option<Interval<T, Exclusive>> {
         Interval::<_, Exclusive>::new_(self.left.interior(), self.right.interior())
     }
 
     /// IoU - Intersection over Union.
     /// ```
     /// use kd_interval::{Interval, Inclusive};
-    /// let a = Inclusive.at(0.0).float_to(Inclusive.at(1.0)).unwrap();
-    /// let b = Inclusive.at(0.0).float_to(Inclusive.at(2.0)).unwrap();
-    /// let c = Inclusive.at(1.0).float_to(Inclusive.at(2.0)).unwrap();
-    /// assert_eq!(a.iou(a), 1.0);
-    /// assert_eq!(a.iou(b), 0.5);
-    /// assert_eq!(a.iou(c), 0.0);
+    /// let a = Inclusive.at(0.0).to(Inclusive.at(1.0));
+    /// let b = Inclusive.at(0.0).to(Inclusive.at(2.0));
+    /// let c = Inclusive.at(1.0).to(Inclusive.at(2.0));
+    /// assert_eq!(a.iou(&a), 1.0);
+    /// assert_eq!(a.iou(&b), 0.5);
+    /// assert_eq!(a.iou(&c), 0.0);
     /// ```
-    pub fn iou(self, other: Self) -> T {
+    pub fn iou(&self, other: &Self) -> T {
         self.intersection(other)
             .map(|intersection| {
-                let union = self.hull(other);
+                let union = self.span(other);
                 intersection.measure() / union.measure()
             })
             .unwrap_or(T::zero())
-    }
-}
-
-impl<T: FloatCore> Interval<NotNan<T>, Inclusive, Inclusive> {
-    /// ```
-    /// use kd_interval::IntervalF;
-    /// let span = IntervalF::enclosure_of_floats(vec![3.1, 9.2, 2.3, 5.4]).unwrap().unwrap(); // [2.3, 9.2]
-    /// assert_eq!(span.inf(), 2.3);
-    /// assert_eq!(span.sup(), 9.2);
-    /// assert!(IntervalF::<f64, _, _>::enclosure_of_floats(vec![]).unwrap().is_none());
-    /// ```
-    pub fn enclosure_of_floats(
-        floats: impl IntoIterator<Item = T>,
-    ) -> Result<Option<Self>, FloatIsNan> {
-        let mut inf = NotNan::new(T::infinity()).unwrap();
-        let mut sup = NotNan::new(T::neg_infinity()).unwrap();
-        for x in floats {
-            let x = NotNan::new(x)?;
-            inf = inf.min(x);
-            sup = sup.max(x);
-        }
-        Ok(Self::between(inf, sup))
     }
 }
 
@@ -522,14 +531,13 @@ where
 /// use kd_interval::{Interval, Exclusive, Inclusive, BoundType};
 ///
 /// // Iterate Interval<i32, Exclusive, Inclusive>
-/// let items: Vec<_> = Exclusive.at(0).to(Inclusive.at(10)).unwrap().into_iter().collect();
+/// let items: Vec<_> = Exclusive.at(0).to(Inclusive.at(10)).into_iter().collect();
 /// assert_eq!(items.len(), 10);
 /// assert_eq!(items[0], 1);
 /// assert_eq!(items.last().unwrap(), &10);
 ///
 /// // Iterate Interval<i32, BoundType, BoundType>
 /// let items: Vec<_> = (BoundType::Exclusive.at(0).to(BoundType::Inclusive.at(10)))
-///     .unwrap()
 ///     .into_iter()
 ///     .collect();
 /// assert_eq!(items.len(), 10);
@@ -547,3 +555,9 @@ where
         self.minimum()..=self.maximum()
     }
 }
+
+// impl<T, L, R> std::iter::Sum for Interval<T, L, R> {
+//     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+//         Self::hull_many(iter).unwrap()
+//     }
+// }

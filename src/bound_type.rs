@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::traits::{Boundary, BoundaryOf, Flip, IntoGeneral, Scalar};
+use crate::traits::{Boundary, BoundaryOf, Flip, IntoGeneral};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Inclusive;
@@ -117,32 +117,32 @@ impl Flip for Right {
 }
 
 impl Boundary for Inclusive {
-    fn less<S: Scalar<T>, T>(&self, this: &S, t: &T) -> bool {
-        this.scalar_le(t)
+    fn less<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
+        this <= t
     }
-    fn greater<S: Scalar<T>, T>(&self, this: &S, t: &T) -> bool {
-        this.scalar_ge(t)
+    fn greater<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
+        this >= t
     }
 }
 impl Boundary for Exclusive {
-    fn less<S: Scalar<T>, T>(&self, this: &S, t: &T) -> bool {
-        this.scalar_lt(t)
+    fn less<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
+        this < t
     }
-    fn greater<S: Scalar<T>, T>(&self, this: &S, t: &T) -> bool {
-        this.scalar_gt(t)
+    fn greater<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
+        this > t
     }
 }
 impl Boundary for BoundType {
-    fn less<S: Scalar<T>, T>(&self, this: &S, t: &T) -> bool {
+    fn less<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
         match self {
-            BoundType::Inclusive => this.scalar_le(t),
-            BoundType::Exclusive => this.scalar_lt(t),
+            BoundType::Inclusive => this <= t,
+            BoundType::Exclusive => this < t,
         }
     }
-    fn greater<S: Scalar<T>, T>(&self, this: &S, t: &T) -> bool {
+    fn greater<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
         match self {
-            BoundType::Inclusive => this.scalar_ge(t),
-            BoundType::Exclusive => this.scalar_gt(t),
+            BoundType::Inclusive => this >= t,
+            BoundType::Exclusive => this > t,
         }
     }
 }

@@ -14,5 +14,4 @@ license = "MIT"
 
 [dependencies]
 num = "0.4.1"
-ordered-float = "4.2.0"
 thiserror = "1.0.53"
