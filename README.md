@@ -1,13 +1,36 @@
-# Mathematical interval library for Rust
+# Intervals on ℝⁿ
 
 Mathematical intervals, i.g., [a, b], (a, b), [a, b), and (a, b] on ℝ (real number line).
 Also supports multi-dimensional axis-aligned boxes.
 
 NOTE: Not yet stable.
 
-## Interval
+## Intervals on ℝ
 Intervals like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `PartialOrd` type.
 
+### Properties
+```txt
+lower_bound     left              . center          right    upper_bound
+...------------>|<------- self -------------------->|<------------ ...
+                inf                                 sup
+                [<------------ closure ------------>]
+                 (<----------- interior ---------->)
+```
+
+### Set operations
+```txt
+|<------------- a ----------------->|   . p           |<-------- c -------->|
+       |<--------------- b ------------------->|
+       |<--- a.intersection(&b) --->|
+                                    |<-- a.gap(&c) -->|
+|<------------- a.hull(p) ------------->|
+|<---------------------------------- a.span(&c) --------------------------->|
+|<--------------------------------->|        +        |<------------------->| a.union(&c)
+|<---->| a.difference(&b)
+                                               |<- δ -+---- c.dilate(δ) ----+- δ ->|
+```
+
+### Examples
 ```rust
 use inter_val::{Inclusive, Exclusive, Interval};
 
@@ -44,7 +67,7 @@ let a = Interval::<_>::hull_many(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
 assert_eq!(a, Inclusive.between(2, 9));
 ```
 
-## Multi-dimensional axis-aligned box
+## Axis-aligned box on ℝⁿ
 Boxes represented by Cartesian product of intervals.
 ```rust
 use inter_val::{Box2, Inclusive};
