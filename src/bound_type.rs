@@ -120,16 +120,10 @@ impl Boundary for Inclusive {
     fn less<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
         this <= t
     }
-    fn greater<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
-        this >= t
-    }
 }
 impl Boundary for Exclusive {
     fn less<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
         this < t
-    }
-    fn greater<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
-        this > t
     }
 }
 impl Boundary for BoundType {
@@ -137,12 +131,6 @@ impl Boundary for BoundType {
         match self {
             BoundType::Inclusive => this <= t,
             BoundType::Exclusive => this < t,
-        }
-    }
-    fn greater<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
-        match self {
-            BoundType::Inclusive => this >= t,
-            BoundType::Exclusive => this > t,
         }
     }
 }

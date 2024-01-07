@@ -147,7 +147,7 @@ impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
         other.limit <= self.limit
     }
     pub fn contains(&self, t: &T) -> bool {
-        self.bound_type.greater(&self.limit, t)
+        self.bound_type.less(t, &self.limit)
     }
     pub fn intersection<'a>(&'a self, other: &'a Self) -> &'a Self {
         self.min(other)

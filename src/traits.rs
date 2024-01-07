@@ -18,7 +18,6 @@ pub(crate) trait IntoGeneral {
 
 pub trait Boundary: Flip + Eq + Copy {
     fn less<T: PartialOrd>(&self, this: &T, t: &T) -> bool;
-    fn greater<T: PartialOrd>(&self, this: &T, t: &T) -> bool;
 }
 
 pub trait BoundaryOf<LR>: Boundary {
