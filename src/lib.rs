@@ -30,7 +30,7 @@ mod converters;
 mod half;
 mod interval;
 mod interval_box;
-mod kd;
+mod ndim;
 mod nullable;
 mod std_range;
 mod tests;
@@ -44,7 +44,7 @@ pub use bound_type::{BoundType, Exclusive, Inclusive};
 pub use half::{HalfBounded, LeftBounded, RightBounded};
 pub use interval::Interval;
 pub use interval_box::BoxN;
-pub use kd::Kd;
+pub use ndim::NDim;
 pub use nullable::Nullable;
 
 impl Inclusive {

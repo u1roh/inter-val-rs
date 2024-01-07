@@ -1,14 +1,14 @@
 use crate::bound_type::{Left, Right};
-use crate::kd::Kd;
+use crate::ndim::NDim;
 use crate::traits::BoundaryOf;
 use crate::{Bound, Exclusive, Inclusive, Interval, LeftBounded, RightBounded};
 
 /// n-dimensional axis-aligned box as a cartesian product set of intervals, i.g., *[a, b)^n*.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct BoxN<const N: usize, T, L = Inclusive, R = L>(Kd<N, Interval<T, L, R>>);
+pub struct BoxN<const N: usize, T, L = Inclusive, R = L>(NDim<N, Interval<T, L, R>>);
 
 impl<const N: usize, T, L, R> std::ops::Deref for BoxN<N, T, L, R> {
-    type Target = Kd<N, Interval<T, L, R>>;
+    type Target = NDim<N, Interval<T, L, R>>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -101,19 +101,19 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
         std::array::from_fn(|i| Interval::between(a[i].clone(), b[i].clone())).into()
     }
 
-    pub fn left(&self) -> Kd<N, &LeftBounded<T, L>> {
+    pub fn left(&self) -> NDim<N, &LeftBounded<T, L>> {
         std::array::from_fn(|i| self[i].left()).into()
     }
 
-    pub fn right(&self) -> Kd<N, &RightBounded<T, R>> {
+    pub fn right(&self) -> NDim<N, &RightBounded<T, R>> {
         std::array::from_fn(|i| self[i].right()).into()
     }
 
-    pub fn inf(&self) -> Kd<N, T> {
+    pub fn inf(&self) -> NDim<N, T> {
         std::array::from_fn(|i| self[i].inf().clone()).into()
     }
 
-    pub fn sup(&self) -> Kd<N, T> {
+    pub fn sup(&self) -> NDim<N, T> {
         std::array::from_fn(|i| self[i].sup().clone()).into()
     }
 
@@ -172,7 +172,7 @@ where
     L: BoundaryOf<Left>,
     R: BoundaryOf<Right>,
 {
-    pub fn size(&self) -> Kd<N, T> {
+    pub fn size(&self) -> NDim<N, T> {
         std::array::from_fn(|i| self[i].measure()).into()
     }
     pub fn measure(&self) -> T {
@@ -183,7 +183,7 @@ where
 }
 
 impl<const N: usize, T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> BoxN<N, T, L, R> {
-    pub fn center(&self) -> Kd<N, T> {
+    pub fn center(&self) -> NDim<N, T> {
         std::array::from_fn(|i| self[i].center()).into()
     }
 }
