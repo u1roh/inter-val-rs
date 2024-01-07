@@ -3,11 +3,11 @@ name = "inter-val"
 version = "0.1.0"
 edition = "2021"
 authors = ["Yuichiro Terada <terada.yuichiro@gmail.com>"]
-repository = "https://github.com/u1roh/intervals-rs"
+repository = "https://github.com/u1roh/inter-val-rs"
 documentation = "https://docs.rs/inter-val"
-keywords = ["interval", "math", "range", "box", "aabb", "bounds"]
+keywords = ["interval", "math", "range", "box", "aabb", "bounds", "axis-aligned", "multi-dimensional"]
 readme = "README.md"
-description = "Mathematical intervals, i.g., [a, b], (a, b), [a, b), and (a, b]"
+description = "Mathematical intervals, i.g., [a, b], (a, b), [a, b), and (a, b] on ℝ, and multi-dimensional axis-aligned boxes represented as Cartesian product of intervals."
 license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
