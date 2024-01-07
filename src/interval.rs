@@ -38,7 +38,7 @@ where
 
 /// Interval like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `PartialOrd` type.
 ///
-/// * `T`: Scalar type. `T` should implements `PartialOrd`. `NaN` safety is not guaranteed when `T` is floating point type.
+/// * `T`: Numeric type bounding real number line. `T` should implements `PartialOrd`. `NaN` safety is not guaranteed when `T` is floating point type.
 /// * `L`: Left boundary type. Specify one of [`Inclusive`], [`Exclusive`], or [`BoundType`](crate::BoundType).
 /// * `R`: Right boundary type. Specify one of [`Inclusive`] [`Exclusive`], or [`BoundType`](crate::BoundType).
 /// * `Interval<T>` (= `Interval<T, Inclusive, Inclusive>`) represents a closed interval, i.e., *[a, b]*.
@@ -59,6 +59,15 @@ where
 ///
 /// // Size is larger when bound type is not statically determined.
 /// assert!(std::mem::size_of::<Interval<i32, BoundType>>() > (std::mem::size_of::<i32>() + std::mem::size_of::<BoundType>()) * 2);
+/// ```
+///
+/// # Set operations
+/// ```txt
+/// |<------------- a ----------------->|<-- a.gap(&c) -->|<-------- c -------->|
+///        |<--------------- b ------------------->|
+///        |<--- a.intersection(&b) --->|
+/// |<---------------------------------- a.span(&c) --------------------------->|
+/// |<--------------------------------->|.. a.union(&c) ..|<------------------->|
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Interval<T, L = Inclusive, R = L> {
@@ -478,6 +487,39 @@ impl<T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
                 intersection.measure() / union.measure()
             })
             .unwrap_or(T::zero())
+    }
+}
+
+impl<T, L, R> Interval<T, L, R> {
+    /// Cast by `From<T>`.
+    /// ```
+    /// use kd_interval::{Interval, Exclusive};
+    /// let src: Interval<i32, Exclusive> = Interval::between(0, 1);  // open interval (0, 1)
+    /// let dst = src.cast::<f64>();
+    /// assert!(dst.contains(&0.5));
+    /// ```
+    pub fn cast<U: From<T>>(self) -> Interval<U, L, R> {
+        Interval {
+            left: self.left.cast(),
+            right: self.right.cast(),
+        }
+    }
+}
+
+impl<T: num::NumCast, L, R> Interval<T, L, R> {
+    /// Cast by `num::NumCast`.
+    /// ```
+    /// use kd_interval::{Interval, Exclusive};
+    /// let src: Interval<f64> = Interval::between(1.2, 7.8);  // closed interval [1.2, 7.8]
+    /// let dst = src.try_cast::<i32>().unwrap();
+    /// assert_eq!(dst.inf(), &1);
+    /// assert_eq!(dst.sup(), &7);
+    /// ```
+    pub fn try_cast<U: num::NumCast>(self) -> Option<Interval<U, L, R>> {
+        Some(Interval {
+            left: self.left.try_cast()?,
+            right: self.right.try_cast()?,
+        })
     }
 }
 

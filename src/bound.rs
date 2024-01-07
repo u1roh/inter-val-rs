@@ -29,6 +29,23 @@ impl<T, B: Flip> Flip for Bound<T, B> {
     }
 }
 
+impl<T, B> Bound<T, B> {
+    pub fn cast<U: From<T>>(self) -> Bound<U, B> {
+        Bound {
+            limit: self.limit.into(),
+            bound_type: self.bound_type,
+        }
+    }
+}
+impl<T: num::NumCast, B> Bound<T, B> {
+    pub fn try_cast<U: num::NumCast>(self) -> Option<Bound<U, B>> {
+        Some(Bound {
+            limit: num::cast(self.limit)?,
+            bound_type: self.bound_type,
+        })
+    }
+}
+
 macro_rules! impl_ceil_floor_for_integer {
     ($T:ty) => {
         impl Ceil<$T> for Bound<$T, Inclusive> {

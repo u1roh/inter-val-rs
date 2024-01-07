@@ -64,6 +64,17 @@ impl<T, B: Flip, LR: Flip> Flip for HalfBounded<T, B, LR> {
     }
 }
 
+impl<T, B, LR> HalfBounded<T, B, LR> {
+    pub fn cast<U: From<T>>(self) -> HalfBounded<U, B, LR> {
+        self.0.cast().into()
+    }
+}
+impl<T: num::NumCast, B, LR> HalfBounded<T, B, LR> {
+    pub fn try_cast<U: num::NumCast>(self) -> Option<HalfBounded<U, B, LR>> {
+        self.0.try_cast().map(Into::into)
+    }
+}
+
 pub(crate) fn partial_min<T: PartialOrd>(a: T, b: T) -> T {
     if a < b {
         a
