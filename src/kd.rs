@@ -1,6 +1,12 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Kd<const N: usize, T>(pub [T; N]);
 
+impl<const N: usize, T: PartialEq> PartialEq<[T; N]> for Kd<N, T> {
+    fn eq(&self, other: &[T; N]) -> bool {
+        self.0 == *other
+    }
+}
+
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Xy<T> {

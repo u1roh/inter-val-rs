@@ -70,6 +70,14 @@ impl<T, L, R> BoxN<4, T, L, R> {
 impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<Right>>
     BoxN<N, T, L, R>
 {
+    /// ```
+    /// use kd_interval::{Box2, Exclusive};
+    /// let a: Box2<i32> = Box2::try_between(&[0, 0], &[10, 20]).unwrap();
+    /// assert_eq!(a.x.inf(), &0);
+    /// assert_eq!(a.y.sup(), &20);
+    ///
+    /// assert!(Box2::<i32, Exclusive>::try_between(&[0, 0], &[0, 1]).is_none());
+    /// ```
     pub fn try_between(a: &[T; N], b: &[T; N]) -> Option<Self>
     where
         T: Into<Bound<T, L>> + Into<Bound<T, R>>,
@@ -81,6 +89,11 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
             .then(|| std::array::from_fn(|i| tmp[i].take().unwrap()).into())
     }
 
+    /// ```
+    /// use kd_interval::Box2;
+    /// let a: Box2<i32> = Box2::between(&[0, 0], &[10, 20]);
+    /// assert_eq!(a.inf(), [0, 0]);
+    /// assert_eq!(a.sup(), [10, 20]);
     pub fn between(a: &[T; N], b: &[T; N]) -> Self
     where
         T: Into<Bound<T, L>> + Into<Bound<T, R>>,
@@ -137,12 +150,12 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
     }
 
     /// ```
-    /// use kd_interval::{Box, Inclusive, Exclusive};
-    /// let a = Box([
-    /// ])
+    /// use kd_interval::Box2;
+    /// let a: Box2<i32> = Box2::between(&[0, 0], &[10, 10]);
+    /// let b = a.hull(&[20, 5]);
+    /// assert_eq!(b, Box2::between(&[0, 0], &[20, 10]));
     /// ```
-    pub fn hull(self, p: impl AsRef<[T; N]>) -> Self {
-        let p = p.as_ref();
+    pub fn hull(self, p: &[T; N]) -> Self {
         std::array::from_fn(|i| self[i].clone().hull(p[i].clone())).into()
     }
 
@@ -153,10 +166,12 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
     }
 }
 
-impl<const N: usize, T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> BoxN<N, T, L, R> {
-    pub fn center(&self) -> Kd<N, T> {
-        std::array::from_fn(|i| self[i].center()).into()
-    }
+impl<const N: usize, T, L, R> BoxN<N, T, L, R>
+where
+    T: PartialOrd + Clone + num::Num,
+    L: BoundaryOf<Left>,
+    R: BoundaryOf<Right>,
+{
     pub fn size(&self) -> Kd<N, T> {
         std::array::from_fn(|i| self[i].measure()).into()
     }
@@ -164,5 +179,11 @@ impl<const N: usize, T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> B
         self.iter()
             .map(|item| item.measure())
             .fold(T::one(), |a, b| a * b)
+    }
+}
+
+impl<const N: usize, T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> BoxN<N, T, L, R> {
+    pub fn center(&self) -> Kd<N, T> {
+        std::array::from_fn(|i| self[i].center()).into()
     }
 }
