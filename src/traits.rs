@@ -3,12 +3,12 @@ pub trait Flip {
     fn flip(self) -> Self::Flip;
 }
 
-pub trait Minimum<T> {
-    fn minimum(&self) -> T;
+pub trait Ceil<T> {
+    fn ceil(&self) -> T;
 }
 
-pub trait Maximum<T> {
-    fn maximum(&self) -> T;
+pub trait Floor<T> {
+    fn floor(&self) -> T;
 }
 
 pub(crate) trait IntoGeneral {

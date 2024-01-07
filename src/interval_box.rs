@@ -1,6 +1,6 @@
 use crate::bound_type::{Left, Right};
 use crate::kd::Kd;
-use crate::traits::{BoundaryOf, Maximum, Minimum};
+use crate::traits::BoundaryOf;
 use crate::{Exclusive, Inclusive, Interval, LeftBounded, RightBounded};
 
 #[derive(Debug, Clone, Copy, Eq)]
@@ -47,20 +47,6 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
 
     pub fn includes(&self, other: &Self) -> bool {
         self.iter().zip(other.iter()).all(|(i, o)| i.includes(o))
-    }
-
-    pub fn min(&self) -> Kd<N, T>
-    where
-        LeftBounded<T, L>: Minimum<T>,
-    {
-        std::array::from_fn(|i| self[i].min()).into()
-    }
-
-    pub fn max(&self) -> Kd<N, T>
-    where
-        RightBounded<T, R>: Maximum<T>,
-    {
-        std::array::from_fn(|i| self[i].max()).into()
     }
 
     pub fn intersection(&self, other: &Self) -> Option<Self> {

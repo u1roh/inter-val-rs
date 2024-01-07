@@ -1,5 +1,5 @@
 use crate::bound_type::{Left, Right};
-use crate::traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum};
+use crate::traits::{BoundaryOf, Ceil, Flip, Floor, IntoGeneral};
 use crate::{Bound, Exclusive, Inclusive, LeftBounded, RightBounded};
 
 /// Return type of `Interval::union()`.
@@ -47,12 +47,17 @@ where
 /// * `Interval<T, Exclusive, Inclusive>` represents a left half-open interval, i.e., *(a, b]*.
 /// * `Interval<T, BoundType>` represents any of the above.
 ///
-/// This type is considered as an interval on ℝ (real number line) even if an integer type is specified for `T`.
+/// This type is considered as an interval on ℝ (real number line), even if an integer type is specified for `T`.
 ///
+/// # Memory cost
 /// ```
 /// use kd_interval::{Interval, Exclusive, Inclusive, BoundType};
+///
+/// // When bound type is statically determined, the size of the interval is just the size of two `T`.
 /// assert_eq!(std::mem::size_of::<Interval<i32, Inclusive>>(), std::mem::size_of::<i32>() * 2);
 /// assert_eq!(std::mem::size_of::<Interval<f64, Exclusive>>(), std::mem::size_of::<f64>() * 2);
+///
+/// // Size is larger when bound type is not statically determined.
 /// assert!(std::mem::size_of::<Interval<i32, BoundType>>() > (std::mem::size_of::<i32>() + std::mem::size_of::<BoundType>()) * 2);
 /// ```
 #[derive(Debug, Clone, Copy)]
@@ -179,66 +184,28 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
         Self::try_between(a, b).unwrap()
     }
 
-    /// Short hand of `.left().limit``
+    /// Shorthand of `.left().limit`
     /// ```
     /// use kd_interval::{Interval, Exclusive, Inclusive};
-    /// let a = Interval::new(Inclusive.at(-1.0), Inclusive.at(1.0));
+    /// let a = Interval::new(Exclusive.at(-1.0), Inclusive.at(1.0));
     /// assert_eq!(a.inf(), &-1.0);
-    /// assert!(a.contains(&-1.0));
-    ///
-    /// let b = Interval::new(Exclusive.at(-1.0), Inclusive.at(1.0));
-    /// assert_eq!(b.inf(), &-1.0);
-    /// assert!(!b.contains(&-1.0));
+    /// assert_eq!(a.inf(), &a.left().limit);
+    /// assert!(!a.contains(&-1.0));
     /// ```
     pub fn inf(&self) -> &T {
         self.left.inf()
     }
 
-    /// Short hand of `.right().limit`
+    /// Shorthand of `.right().limit`
     /// ```
     /// use kd_interval::{Interval, Exclusive, Inclusive};
-    /// let a = Interval::new(Inclusive.at(-1.0), Inclusive.at(1.0));
+    /// let a = Interval::new(Inclusive.at(-1.0), Exclusive.at(1.0));
     /// assert_eq!(a.sup(), &1.0);
-    /// assert!(a.contains(&1.0));
-    ///
-    /// let b = Interval::new(Inclusive.at(-1.0), Exclusive.at(1.0));
-    /// assert_eq!(b.sup(), &1.0);
-    /// assert!(!b.contains(&1.0));
+    /// assert_eq!(a.sup(), &a.right().limit);
+    /// assert!(!a.contains(&1.0));
     /// ```
     pub fn sup(&self) -> &T {
         self.right.sup()
-    }
-
-    /// ```
-    /// use kd_interval::{Interval, Inclusive, Exclusive};
-    /// let a = Inclusive.at(4).to(Inclusive.at(7));
-    /// let b = Exclusive.at(4).to(Inclusive.at(7));
-    /// let c = Inclusive.at(1.23).to(Inclusive.at(4.56));
-    /// assert_eq!(a.min(), 4);
-    /// assert_eq!(b.min(), 5);
-    /// assert_eq!(c.min(), 1.23);
-    /// ```
-    pub fn min(&self) -> T
-    where
-        LeftBounded<T, L>: Minimum<T>,
-    {
-        self.left.minimum()
-    }
-
-    /// ```
-    /// use kd_interval::{Interval, Inclusive, Exclusive};
-    /// let a = Inclusive.at(4).to(Inclusive.at(7));
-    /// let b = Inclusive.at(4).to(Exclusive.at(7));
-    /// let c = Inclusive.at(1.23).to(Inclusive.at(4.56));
-    /// assert_eq!(a.max(), 7);
-    /// assert_eq!(b.max(), 6);
-    /// assert_eq!(c.max(), 4.56);
-    /// ```
-    pub fn max(&self) -> T
-    where
-        RightBounded<T, R>: Maximum<T>,
-    {
-        self.right.maximum()
     }
 
     pub fn closure(self) -> Interval<T, Inclusive> {
@@ -455,8 +422,8 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// ```
     /// use kd_interval::{Interval, Nullable};
     /// let hull = Interval::<_>::hull_many(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
-    /// assert_eq!(hull.min(), 2);
-    /// assert_eq!(hull.max(), 9);
+    /// assert_eq!(hull.inf(), &2);
+    /// assert_eq!(hull.sup(), &9);
     ///
     /// let hull = Interval::<_>::hull_many(vec![3.1, 9.2, 2.3, 5.4]).unwrap(); // [2.3, 9.2]
     /// assert_eq!(hull.inf(), &2.3);
@@ -489,9 +456,6 @@ impl<T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// use kd_interval::{Interval, Inclusive};
     /// let a = Inclusive.at(2.1).to(Inclusive.at(5.3));
     /// assert_eq!(a.center(), (2.1 + 5.3) / 2.0);
-    ///
-    /// let a = Inclusive.at(std::f64::NEG_INFINITY).to(Inclusive.at(std::f64::INFINITY));
-    /// assert!(a.center().is_nan());
     /// ```
     pub fn center(&self) -> T {
         (self.left.limit + self.right.limit) / (T::one() + T::one())
@@ -527,24 +491,6 @@ impl<T, L: IntoGeneral, R: IntoGeneral> IntoGeneral for Interval<T, L, R> {
     }
 }
 
-impl<T, L, R> Minimum<T> for Interval<T, L, R>
-where
-    LeftBounded<T, L>: Minimum<T>,
-{
-    fn minimum(&self) -> T {
-        self.left.minimum()
-    }
-}
-
-impl<T, L, R> Maximum<T> for Interval<T, L, R>
-where
-    RightBounded<T, R>: Maximum<T>,
-{
-    fn maximum(&self) -> T {
-        self.right.maximum()
-    }
-}
-
 /// ```
 /// use kd_interval::{Interval, Exclusive, Inclusive, BoundType};
 ///
@@ -565,11 +511,12 @@ where
 impl<T, L, R> IntoIterator for Interval<T, L, R>
 where
     std::ops::RangeInclusive<T>: Iterator<Item = T>,
-    Self: Minimum<T> + Maximum<T>,
+    Bound<T, L>: Ceil<T>,
+    Bound<T, R>: Floor<T>,
 {
     type Item = T;
     type IntoIter = std::ops::RangeInclusive<T>;
     fn into_iter(self) -> Self::IntoIter {
-        self.minimum()..=self.maximum()
+        self.left().ceil()..=self.right().floor()
     }
 }

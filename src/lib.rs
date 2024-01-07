@@ -8,8 +8,8 @@
 //! let a = Inclusive.at(0).to(Inclusive.at(10));  // [0, 10]
 //! let b = Inclusive.at(5).to(Inclusive.at(15));  // [5, 15]
 //! let c = a.intersection(&b).unwrap(); // [0, 10] ∩ [5, 15] = [5, 10]
-//! assert_eq!(c.min(), 5);
-//! assert_eq!(c.max(), 10);
+//! assert_eq!(c.inf(), &5);
+//! assert_eq!(c.sup(), &10);
 //!
 //! // Half-open interval of f64
 //! let a = Inclusive.at(1.23).to(Exclusive.at(4.56));   // [1.23, 4.56)
@@ -21,8 +21,8 @@
 //!
 //! // Hull
 //! let a = Interval::<_>::hull_many(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
-//! assert_eq!(a.min(), 2);
-//! assert_eq!(a.max(), 9);
+//! assert_eq!(a.inf(), &2);
+//! assert_eq!(a.sup(), &9);
 //! ```
 mod bound;
 mod bound_type;

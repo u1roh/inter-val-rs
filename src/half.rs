@@ -1,7 +1,7 @@
 use crate::{
     bound_type::{Left, Right},
-    traits::{BoundaryOf, Flip, IntoGeneral, Maximum, Minimum},
-    Bound, BoundType, Exclusive, Inclusive,
+    traits::{BoundaryOf, Ceil, Flip, Floor, IntoGeneral},
+    Bound, Exclusive, Inclusive,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -140,6 +140,22 @@ impl<T: PartialOrd, B: BoundaryOf<Left>> LeftBounded<T, B> {
         }
         .into()
     }
+
+    /// ```
+    /// use kd_interval::{LeftBounded, Inclusive, Exclusive};
+    /// let a: LeftBounded<_, _> = Inclusive.at(4).into();
+    /// let b: LeftBounded<_, _> = Exclusive.at(4).into();
+    /// let c: LeftBounded<_, _> = Inclusive.at(1.23).into();
+    /// assert_eq!(a.ceil(), 4);
+    /// assert_eq!(b.ceil(), 5);
+    /// assert_eq!(c.ceil(), 2.0);
+    /// ```
+    pub fn ceil(&self) -> T
+    where
+        Bound<T, B>: Ceil<T>,
+    {
+        self.0.ceil()
+    }
 }
 
 impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
@@ -187,6 +203,22 @@ impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
         .into()
     }
 
+    /// ```
+    /// use kd_interval::{RightBounded, Inclusive, Exclusive};
+    /// let a : RightBounded<_, _> = Inclusive.at(7).into();
+    /// let b : RightBounded<_, _> = Exclusive.at(7).into();
+    /// let c : RightBounded<_, _> = Inclusive.at(4.56).into();
+    /// assert_eq!(a.floor(), 7);
+    /// assert_eq!(b.floor(), 6);
+    /// assert_eq!(c.floor(), 4.0);
+    /// ```
+    pub fn floor(&self) -> T
+    where
+        Bound<T, B>: Floor<T>,
+    {
+        self.0.floor()
+    }
+
     pub fn interior(self) -> RightBounded<T, Exclusive> {
         Bound {
             limit: self.0.limit,
@@ -196,41 +228,11 @@ impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
     }
 }
 
-impl<T: Clone> Minimum<T> for LeftBounded<T, Inclusive> {
-    fn minimum(&self) -> T {
-        self.limit.clone()
-    }
-}
-impl<T: Clone> Maximum<T> for RightBounded<T, Inclusive> {
-    fn maximum(&self) -> T {
-        self.limit.clone()
-    }
-}
-
-impl<T: num::Integer + Clone> Minimum<T> for LeftBounded<T, Exclusive> {
-    fn minimum(&self) -> T {
-        self.limit.clone() + T::one()
-    }
-}
-impl<T: num::Integer + Clone> Maximum<T> for RightBounded<T, Exclusive> {
-    fn maximum(&self) -> T {
-        self.limit.clone() - T::one()
-    }
-}
-
-impl<T: num::Integer + Clone> Minimum<T> for LeftBounded<T, BoundType> {
-    fn minimum(&self) -> T {
-        match self.bound_type {
-            BoundType::Inclusive => self.limit.clone(),
-            BoundType::Exclusive => self.limit.clone() + T::one(),
-        }
-    }
-}
-impl<T: num::Integer + Clone> Maximum<T> for RightBounded<T, BoundType> {
-    fn maximum(&self) -> T {
-        match self.bound_type {
-            BoundType::Inclusive => self.limit.clone(),
-            BoundType::Exclusive => self.limit.clone() - T::one(),
-        }
+impl<T, B> Floor<T> for RightBounded<T, B>
+where
+    Bound<T, B>: Floor<T>,
+{
+    fn floor(&self) -> T {
+        self.0.floor()
     }
 }
