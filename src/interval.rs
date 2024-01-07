@@ -3,6 +3,7 @@ use crate::traits::{BoundaryOf, Ceil, Flip, Floor, IntoGeneral};
 use crate::{Bound, Exclusive, Inclusive, LeftBounded, RightBounded};
 
 /// Return type of `Interval::union()`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct IntervalUnion<T, L: Flip, R: Flip> {
     pub span: Interval<T, L, R>,
     pub gap: Option<Interval<T, R::Flip, L::Flip>>,
@@ -24,6 +25,21 @@ impl<T, L: Flip, R: Flip> IntoIterator for IntervalUnion<T, L, R> {
         } else {
             vec![self.span].into_iter()
         }
+    }
+}
+
+/// Return type of `Interval::difference()`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct IntervalDifference<T, L: Flip, R: Flip> {
+    pub lower: Option<Interval<T, L, L::Flip>>,
+    pub upper: Option<Interval<T, R::Flip, R>>,
+}
+impl<T, L: Flip<Flip = R>, R: Flip<Flip = L>> IntoIterator for IntervalDifference<T, L, R> {
+    type Item = Interval<T, L, R>;
+    type IntoIter =
+        std::iter::Chain<std::option::IntoIter<Self::Item>, std::option::IntoIter<Self::Item>>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.lower.into_iter().chain(self.upper)
     }
 }
 
@@ -52,13 +68,14 @@ where
 /// # Memory cost
 /// ```
 /// use kd_interval::{Interval, Exclusive, Inclusive, BoundType};
+/// use std::mem::size_of;
 ///
 /// // When bound type is statically determined, the size of the interval is just the size of two `T`.
-/// assert_eq!(std::mem::size_of::<Interval<i32, Inclusive>>(), std::mem::size_of::<i32>() * 2);
-/// assert_eq!(std::mem::size_of::<Interval<f64, Exclusive>>(), std::mem::size_of::<f64>() * 2);
+/// assert_eq!(size_of::<Interval<i32, Inclusive>>(), size_of::<i32>() * 2);
+/// assert_eq!(size_of::<Interval<f64, Exclusive>>(), size_of::<f64>() * 2);
 ///
 /// // Size is larger when bound type is not statically determined.
-/// assert!(std::mem::size_of::<Interval<i32, BoundType>>() > (std::mem::size_of::<i32>() + std::mem::size_of::<BoundType>()) * 2);
+/// assert!(size_of::<Interval<i32, BoundType>>() >= (size_of::<i32>() + size_of::<BoundType>()) * 2);
 /// ```
 ///
 /// # Properties
@@ -72,23 +89,20 @@ where
 ///
 /// # Set operations
 /// ```txt
-/// |<------------- a ----------------->|<-- a.gap(&c) -->|<-------- c -------->|
+/// |<------------- a ----------------->|   . p           |<-------- c -------->|
 ///        |<--------------- b ------------------->|
 ///        |<--- a.intersection(&b) --->|
+///                                     |<-- a.gap(&c) -->|
+/// |<------------- a.hull(p) ------------->|
 /// |<---------------------------------- a.span(&c) --------------------------->|
-/// |<--------------------------------->|.. a.union(&c) ..|<------------------->|
+/// |<--------------------------------->|        +        |<------------------->| a.union(&c)
+/// |<---->| a.difference(&b)
 /// ```
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Interval<T, L = Inclusive, R = L> {
     pub(crate) left: LeftBounded<T, L>,
     pub(crate) right: RightBounded<T, R>,
 }
-impl<T: PartialEq, L: Eq, R: Eq> PartialEq for Interval<T, L, R> {
-    fn eq(&self, other: &Self) -> bool {
-        self.left == other.left && self.right == other.right
-    }
-}
-impl<T: Eq, L: Eq, R: Eq> Eq for Interval<T, L, R> {}
 
 impl<T, L, R> Interval<T, L, R> {
     pub fn left(&self) -> &LeftBounded<T, L> {
@@ -466,6 +480,30 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
             }
         }
         Self::try_new(left.into(), right.into())
+    }
+}
+
+impl<T: PartialOrd, L: BoundaryOf<Left, Flip = R>, R: BoundaryOf<Right, Flip = L>>
+    Interval<T, L, R>
+{
+    /// Difference is defined only for `Interval<T, Inclusive, Exclusive>`, `Interval<T, Exclusive, Inclusive>`, and `Interval<T, BoundType>`.
+    /// ```
+    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(0).to(Exclusive.at(3));
+    /// let b = Inclusive.at(1).to(Exclusive.at(4));
+    /// let diff = a.difference(&b);
+    /// assert!(diff.lower.is_some() && diff.upper.is_none());
+    /// assert_eq!(diff.lower.unwrap(), Inclusive.at(0).to(Exclusive.at(1)));
+    /// assert_eq!(diff.into_iter().collect::<Vec<_>>().len(), 1);
+    /// ```
+    pub fn difference(&self, other: &Self) -> IntervalDifference<T, L, R>
+    where
+        T: Clone,
+    {
+        IntervalDifference {
+            lower: Self::new_(self.left.clone(), other.lower_bound()),
+            upper: Self::new_(other.upper_bound(), self.right.clone()),
+        }
     }
 }
 

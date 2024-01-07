@@ -26,11 +26,12 @@ mod ordering {
     use super::HalfBounded;
     use crate::traits::BoundaryOf;
 
-    impl<T: PartialEq, B: Eq, LR> PartialEq for HalfBounded<T, B, LR> {
+    impl<T: PartialEq, B: PartialEq, LR> PartialEq for HalfBounded<T, B, LR> {
         fn eq(&self, other: &Self) -> bool {
             self.0 == other.0
         }
     }
+    impl<T: Eq, B: Eq, LR> Eq for HalfBounded<T, B, LR> {}
 
     impl<T: PartialOrd, B: BoundaryOf<LR>, LR> HalfBounded<T, B, LR> {
         fn ordering_key(&self) -> (&T, B::Ordered) {
