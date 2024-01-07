@@ -18,7 +18,7 @@ use crate::{
 /// assert_eq!(hull.unwrap(), Interval::between(1, 8));
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub struct Nullable<T>(Option<T>);
+pub struct Nullable<T>(pub Option<T>);
 
 impl<T> std::ops::Deref for Nullable<T> {
     type Target = Option<T>;
@@ -97,6 +97,22 @@ where
     R: BoundaryOf<Right>,
 {
     fn sum<I: Iterator<Item = T>>(iter: I) -> Self {
+        Interval::hull_many(iter).into()
+    }
+}
+
+/// ```
+/// use inter_val::{Interval, Nullable};
+/// let a = vec![1, 6, 2, 8, 3].into_iter().collect::<Nullable<Interval<i32>>>();
+/// assert_eq!(a.unwrap(), Interval::between(1, 8));
+/// ```
+impl<T, L, R> std::iter::FromIterator<T> for Nullable<Interval<T, L, R>>
+where
+    T: PartialOrd + Clone + Into<Bound<T, L>> + Into<Bound<T, R>>,
+    L: BoundaryOf<Left>,
+    R: BoundaryOf<Right>,
+{
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Interval::hull_many(iter).into()
     }
 }

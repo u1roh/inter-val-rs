@@ -1,7 +1,7 @@
 use crate::bound_type::{Left, Right};
 use crate::ndim::NDim;
 use crate::traits::BoundaryOf;
-use crate::{Bound, Exclusive, Inclusive, Interval, LeftBounded, RightBounded};
+use crate::{Bound, Exclusive, Inclusive, Interval};
 
 /// n-dimensional axis-aligned box as a cartesian product set of intervals, i.g., *[a, b)^n*.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -101,32 +101,12 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
         std::array::from_fn(|i| Interval::between(a[i].clone(), b[i].clone())).into()
     }
 
-    pub fn left(&self) -> NDim<N, &LeftBounded<T, L>> {
-        std::array::from_fn(|i| self[i].left()).into()
-    }
-
-    pub fn right(&self) -> NDim<N, &RightBounded<T, R>> {
-        std::array::from_fn(|i| self[i].right()).into()
-    }
-
     pub fn inf(&self) -> NDim<N, T> {
         std::array::from_fn(|i| self[i].inf().clone()).into()
     }
 
     pub fn sup(&self) -> NDim<N, T> {
         std::array::from_fn(|i| self[i].sup().clone()).into()
-    }
-
-    pub fn closure(&self) -> BoxN<N, T, Inclusive> {
-        std::array::from_fn(|i| self[i].clone().closure()).into()
-    }
-
-    pub fn interior(&self) -> Option<BoxN<N, T, Exclusive>> {
-        let mut interiors: [_; N] = std::array::from_fn(|i| self[i].clone().interior());
-        interiors
-            .iter()
-            .all(|i| i.is_some())
-            .then(|| std::array::from_fn(|i| interiors[i].take().unwrap()).into())
     }
 
     pub fn contains(&self, t: &[T; N]) -> bool {
@@ -137,16 +117,37 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
         self.iter().zip(other.iter()).all(|(i, o)| i.includes(o))
     }
 
+    pub fn overlaps(&self, other: &Self) -> bool {
+        self.iter().zip(other.iter()).all(|(i, j)| i.overlaps(j))
+    }
+
+    pub fn closure(&self) -> BoxN<N, T, Inclusive> {
+        std::array::from_fn(|i| self[i].clone().closure()).into()
+    }
+
+    pub fn interior(&self) -> Option<BoxN<N, T, Exclusive>> {
+        let mut tmp: [_; N] = std::array::from_fn(|i| self[i].clone().interior());
+        tmp.iter()
+            .all(|i| i.is_some())
+            .then(|| std::array::from_fn(|i| tmp[i].take().unwrap()).into())
+    }
+
     pub fn intersection(&self, other: &Self) -> Option<Self> {
-        let mut dst = self.clone();
-        for i in 0..N {
-            dst[i] = dst[i].clone().intersection(&other[i])?;
-        }
-        Some(dst)
+        let mut tmp: [_; N] = std::array::from_fn(|i| self[i].intersection(&other[i]));
+        tmp.iter()
+            .all(|i| i.is_some())
+            .then(|| std::array::from_fn(|i| tmp[i].take().unwrap()).into())
     }
 
     pub fn span(&self, other: &Self) -> Self {
         std::array::from_fn(|i| self[i].clone().span(&other[i])).into()
+    }
+
+    pub fn dilate(&self, delta: T) -> Self
+    where
+        T: std::ops::Add<Output = T> + std::ops::Sub<Output = T>,
+    {
+        std::array::from_fn(|i| self[i].clone().dilate(delta.clone())).into()
     }
 
     /// ```
@@ -163,6 +164,25 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
         let mut items = items.into_iter();
         let first = items.next()?.into();
         Some(items.fold(first, |acc, item| acc.span(&item.into())))
+    }
+
+    pub fn hull_many<'a>(items: impl IntoIterator<Item = &'a [T; N]>) -> Option<Self>
+    where
+        T: Clone + Into<Bound<T, L>> + Into<Bound<T, R>> + 'a,
+    {
+        let mut items = items.into_iter();
+        let mut lower = items.next()?.clone();
+        let mut upper = lower.clone();
+        for p in items {
+            for i in 0..N {
+                if p[i] < lower[i] {
+                    lower[i] = p[i].clone();
+                } else if upper[i] < p[i] {
+                    upper[i] = p[i].clone();
+                }
+            }
+        }
+        Self::try_between(&lower, &upper)
     }
 }
 

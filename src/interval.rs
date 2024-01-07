@@ -97,6 +97,7 @@ where
 /// |<---------------------------------- a.span(&c) --------------------------->|
 /// |<--------------------------------->|        +        |<------------------->| a.union(&c)
 /// |<---->| a.difference(&b)
+///                                                |<- δ -+---- c.dilate(δ) ----+- δ ->|
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Interval<T, L = Inclusive, R = L> {
@@ -267,10 +268,14 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
 
     /// ```
     /// use inter_val::{Inclusive, Exclusive};
-    /// let a = Inclusive.at(4).to(Exclusive.at(7));
-    /// assert_eq!(a.dilate(2), Inclusive.at(2).to(Exclusive.at(9)));
-    /// assert_eq!(a.dilate(-1), Inclusive.at(5).to(Exclusive.at(6)));
-    /// assert!(std::panic::catch_unwind(|| a.dilate(-2)).is_err());
+    /// let a = Inclusive.at(4).to(Exclusive.at(7));    // [4, 7)
+    /// assert_eq!(a.dilate(2), Inclusive.at(2).to(Exclusive.at(9)));   // [4-2, 7+2) = [2, 9)
+    /// assert_eq!(a.dilate(-1), Inclusive.at(5).to(Exclusive.at(6)));  // [4+1, 7-1) = [5, 6)
+    /// ```
+    /// ```should_panic
+    /// use inter_val::{Inclusive, Exclusive};
+    /// let a = Inclusive.at(4).to(Exclusive.at(7));    // [4, 7)
+    /// a.dilate(-2);   // panic! [4+2, 7-2) = [6, 5) is empty.
     /// ```
     pub fn dilate(self, delta: T) -> Self
     where
