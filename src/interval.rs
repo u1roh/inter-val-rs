@@ -80,8 +80,8 @@ where
 ///
 /// # Properties
 /// ```txt
-/// lower_bound     left                                right    upper_bound
-/// ...------------>|<------------- self -------------->|<------------ ...
+/// lower_bound     left              . center          right    upper_bound
+/// ...------------>|<------- self -------------------->|<------------ ...
 ///                 inf                                 sup
 ///                 [<------------ closure ------------>]
 ///                  (<----------- interior ---------->)
