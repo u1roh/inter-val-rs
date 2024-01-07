@@ -1,7 +1,9 @@
 # Mathematical interval library for Rust
 
-Mathematical intervals, i.g., [a, b], (a, b), [a, b), and (a, b].
+Mathematical intervals, i.g., [a, b], (a, b), [a, b), and (a, b] on ℝ (real number line).
 Also supports multi-dimensional axis-aligned boxes.
+
+NOTE: Not yet stable.
 
 ## Interval
 Intervals like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `PartialOrd` type.
