@@ -6,7 +6,7 @@ Also supports multi-dimensional axis-aligned boxes.
 ## Interval
 Intervals like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `PartialOrd` type.
 
-```
+```rust
 use inter_val::{Inclusive, Exclusive, Interval};
 
 // Closed interval of i32
@@ -44,7 +44,7 @@ assert_eq!(a, Inclusive.between(2, 9));
 
 ## Multi-dimensional axis-aligned box
 Boxes represented by Cartesian product of intervals.
-```
+```rust
 use inter_val::{Box2, Inclusive};
 
 // [0.0, 10.0] × [5.0, 20.0]
