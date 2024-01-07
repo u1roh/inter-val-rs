@@ -1,28 +1,60 @@
 //! Mathematical intervals, i.g., [a, b], (a, b), [a, b), and (a, b].
+//! Also supports multi-dimensional axis-aligned boxes.
 //!
-//! # Usage
+//! # Interval
+//! Intervals like *[a, b]*, *(a, b)*, *[a, b)*, and *(a, b]* for any `PartialOrd` type.
+//!
 //! ```
 //! use inter_val::{Inclusive, Exclusive, Interval};
 //!
 //! // Closed interval of i32
 //! let a = Inclusive.at(0).to(Inclusive.at(10));  // [0, 10]
-//! let b = Inclusive.at(5).to(Inclusive.at(15));  // [5, 15]
-//! let c = a.intersection(&b).unwrap(); // [0, 10] ∩ [5, 15] = [5, 10]
-//! assert_eq!(c.inf(), &5);
-//! assert_eq!(c.sup(), &10);
+//! assert!(a.contains(&3));
 //!
 //! // Half-open interval of f64
-//! let a = Inclusive.at(1.23).to(Exclusive.at(4.56));   // [1.23, 4.56)
-//! assert_eq!(a.inf(), &1.23);
-//! assert_eq!(a.sup(), &4.56);
-//! assert!(a.contains(&1.23));
-//! assert!(!a.contains(&4.56));
-//! assert!(a.contains(&(4.56 - 0.000000000000001)));
+//! let b = Inclusive.at(1.23).to(Exclusive.at(4.56));   // [1.23, 4.56)
+//! assert!(!b.contains(&4.56));
+//! assert!(b.contains(&(4.56 - 0.000000000000001)));
+//!
+//! // Intersection
+//! let c = Inclusive.between(5, 15);  // [5, 15]
+//! let isect = a.intersection(&c).unwrap(); // [0, 10] ∩ [5, 15] = [5, 10]
+//! assert_eq!(isect.inf(), &5);
+//! assert_eq!(isect.sup(), &10);
+//!
+//! // Span & Gap
+//! let d = Inclusive.between(12, 15);  // [12, 15]
+//! let span = a.span(&d);  // [0, 15]
+//! let gap = a.gap(&d);    // (10, 12)
+//! assert_eq!(span, Inclusive.between(0, 15));
+//! assert_eq!(gap.unwrap(), Exclusive.between(10, 12));
+//!
+//! // Union
+//! let union = a.union(&d);
+//! assert_eq!(union.span, span);
+//! assert_eq!(union.gap, gap);
+//! assert_eq!(union.into_vec(), vec![a, d]);
 //!
 //! // Hull
 //! let a = Interval::<_>::hull_many(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
-//! assert_eq!(a.inf(), &2);
-//! assert_eq!(a.sup(), &9);
+//! assert_eq!(a, Inclusive.between(2, 9));
+//! ```
+//!
+//! # Multi-dimensional axis-aligned box
+//! Boxes represented by Cartesian product of intervals.
+//! ```
+//! use inter_val::{Box2, Inclusive};
+//!
+//! // [0.0, 10.0] × [5.0, 20.0]
+//! let a: Box2<f64> = Box2::new(Inclusive.between(0.0, 10.0), Inclusive.between(5.0, 20.0));
+//!
+//! // Another way to construct [0.0, 10.0] × [5.0, 20.0]
+//! let b: Box2<f64> = Box2::between(&[0.0, 5.0], &[10.0, 20.0]);
+//! assert_eq!(a, b);
+//!
+//! // Hull
+//! let b = a.hull(&[12.3, 7.5]);
+//! assert_eq!(b, Box2::between(&[0.0, 5.0], &[12.3, 20.0]));
 //! ```
 mod bound;
 mod bound_type;
@@ -54,7 +86,7 @@ impl Inclusive {
             bound_type: self,
         }
     }
-    pub fn between<T: PartialOrd>(a: T, b: T) -> Interval<T, Self, Self> {
+    pub fn between<T: PartialOrd>(self, a: T, b: T) -> Interval<T, Self, Self> {
         Interval::between(a, b)
     }
     pub fn hull<T: PartialOrd + Clone>(
@@ -70,8 +102,11 @@ impl Exclusive {
             bound_type: self,
         }
     }
-    pub fn try_between<T: PartialOrd>(a: T, b: T) -> Option<Interval<T, Self, Self>> {
+    pub fn try_between<T: PartialOrd>(self, a: T, b: T) -> Option<Interval<T, Self, Self>> {
         Interval::try_between(a, b)
+    }
+    pub fn between<T: PartialOrd>(self, a: T, b: T) -> Interval<T, Self, Self> {
+        Interval::between(a, b)
     }
     pub fn hull<T: PartialOrd + Clone>(
         items: impl IntoIterator<Item = T>,

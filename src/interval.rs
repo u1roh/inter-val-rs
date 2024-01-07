@@ -8,6 +8,11 @@ pub struct IntervalUnion<T, L: Flip, R: Flip> {
     pub span: Interval<T, L, R>,
     pub gap: Option<Interval<T, R::Flip, L::Flip>>,
 }
+impl<T, L: Flip, R: Flip> IntervalUnion<T, L, R> {
+    pub fn into_vec(self) -> Vec<Interval<T, L, R>> {
+        self.into_iter().collect()
+    }
+}
 impl<T, L: Flip, R: Flip> IntoIterator for IntervalUnion<T, L, R> {
     type Item = Interval<T, L, R>;
     type IntoIter = std::vec::IntoIter<Self::Item>;
@@ -33,6 +38,11 @@ impl<T, L: Flip, R: Flip> IntoIterator for IntervalUnion<T, L, R> {
 pub struct IntervalDifference<T, L: Flip, R: Flip> {
     pub lower: Option<Interval<T, L, L::Flip>>,
     pub upper: Option<Interval<T, R::Flip, R>>,
+}
+impl<T, L: Flip<Flip = R>, R: Flip<Flip = L>> IntervalDifference<T, L, R> {
+    pub fn into_vec(self) -> Vec<Interval<T, L, R>> {
+        self.into_iter().collect()
+    }
 }
 impl<T, L: Flip<Flip = R>, R: Flip<Flip = L>> IntoIterator for IntervalDifference<T, L, R> {
     type Item = Interval<T, L, R>;
