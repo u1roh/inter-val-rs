@@ -71,7 +71,7 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
     BoxN<N, T, L, R>
 {
     /// ```
-    /// use kd_interval::{Box2, Exclusive};
+    /// use inter_val::{Box2, Exclusive};
     /// let a: Box2<i32> = Box2::try_between(&[0, 0], &[10, 20]).unwrap();
     /// assert_eq!(a.x.inf(), &0);
     /// assert_eq!(a.y.sup(), &20);
@@ -90,7 +90,7 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
     }
 
     /// ```
-    /// use kd_interval::Box2;
+    /// use inter_val::Box2;
     /// let a: Box2<i32> = Box2::between(&[0, 0], &[10, 20]);
     /// assert_eq!(a.inf(), [0, 0]);
     /// assert_eq!(a.sup(), [10, 20]);
@@ -150,7 +150,7 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
     }
 
     /// ```
-    /// use kd_interval::Box2;
+    /// use inter_val::Box2;
     /// let a: Box2<i32> = Box2::between(&[0, 0], &[10, 10]);
     /// let b = a.hull(&[20, 5]);
     /// assert_eq!(b, Box2::between(&[0, 0], &[20, 10]));

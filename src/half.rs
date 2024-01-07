@@ -154,7 +154,7 @@ impl<T: PartialOrd, B: BoundaryOf<Left>> LeftBounded<T, B> {
     }
 
     /// ```
-    /// use kd_interval::{LeftBounded, Inclusive, Exclusive};
+    /// use inter_val::{LeftBounded, Inclusive, Exclusive};
     /// let a: LeftBounded<_, _> = Inclusive.at(4).into();
     /// let b: LeftBounded<_, _> = Exclusive.at(4).into();
     /// let c: LeftBounded<_, _> = Inclusive.at(1.23).into();
@@ -216,7 +216,7 @@ impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
     }
 
     /// ```
-    /// use kd_interval::{RightBounded, Inclusive, Exclusive};
+    /// use inter_val::{RightBounded, Inclusive, Exclusive};
     /// let a : RightBounded<_, _> = Inclusive.at(7).into();
     /// let b : RightBounded<_, _> = Exclusive.at(7).into();
     /// let c : RightBounded<_, _> = Inclusive.at(4.56).into();

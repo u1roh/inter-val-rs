@@ -67,7 +67,7 @@ where
 ///
 /// # Memory cost
 /// ```
-/// use kd_interval::{Interval, Exclusive, Inclusive, BoundType};
+/// use inter_val::{Interval, Exclusive, Inclusive, BoundType};
 /// use std::mem::size_of;
 ///
 /// // When bound type is statically determined, the size of the interval is just the size of two `T`.
@@ -120,7 +120,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// Try to create a new interval. Return `None` if the interval is empty.
     /// ```
     /// use std::any::{Any, TypeId};
-    /// use kd_interval::{Interval, BoundType, Exclusive, Inclusive};
+    /// use inter_val::{Interval, BoundType, Exclusive, Inclusive};
     ///
     /// let a: Interval<i32, Inclusive, Exclusive> = Interval::try_new(0.into(), 3.into()).unwrap();
     /// assert!(a.contains(&0));
@@ -145,7 +145,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// Create a new interval. Panics if the interval is empty.
     /// ```
     /// use std::any::{Any, TypeId};
-    /// use kd_interval::{Interval, BoundType, Exclusive, Inclusive};
+    /// use inter_val::{Interval, BoundType, Exclusive, Inclusive};
     ///
     /// let a: Interval<i32, Inclusive, Exclusive> = Interval::new(0.into(), 3.into());
     /// assert!(a.contains(&0));
@@ -161,11 +161,11 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     ///
     /// # Panics
     /// ```should_panic
-    /// # use kd_interval::{Interval, Exclusive, Inclusive};
+    /// # use inter_val::{Interval, Exclusive, Inclusive};
     /// Interval::new(Inclusive.at(3), Exclusive.at(0)); // [3, 0) is empty.
     /// ```
     /// ```should_panic
-    /// # use kd_interval::{Interval, Exclusive, Inclusive};
+    /// # use inter_val::{Interval, Exclusive, Inclusive};
     /// Interval::new(Inclusive.at(3), Exclusive.at(3)); // [3, 3) is empty.
     /// ```
     pub fn new(left: Bound<T, L>, right: Bound<T, R>) -> Self {
@@ -173,7 +173,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Interval, Exclusive, Inclusive};
+    /// use inter_val::{Interval, Exclusive, Inclusive};
     /// let a: Interval<i32, Inclusive, Exclusive> = Interval::try_between(-2, 5).unwrap();
     /// assert_eq!(a, Inclusive.at(-2).to(Exclusive.at(5)));
     ///
@@ -195,7 +195,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Interval, Exclusive, Inclusive};
+    /// use inter_val::{Interval, Exclusive, Inclusive};
     /// let a: Interval<i32, Inclusive, Exclusive> = Interval::between(-2, 5);
     /// assert_eq!(a, Inclusive.at(-2).to(Exclusive.at(5)));
     ///
@@ -206,7 +206,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// Interval::<i32, Inclusive, Inclusive>::between(1, 1); // Doesn't panic since [1, 1] is not empty.
     /// ```
     /// ```should_panic
-    /// # use kd_interval::{Interval, Exclusive, Inclusive};
+    /// # use inter_val::{Interval, Exclusive, Inclusive};
     /// Interval::<i32, Inclusive, Exclusive>::between(1, 1); // Panics since [1, 1) is empty.
     /// ```
     pub fn between(a: T, b: T) -> Self
@@ -218,7 +218,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
 
     /// Shorthand of `.left().limit`
     /// ```
-    /// use kd_interval::{Interval, Exclusive, Inclusive};
+    /// use inter_val::{Interval, Exclusive, Inclusive};
     /// let a = Interval::new(Exclusive.at(-1.0), Inclusive.at(1.0));
     /// assert_eq!(a.inf(), &-1.0);
     /// assert_eq!(a.inf(), &a.left().limit);
@@ -230,7 +230,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
 
     /// Shorthand of `.right().limit`
     /// ```
-    /// use kd_interval::{Interval, Exclusive, Inclusive};
+    /// use inter_val::{Interval, Exclusive, Inclusive};
     /// let a = Interval::new(Inclusive.at(-1.0), Exclusive.at(1.0));
     /// assert_eq!(a.sup(), &1.0);
     /// assert_eq!(a.sup(), &a.right().limit);
@@ -252,7 +252,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// use inter_val::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(4).to(Exclusive.at(7));
     /// let b = Exclusive.at(1.23).to(Inclusive.at(4.56));
     /// assert!(a.contains(&4));
@@ -266,7 +266,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Inclusive, Exclusive};
+    /// use inter_val::{Inclusive, Exclusive};
     /// let a = Inclusive.at(4).to(Exclusive.at(7));
     /// assert_eq!(a.dilate(2), Inclusive.at(2).to(Exclusive.at(9)));
     /// assert_eq!(a.dilate(-1), Inclusive.at(5).to(Exclusive.at(6)));
@@ -280,7 +280,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// use inter_val::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));
     /// let b = Inclusive.at(0).to(Exclusive.at(4));
     /// let c = Inclusive.at(1).to(Exclusive.at(4));
@@ -293,7 +293,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// use inter_val::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));
     /// let b = Inclusive.at(1).to(Exclusive.at(4));
     /// let c = Inclusive.at(3).to(Exclusive.at(5));
@@ -308,7 +308,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// use inter_val::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));
     /// let b = Inclusive.at(1).to(Exclusive.at(4));
     /// let c = Inclusive.at(3).to(Exclusive.at(5));
@@ -327,7 +327,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// use inter_val::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));
     /// let b = Inclusive.at(5).to(Exclusive.at(8));
     /// assert_eq!(a.span(&b), Inclusive.at(0).to(Exclusive.at(8)));
@@ -343,7 +343,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// use inter_val::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));
     /// assert_eq!(a.hull(-2), Inclusive.at(-2).to(Exclusive.at(3)));
     /// assert_eq!(a.hull(5), Inclusive.at(0).to(Exclusive.at(5)));
@@ -359,7 +359,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// use inter_val::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));
     /// let b = Inclusive.at(5).to(Exclusive.at(8));
     /// assert_eq!(a.gap(&b).unwrap(), Inclusive.at(3).to(Exclusive.at(5)));
@@ -375,7 +375,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// use inter_val::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));
     /// let b = Inclusive.at(5).to(Exclusive.at(8));
     /// let union = a.union(&b);
@@ -413,7 +413,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// use inter_val::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(2.1).to(Inclusive.at(5.3));
     /// assert_eq!(a.measure(), 5.3 - 2.1);
     ///
@@ -428,7 +428,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Interval, Inclusive, Exclusive, Nullable};
+    /// use inter_val::{Interval, Inclusive, Exclusive, Nullable};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));  // [0, 3)
     /// let b = Inclusive.at(1).to(Exclusive.at(5));  // [1, 5)
     /// let c = Inclusive.at(8).to(Exclusive.at(10)); // [8, 10)
@@ -452,7 +452,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
-    /// use kd_interval::{Interval, Nullable};
+    /// use inter_val::{Interval, Nullable};
     /// let hull = Interval::<_>::hull_many(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
     /// assert_eq!(hull.inf(), &2);
     /// assert_eq!(hull.sup(), &9);
@@ -488,7 +488,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left, Flip = R>, R: BoundaryOf<Right, Flip = L
 {
     /// Difference is defined only for `Interval<T, Inclusive, Exclusive>`, `Interval<T, Exclusive, Inclusive>`, and `Interval<T, BoundType>`.
     /// ```
-    /// use kd_interval::{Interval, Inclusive, Exclusive};
+    /// use inter_val::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));
     /// let b = Inclusive.at(1).to(Exclusive.at(4));
     /// let diff = a.difference(&b);
@@ -509,7 +509,7 @@ impl<T: PartialOrd, L: BoundaryOf<Left, Flip = R>, R: BoundaryOf<Right, Flip = L
 
 impl<T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// ```
-    /// use kd_interval::{Interval, Inclusive};
+    /// use inter_val::{Interval, Inclusive};
     /// let a = Inclusive.at(2.1).to(Inclusive.at(5.3));
     /// assert_eq!(a.center(), (2.1 + 5.3) / 2.0);
     /// ```
@@ -519,7 +519,7 @@ impl<T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
 
     /// IoU - Intersection over Union.
     /// ```
-    /// use kd_interval::{Interval, Inclusive};
+    /// use inter_val::{Interval, Inclusive};
     /// let a = Inclusive.at(0.0).to(Inclusive.at(1.0));
     /// let b = Inclusive.at(0.0).to(Inclusive.at(2.0));
     /// let c = Inclusive.at(1.0).to(Inclusive.at(2.0));
@@ -540,7 +540,7 @@ impl<T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
 impl<T, L, R> Interval<T, L, R> {
     /// Cast by `From<T>`.
     /// ```
-    /// use kd_interval::{Interval, Exclusive};
+    /// use inter_val::{Interval, Exclusive};
     /// let src: Interval<i32, Exclusive> = Interval::between(0, 1);  // open interval (0, 1)
     /// let dst = src.cast::<f64>();
     /// assert!(dst.contains(&0.5));
@@ -556,7 +556,7 @@ impl<T, L, R> Interval<T, L, R> {
 impl<T: num::NumCast, L, R> Interval<T, L, R> {
     /// Cast by `num::NumCast`.
     /// ```
-    /// use kd_interval::{Interval, Exclusive};
+    /// use inter_val::{Interval, Exclusive};
     /// let src: Interval<f64> = Interval::between(1.2, 7.8);  // closed interval [1.2, 7.8]
     /// let dst = src.try_cast::<i32>().unwrap();
     /// assert_eq!(dst.inf(), &1);
@@ -581,7 +581,7 @@ impl<T, L: IntoGeneral, R: IntoGeneral> IntoGeneral for Interval<T, L, R> {
 }
 
 /// ```
-/// use kd_interval::{Interval, Exclusive, Inclusive, BoundType};
+/// use inter_val::{Interval, Exclusive, Inclusive, BoundType};
 ///
 /// // Iterate Interval<i32, Exclusive, Inclusive>
 /// let items: Vec<_> = Exclusive.at(0).to(Inclusive.at(10)).into_iter().collect();

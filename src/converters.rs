@@ -18,7 +18,7 @@ impl<T> From<T> for Bound<T, Exclusive> {
 }
 
 /// ```
-/// use kd_interval::{BoundType, Inclusive, Interval};
+/// use inter_val::{BoundType, Inclusive, Interval};
 /// let src: Interval<i32, Inclusive> = Inclusive.at(0).to(Inclusive.at(10));
 /// let dst: Interval<i32, BoundType> = src.into();
 /// assert_eq!(dst.left().bound_type, BoundType::Inclusive);
@@ -31,7 +31,7 @@ impl<T> From<Interval<T, Inclusive>> for Interval<T, BoundType> {
 }
 
 /// ```
-/// use kd_interval::{BoundType, Exclusive, Interval};
+/// use inter_val::{BoundType, Exclusive, Interval};
 /// let src: Interval<i32, Exclusive> = Exclusive.at(0).to(Exclusive.at(10));
 /// let dst: Interval<i32, BoundType> = src.into();
 /// assert_eq!(dst.left().bound_type, BoundType::Exclusive);
@@ -44,7 +44,7 @@ impl<T> From<Interval<T, Exclusive>> for Interval<T, BoundType> {
 }
 
 /// ```
-/// use kd_interval::{BoundType, Inclusive, Exclusive, Interval};
+/// use inter_val::{BoundType, Inclusive, Exclusive, Interval};
 /// let src: Interval<i32, Inclusive, Exclusive> = Inclusive.at(0).to(Exclusive.at(10));
 /// let dst: Interval<i32, BoundType> = src.into();
 /// assert_eq!(dst.left().bound_type, BoundType::Inclusive);
@@ -57,7 +57,7 @@ impl<T> From<Interval<T, Inclusive, Exclusive>> for Interval<T, BoundType> {
 }
 
 /// ```
-/// use kd_interval::{BoundType, Inclusive, Exclusive, Interval};
+/// use inter_val::{BoundType, Inclusive, Exclusive, Interval};
 /// let src: Interval<i32, Exclusive, Inclusive> = Exclusive.at(0).to(Inclusive.at(10));
 /// let dst: Interval<i32, BoundType> = src.into();
 /// assert_eq!(dst.left().bound_type, BoundType::Exclusive);
@@ -71,7 +71,7 @@ impl<T> From<Interval<T, Exclusive, Inclusive>> for Interval<T, BoundType> {
 
 /// ```
 /// use std::any::{Any, TypeId};
-/// use kd_interval::{Inclusive, Interval};
+/// use inter_val::{Inclusive, Interval};
 /// let a: Interval<_, _, _> = 3.into();
 /// assert_eq!(a.type_id(), TypeId::of::<Interval<i32, Inclusive, Inclusive>>());
 /// assert_eq!(a.left().limit, 3);

@@ -6,7 +6,7 @@ NOTE: This library is not yet stable.
 
 ## Usage
 ```
-use kd_interval::{Inclusive, Exclusive, Interval};
+use inter_val::{Inclusive, Exclusive, Interval};
 
 // Closed interval of i32
 let a = Inclusive.at(0).to(Inclusive.at(10));  // [0, 10]

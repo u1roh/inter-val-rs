@@ -6,7 +6,7 @@ use crate::{
 
 /// Wrapper of `Option<T>` to implement `Sum` trait.
 /// ```
-/// use kd_interval::{Nullable, Interval, Inclusive, Exclusive};
+/// use inter_val::{Nullable, Interval, Inclusive, Exclusive};
 /// let a = Inclusive.at(0).to(Exclusive.at(3));  // [0, 3)
 /// let b = Inclusive.at(1).to(Exclusive.at(5));  // [1, 5)
 /// let c = Inclusive.at(8).to(Exclusive.at(10)); // [8, 10)
@@ -66,7 +66,7 @@ impl<T> Nullable<T> {
 }
 
 /// ```
-/// use kd_interval::{Nullable, Interval, Inclusive, Exclusive};
+/// use inter_val::{Nullable, Interval, Inclusive, Exclusive};
 /// let a = Inclusive.at(0).to(Exclusive.at(3));  // [0, 3)
 /// let b = Inclusive.at(1).to(Exclusive.at(5));  // [1, 5)
 /// let c = Inclusive.at(8).to(Exclusive.at(10)); // [8, 10)
@@ -86,7 +86,7 @@ where
 }
 
 /// ```
-/// use kd_interval::{Interval, Nullable};
+/// use inter_val::{Interval, Nullable};
 /// let a: Nullable<Interval<i32>> = vec![1, 6, 2, 8, 3].into_iter().sum();
 /// assert_eq!(a.unwrap(), Interval::between(1, 8));
 /// ```
