@@ -61,6 +61,15 @@ where
 /// assert!(std::mem::size_of::<Interval<i32, BoundType>>() > (std::mem::size_of::<i32>() + std::mem::size_of::<BoundType>()) * 2);
 /// ```
 ///
+/// # Properties
+/// ```txt
+/// lower_bound     left                                right    upper_bound
+/// ...------------>|<------------- self -------------->|<------------ ...
+///                 inf                                 sup
+///                 [<------------ closure ------------>]
+///                  (<----------- interior ---------->)
+/// ```
+///
 /// # Set operations
 /// ```txt
 /// |<------------- a ----------------->|<-- a.gap(&c) -->|<-------- c -------->|
