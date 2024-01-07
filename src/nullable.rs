@@ -4,6 +4,19 @@ use crate::{
     Bound, Interval,
 };
 
+/// Wrapper of `Option<T>` to implement `Sum` trait.
+/// ```
+/// use kd_interval::{Nullable, Interval, Inclusive, Exclusive};
+/// let a = Inclusive.at(0).to(Exclusive.at(3));  // [0, 3)
+/// let b = Inclusive.at(1).to(Exclusive.at(5));  // [1, 5)
+/// let c = Inclusive.at(8).to(Exclusive.at(10)); // [8, 10)
+/// let span: Nullable<Interval<_, _, _>> = vec![a, b, c].into_iter().sum(); // [0, 10)
+/// assert_eq!(span.as_ref().unwrap().left().limit, 0);
+/// assert_eq!(span.as_ref().unwrap().right().limit, 10);
+///
+/// let hull: Nullable<Interval<i32>> = vec![1, 6, 2, 8, 3].into_iter().sum();
+/// assert_eq!(hull.unwrap(), Interval::between(1, 8));
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Nullable<T>(Option<T>);
 

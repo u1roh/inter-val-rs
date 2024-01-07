@@ -43,7 +43,7 @@ pub use bound::Bound;
 pub use bound_type::{BoundType, Exclusive, Inclusive};
 pub use half::{HalfBounded, LeftBounded, RightBounded};
 pub use interval::Interval;
-pub use interval_box::Box;
+pub use interval_box::BoxN;
 pub use kd::Kd;
 pub use nullable::Nullable;
 
@@ -108,5 +108,8 @@ impl<T: PartialOrd, B: BoundaryOf<Left>> Bound<T, B> {
 #[error("left boundary must be less than or equal to right boundary")]
 pub struct IntervalIsEmpty;
 
-pub type ClosedInterval<T> = Interval<T, Inclusive>;
 pub type OpenInterval<T> = Interval<T, Exclusive>;
+pub type GeneralInterval<T> = Interval<T, BoundType>;
+pub type Box2<T, L = Inclusive, R = L> = BoxN<2, T, L, R>;
+pub type Box3<T, L = Inclusive, R = L> = BoxN<3, T, L, R>;
+pub type Box4<T, L = Inclusive, R = L> = BoxN<4, T, L, R>;
