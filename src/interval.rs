@@ -580,6 +580,46 @@ impl<T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
             })
             .unwrap_or(T::zero())
     }
+
+    /// ```
+    /// use inter_val::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(2.0).to(Inclusive.at(4.0));    // [2, 4]
+    /// assert_eq!(a.at(0.0), 2.0);
+    /// assert_eq!(a.at(0.5), 3.0);
+    /// assert_eq!(a.at(1.0), 4.0);
+    /// ```
+    pub fn at(&self, zero_to_one: T) -> T {
+        (T::one() - zero_to_one) * *self.inf() + zero_to_one * *self.sup()
+    }
+
+    /// ```
+    /// use inter_val::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(2.0).to(Inclusive.at(4.0));    // [2, 4]
+    /// let b = Inclusive.at(2.0).to(Exclusive.at(4.0));    // [2, 4)
+    /// let c = Exclusive.at(2.0).to(Inclusive.at(4.0));    // (2, 4]
+    /// assert!(a.step_uniform(4).eq(vec![2.0, 2.5, 3.0, 3.5, 4.0]));
+    /// assert!(b.step_uniform(4).eq(vec![2.0, 2.5, 3.0, 3.5]));
+    /// assert!(c.step_uniform(4).eq(vec![2.5, 3.0, 3.5, 4.0]));
+    /// ```
+    pub fn step_uniform(&self, n: usize) -> impl Iterator<Item = T> + '_ {
+        let step = self.measure() / T::from(n).unwrap();
+        let (mut i, mut t) = if self.left.bound_type.is_inclusive() {
+            (0, *self.inf())
+        } else {
+            (1, *self.inf() + step)
+        };
+        let last = if self.right.bound_type.is_inclusive() {
+            n
+        } else {
+            n - 1
+        };
+        std::iter::from_fn(move || {
+            let ret = (i <= last).then_some(t);
+            t = if i == n { *self.sup() } else { t + step };
+            i += 1;
+            ret
+        })
+    }
 }
 
 impl<T, L, R> Interval<T, L, R> {

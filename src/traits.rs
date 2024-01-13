@@ -12,6 +12,13 @@ pub(crate) trait IntoGeneral {
 
 pub trait Boundary: Flip + Eq + PartialEq<BoundType> + Copy {
     fn less<T: PartialOrd>(&self, this: &T, t: &T) -> bool;
+
+    fn is_inclusive(&self) -> bool {
+        *self == BoundType::Inclusive
+    }
+    fn is_exclusive(&self) -> bool {
+        *self == BoundType::Exclusive
+    }
 }
 
 pub trait BoundaryOf<LR>: Boundary {
