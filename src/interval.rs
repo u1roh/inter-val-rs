@@ -1,5 +1,5 @@
 use crate::bound_type::{Left, Right};
-use crate::traits::{BoundaryOf, Ceil, Flip, Floor, IntoGeneral};
+use crate::traits::{BoundaryOf, Flip, IntoGeneral};
 use crate::{Bound, Exclusive, Inclusive, LeftBounded, RightBounded};
 
 /// Return type of `Interval::union()`.
@@ -645,12 +645,16 @@ impl<T, L: IntoGeneral, R: IntoGeneral> IntoGeneral for Interval<T, L, R> {
 impl<T, L, R> IntoIterator for Interval<T, L, R>
 where
     std::ops::RangeInclusive<T>: Iterator<Item = T>,
-    Bound<T, L>: Ceil<T>,
-    Bound<T, R>: Floor<T>,
+    T: num::Integer + Clone,
+    L: BoundaryOf<Left>,
+    R: BoundaryOf<Right>,
+    for<'a> T: std::ops::AddAssign<&'a T> + std::ops::SubAssign<&'a T>,
 {
     type Item = T;
     type IntoIter = std::ops::RangeInclusive<T>;
     fn into_iter(self) -> Self::IntoIter {
-        self.left().ceil()..=self.right().floor()
+        let first = self.left.step_by(T::one()).next().unwrap();
+        let last = self.right.step_rev_by(T::one()).next().unwrap();
+        first..=last
     }
 }

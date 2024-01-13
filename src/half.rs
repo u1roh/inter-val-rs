@@ -1,6 +1,6 @@
 use crate::{
     bound_type::{Left, Right},
-    traits::{BoundaryOf, Ceil, Flip, Floor, IntoGeneral},
+    traits::{BoundaryOf, Flip, IntoGeneral},
     Bound, BoundType, Exclusive, Inclusive,
 };
 
@@ -153,22 +153,6 @@ impl<T: PartialOrd, B: BoundaryOf<Left>> LeftBounded<T, B> {
         .into()
     }
 
-    /// ```
-    /// use inter_val::{LeftBounded, Inclusive, Exclusive};
-    /// let a: LeftBounded<_, _> = Inclusive.at(4).into();
-    /// let b: LeftBounded<_, _> = Exclusive.at(4).into();
-    /// let c: LeftBounded<_, _> = Inclusive.at(1.23).into();
-    /// assert_eq!(a.ceil(), 4);
-    /// assert_eq!(b.ceil(), 5);
-    /// assert_eq!(c.ceil(), 2.0);
-    /// ```
-    pub fn ceil(&self) -> T
-    where
-        Bound<T, B>: Ceil<T>,
-    {
-        self.0.ceil()
-    }
-
     pub fn step_by(&self, step: T) -> impl Iterator<Item = T>
     where
         T: Clone,
@@ -239,22 +223,6 @@ impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
         .into()
     }
 
-    /// ```
-    /// use inter_val::{RightBounded, Inclusive, Exclusive};
-    /// let a : RightBounded<_, _> = Inclusive.at(7).into();
-    /// let b : RightBounded<_, _> = Exclusive.at(7).into();
-    /// let c : RightBounded<_, _> = Inclusive.at(4.56).into();
-    /// assert_eq!(a.floor(), 7);
-    /// assert_eq!(b.floor(), 6);
-    /// assert_eq!(c.floor(), 4.0);
-    /// ```
-    pub fn floor(&self) -> T
-    where
-        Bound<T, B>: Floor<T>,
-    {
-        self.0.floor()
-    }
-
     pub fn step_rev_by(&self, step: T) -> impl Iterator<Item = T>
     where
         T: Clone,
@@ -269,14 +237,5 @@ impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
             t -= &step;
             Some(r)
         })
-    }
-}
-
-impl<T, B> Floor<T> for RightBounded<T, B>
-where
-    Bound<T, B>: Floor<T>,
-{
-    fn floor(&self) -> T {
-        self.0.floor()
     }
 }
