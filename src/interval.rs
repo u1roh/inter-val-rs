@@ -1,5 +1,5 @@
 use crate::bound_type::{Left, Right};
-use crate::traits::{BoundaryOf, Ceil, Flip, Floor, IntoGeneral};
+use crate::traits::{BoundaryOf, Flip, IntoGeneral};
 use crate::{Bound, Exclusive, Inclusive, LeftBounded, RightBounded};
 
 /// Return type of `Interval::union()`.
@@ -443,6 +443,36 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
+    /// use inter_val::{Inclusive, Exclusive};
+    /// let a = Exclusive.at(10).to(Inclusive.at(20)); // (10, 20]
+    /// assert!(a.step_by(2).eq(vec![12, 14, 16, 18, 20]));
+    /// ```
+    pub fn step_by(&self, step: T) -> impl Iterator<Item = T> + '_
+    where
+        T: Clone,
+        for<'a> T: std::ops::AddAssign<&'a T>,
+    {
+        self.left
+            .step_by(step)
+            .take_while(|t| self.right.contains(t))
+    }
+
+    /// ```
+    /// use inter_val::{Inclusive, Exclusive};
+    /// let a = Exclusive.at(10).to(Inclusive.at(20)); // (10, 20]
+    /// assert!(a.step_rev_by(2).eq(vec![20, 18, 16, 14, 12]));
+    /// ```
+    pub fn step_rev_by(&self, step: T) -> impl Iterator<Item = T> + '_
+    where
+        T: Clone,
+        for<'a> T: std::ops::SubAssign<&'a T>,
+    {
+        self.right
+            .step_rev_by(step)
+            .take_while(|t| self.left.contains(t))
+    }
+
+    /// ```
     /// use inter_val::{Interval, Inclusive, Exclusive, Nullable};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));  // [0, 3)
     /// let b = Inclusive.at(1).to(Exclusive.at(5));  // [1, 5)
@@ -550,6 +580,46 @@ impl<T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
             })
             .unwrap_or(T::zero())
     }
+
+    /// ```
+    /// use inter_val::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(2.0).to(Inclusive.at(4.0));    // [2, 4]
+    /// assert_eq!(a.at(0.0), 2.0);
+    /// assert_eq!(a.at(0.5), 3.0);
+    /// assert_eq!(a.at(1.0), 4.0);
+    /// ```
+    pub fn at(&self, zero_to_one: T) -> T {
+        (T::one() - zero_to_one) * *self.inf() + zero_to_one * *self.sup()
+    }
+
+    /// ```
+    /// use inter_val::{Interval, Inclusive, Exclusive};
+    /// let a = Inclusive.at(2.0).to(Inclusive.at(4.0));    // [2, 4]
+    /// let b = Inclusive.at(2.0).to(Exclusive.at(4.0));    // [2, 4)
+    /// let c = Exclusive.at(2.0).to(Inclusive.at(4.0));    // (2, 4]
+    /// assert!(a.step_uniform(4).eq(vec![2.0, 2.5, 3.0, 3.5, 4.0]));
+    /// assert!(b.step_uniform(4).eq(vec![2.0, 2.5, 3.0, 3.5]));
+    /// assert!(c.step_uniform(4).eq(vec![2.5, 3.0, 3.5, 4.0]));
+    /// ```
+    pub fn step_uniform(&self, n: usize) -> impl Iterator<Item = T> + '_ {
+        let step = self.measure() / T::from(n).unwrap();
+        let (mut i, mut t) = if self.left.bound_type.is_inclusive() {
+            (0, *self.inf())
+        } else {
+            (1, *self.inf() + step)
+        };
+        let last = if self.right.bound_type.is_inclusive() {
+            n
+        } else {
+            n - 1
+        };
+        std::iter::from_fn(move || {
+            let ret = (i <= last).then_some(t);
+            t = if i == n { *self.sup() } else { t + step };
+            i += 1;
+            ret
+        })
+    }
 }
 
 impl<T, L, R> Interval<T, L, R> {
@@ -615,12 +685,16 @@ impl<T, L: IntoGeneral, R: IntoGeneral> IntoGeneral for Interval<T, L, R> {
 impl<T, L, R> IntoIterator for Interval<T, L, R>
 where
     std::ops::RangeInclusive<T>: Iterator<Item = T>,
-    Bound<T, L>: Ceil<T>,
-    Bound<T, R>: Floor<T>,
+    T: num::Integer + Clone,
+    L: BoundaryOf<Left>,
+    R: BoundaryOf<Right>,
+    for<'a> T: std::ops::AddAssign<&'a T> + std::ops::SubAssign<&'a T>,
 {
     type Item = T;
     type IntoIter = std::ops::RangeInclusive<T>;
     fn into_iter(self) -> Self::IntoIter {
-        self.left().ceil()..=self.right().floor()
+        let first = self.left.step_by(T::one()).next().unwrap();
+        let last = self.right.step_rev_by(T::one()).next().unwrap();
+        first..=last
     }
 }

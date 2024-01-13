@@ -21,18 +21,18 @@ pub struct Left;
 pub struct Right;
 
 #[derive(Debug, Clone, Copy)]
-pub struct SideInclusion<B, S>(B, PhantomData<S>);
+pub struct BoundOrderingKey<B, LR>(B, PhantomData<LR>);
 
 mod ordering {
-    use super::{Left, Right, SideInclusion};
+    use super::{BoundOrderingKey, Left, Right};
     use crate::{BoundType, Exclusive, Inclusive};
 
-    impl<B: PartialEq, S> PartialEq for SideInclusion<B, S> {
+    impl<B: PartialEq, LR> PartialEq for BoundOrderingKey<B, LR> {
         fn eq(&self, other: &Self) -> bool {
             self.0 == other.0
         }
     }
-    impl<B: Eq, S> Eq for SideInclusion<B, S> {}
+    impl<B: Eq, LR> Eq for BoundOrderingKey<B, LR> {}
 
     macro_rules! impl_ord {
         (($lhs:ident, $rhs:ident): $type:ty => $body:expr) => {
@@ -51,17 +51,17 @@ mod ordering {
         };
     }
 
-    impl_ord!((_lhs, _rhs): SideInclusion<Inclusive, Left> => std::cmp::Ordering::Equal);
-    impl_ord!((_lhs, _rhs): SideInclusion<Exclusive, Left> => std::cmp::Ordering::Equal);
-    impl_ord!((_lhs, _rhs): SideInclusion<Inclusive, Right> => std::cmp::Ordering::Equal);
-    impl_ord!((_lhs, _rhs): SideInclusion<Exclusive, Right> => std::cmp::Ordering::Equal);
-    impl_ord!((lhs, rhs): SideInclusion<BoundType, Left> => match (lhs.0, rhs.0) {
+    impl_ord!((_lhs, _rhs): BoundOrderingKey<Inclusive, Left> => std::cmp::Ordering::Equal);
+    impl_ord!((_lhs, _rhs): BoundOrderingKey<Exclusive, Left> => std::cmp::Ordering::Equal);
+    impl_ord!((_lhs, _rhs): BoundOrderingKey<Inclusive, Right> => std::cmp::Ordering::Equal);
+    impl_ord!((_lhs, _rhs): BoundOrderingKey<Exclusive, Right> => std::cmp::Ordering::Equal);
+    impl_ord!((lhs, rhs): BoundOrderingKey<BoundType, Left> => match (lhs.0, rhs.0) {
         (BoundType::Inclusive, BoundType::Inclusive) => std::cmp::Ordering::Equal,
         (BoundType::Inclusive, BoundType::Exclusive) => std::cmp::Ordering::Less,
         (BoundType::Exclusive, BoundType::Inclusive) => std::cmp::Ordering::Greater,
         (BoundType::Exclusive, BoundType::Exclusive) => std::cmp::Ordering::Equal,
     });
-    impl_ord!((lhs, rhs): SideInclusion<BoundType, Right> => match (lhs.0, rhs.0) {
+    impl_ord!((lhs, rhs): BoundOrderingKey<BoundType, Right> => match (lhs.0, rhs.0) {
         (BoundType::Inclusive, BoundType::Inclusive) => std::cmp::Ordering::Equal,
         (BoundType::Inclusive, BoundType::Exclusive) => std::cmp::Ordering::Greater,
         (BoundType::Exclusive, BoundType::Inclusive) => std::cmp::Ordering::Less,
@@ -116,6 +116,23 @@ impl Flip for Right {
     }
 }
 
+impl PartialEq<BoundType> for Inclusive {
+    fn eq(&self, other: &BoundType) -> bool {
+        match other {
+            BoundType::Inclusive => true,
+            BoundType::Exclusive => false,
+        }
+    }
+}
+impl PartialEq<BoundType> for Exclusive {
+    fn eq(&self, other: &BoundType) -> bool {
+        match other {
+            BoundType::Inclusive => false,
+            BoundType::Exclusive => true,
+        }
+    }
+}
+
 impl Boundary for Inclusive {
     fn less<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
         this <= t
@@ -137,28 +154,28 @@ impl Boundary for BoundType {
 
 impl<LR> BoundaryOf<LR> for Inclusive
 where
-    SideInclusion<Self, LR>: Ord,
+    BoundOrderingKey<Self, LR>: Ord,
 {
-    type Ordered = SideInclusion<Self, LR>;
+    type Ordered = BoundOrderingKey<Self, LR>;
     fn into_ordered(self) -> Self::Ordered {
-        SideInclusion(self, PhantomData)
+        BoundOrderingKey(self, PhantomData)
     }
 }
 impl<LR> BoundaryOf<LR> for Exclusive
 where
-    SideInclusion<Self, LR>: Ord,
+    BoundOrderingKey<Self, LR>: Ord,
 {
-    type Ordered = SideInclusion<Self, LR>;
+    type Ordered = BoundOrderingKey<Self, LR>;
     fn into_ordered(self) -> Self::Ordered {
-        SideInclusion(self, PhantomData)
+        BoundOrderingKey(self, PhantomData)
     }
 }
 impl<LR> BoundaryOf<LR> for BoundType
 where
-    SideInclusion<Self, LR>: Ord,
+    BoundOrderingKey<Self, LR>: Ord,
 {
-    type Ordered = SideInclusion<Self, LR>;
+    type Ordered = BoundOrderingKey<Self, LR>;
     fn into_ordered(self) -> Self::Ordered {
-        SideInclusion(self, PhantomData)
+        BoundOrderingKey(self, PhantomData)
     }
 }

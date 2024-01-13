@@ -1,14 +1,8 @@
+use crate::BoundType;
+
 pub trait Flip {
     type Flip: Flip<Flip = Self>;
     fn flip(self) -> Self::Flip;
-}
-
-pub trait Ceil<T> {
-    fn ceil(&self) -> T;
-}
-
-pub trait Floor<T> {
-    fn floor(&self) -> T;
 }
 
 pub(crate) trait IntoGeneral {
@@ -16,8 +10,15 @@ pub(crate) trait IntoGeneral {
     fn into_general(self) -> Self::General;
 }
 
-pub trait Boundary: Flip + Eq + Copy {
+pub trait Boundary: Flip + Eq + PartialEq<BoundType> + Copy {
     fn less<T: PartialOrd>(&self, this: &T, t: &T) -> bool;
+
+    fn is_inclusive(&self) -> bool {
+        *self == BoundType::Inclusive
+    }
+    fn is_exclusive(&self) -> bool {
+        *self == BoundType::Exclusive
+    }
 }
 
 pub trait BoundaryOf<LR>: Boundary {
