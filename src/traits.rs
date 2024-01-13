@@ -1,3 +1,5 @@
+use crate::BoundType;
+
 pub trait Flip {
     type Flip: Flip<Flip = Self>;
     fn flip(self) -> Self::Flip;
@@ -16,7 +18,7 @@ pub(crate) trait IntoGeneral {
     fn into_general(self) -> Self::General;
 }
 
-pub trait Boundary: Flip + Eq + Copy {
+pub trait Boundary: Flip + Eq + PartialEq<BoundType> + Copy {
     fn less<T: PartialOrd>(&self, this: &T, t: &T) -> bool;
 }
 

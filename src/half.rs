@@ -1,7 +1,7 @@
 use crate::{
     bound_type::{Left, Right},
     traits::{BoundaryOf, Ceil, Flip, Floor, IntoGeneral},
-    Bound, Exclusive, Inclusive,
+    Bound, BoundType, Exclusive, Inclusive,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -168,6 +168,22 @@ impl<T: PartialOrd, B: BoundaryOf<Left>> LeftBounded<T, B> {
     {
         self.0.ceil()
     }
+
+    pub fn step_by(&self, step: T) -> impl Iterator<Item = T>
+    where
+        T: Clone,
+        for<'a> T: std::ops::AddAssign<&'a T>,
+    {
+        let mut t = self.limit.clone();
+        if self.bound_type == BoundType::Exclusive {
+            t += &step;
+        };
+        std::iter::from_fn(move || {
+            let r = t.clone();
+            t += &step;
+            Some(r)
+        })
+    }
 }
 
 impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
@@ -215,6 +231,14 @@ impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
         .into()
     }
 
+    pub fn interior(self) -> RightBounded<T, Exclusive> {
+        Bound {
+            limit: self.0.limit,
+            bound_type: Exclusive,
+        }
+        .into()
+    }
+
     /// ```
     /// use inter_val::{RightBounded, Inclusive, Exclusive};
     /// let a : RightBounded<_, _> = Inclusive.at(7).into();
@@ -231,12 +255,20 @@ impl<T: PartialOrd, B: BoundaryOf<Right>> RightBounded<T, B> {
         self.0.floor()
     }
 
-    pub fn interior(self) -> RightBounded<T, Exclusive> {
-        Bound {
-            limit: self.0.limit,
-            bound_type: Exclusive,
-        }
-        .into()
+    pub fn step_rev_by(&self, step: T) -> impl Iterator<Item = T>
+    where
+        T: Clone,
+        for<'a> T: std::ops::SubAssign<&'a T>,
+    {
+        let mut t = self.limit.clone();
+        if self.bound_type == BoundType::Exclusive {
+            t -= &step;
+        };
+        std::iter::from_fn(move || {
+            let r = t.clone();
+            t -= &step;
+            Some(r)
+        })
     }
 }
 

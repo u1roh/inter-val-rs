@@ -116,6 +116,23 @@ impl Flip for Right {
     }
 }
 
+impl PartialEq<BoundType> for Inclusive {
+    fn eq(&self, other: &BoundType) -> bool {
+        match other {
+            BoundType::Inclusive => true,
+            BoundType::Exclusive => false,
+        }
+    }
+}
+impl PartialEq<BoundType> for Exclusive {
+    fn eq(&self, other: &BoundType) -> bool {
+        match other {
+            BoundType::Inclusive => false,
+            BoundType::Exclusive => true,
+        }
+    }
+}
+
 impl Boundary for Inclusive {
     fn less<T: PartialOrd>(&self, this: &T, t: &T) -> bool {
         this <= t

@@ -443,6 +443,36 @@ impl<T: PartialOrd, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     }
 
     /// ```
+    /// use inter_val::{Inclusive, Exclusive};
+    /// let a = Exclusive.at(10).to(Inclusive.at(20)); // (10, 20]
+    /// assert!(a.step_by(2).eq(vec![12, 14, 16, 18, 20]));
+    /// ```
+    pub fn step_by(&self, step: T) -> impl Iterator<Item = T> + '_
+    where
+        T: Clone,
+        for<'a> T: std::ops::AddAssign<&'a T>,
+    {
+        self.left
+            .step_by(step)
+            .take_while(|t| self.right.contains(t))
+    }
+
+    /// ```
+    /// use inter_val::{Inclusive, Exclusive};
+    /// let a = Exclusive.at(10).to(Inclusive.at(20)); // (10, 20]
+    /// assert!(a.step_rev_by(2).eq(vec![20, 18, 16, 14, 12]));
+    /// ```
+    pub fn step_rev_by(&self, step: T) -> impl Iterator<Item = T> + '_
+    where
+        T: Clone,
+        for<'a> T: std::ops::SubAssign<&'a T>,
+    {
+        self.right
+            .step_rev_by(step)
+            .take_while(|t| self.left.contains(t))
+    }
+
+    /// ```
     /// use inter_val::{Interval, Inclusive, Exclusive, Nullable};
     /// let a = Inclusive.at(0).to(Exclusive.at(3));  // [0, 3)
     /// let b = Inclusive.at(1).to(Exclusive.at(5));  // [1, 5)
