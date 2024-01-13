@@ -552,6 +552,18 @@ impl<T: PartialOrd, L: BoundaryOf<Left, Flip = R>, R: BoundaryOf<Right, Flip = L
     }
 }
 
+impl<T: PartialOrd> Interval<T, Inclusive, Exclusive> {
+    /// Not implemented yet
+    pub fn split_at(&self, _t: T) -> (Self, Self) {
+        todo!()
+    }
+
+    /// Not implemented yet
+    pub fn try_split_at(&self, _t: T) -> (Option<Self>, Option<Self>) {
+        todo!()
+    }
+}
+
 impl<T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R> {
     /// ```
     /// use inter_val::{Interval, Inclusive};
