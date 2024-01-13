@@ -581,14 +581,16 @@ impl<T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
             .unwrap_or(T::zero())
     }
 
+    /// Linear interpolation.
     /// ```
     /// use inter_val::{Interval, Inclusive, Exclusive};
     /// let a = Inclusive.at(2.0).to(Inclusive.at(4.0));    // [2, 4]
-    /// assert_eq!(a.at(0.0), 2.0);
-    /// assert_eq!(a.at(0.5), 3.0);
-    /// assert_eq!(a.at(1.0), 4.0);
+    /// assert_eq!(a.lerp(0.0), 2.0);
+    /// assert_eq!(a.lerp(0.5), 3.0);
+    /// assert_eq!(a.lerp(1.0), 4.0);
+    /// assert_eq!(a.lerp(1.1), 4.2);
     /// ```
-    pub fn at(&self, zero_to_one: T) -> T {
+    pub fn lerp(&self, zero_to_one: T) -> T {
         (T::one() - zero_to_one) * *self.inf() + zero_to_one * *self.sup()
     }
 
