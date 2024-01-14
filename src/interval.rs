@@ -634,8 +634,8 @@ impl<T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> Interval<T, L, R>
     /// assert_eq!(a.lerp(1.0), 4.0);
     /// assert_eq!(a.lerp(1.1), 4.2);
     /// ```
-    pub fn lerp(&self, zero_to_one: T) -> T {
-        (T::one() - zero_to_one) * *self.inf() + zero_to_one * *self.sup()
+    pub fn lerp(&self, ratio: T) -> T {
+        (T::one() - ratio) * *self.inf() + ratio * *self.sup()
     }
 
     /// ```

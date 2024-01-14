@@ -63,8 +63,20 @@ assert_eq!(union.gap, gap);
 assert_eq!(union.into_vec(), vec![a, d]);
 
 // Hull
-let a = Interval::<_>::hull_many(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
-assert_eq!(a, Inclusive.between(2, 9));
+let hull = Interval::<_>::hull_many(vec![3, 9, 2, 5]).unwrap(); // [2, 9]
+assert_eq!(hull, Inclusive.between(2, 9));
+
+// Linear interpolation
+assert_eq!(b.lerp(0.0), *b.inf());
+assert_eq!(b.lerp(1.0), *b.sup());
+assert_eq!(b.lerp(0.2), 0.8 * *b.inf() + 0.2 * *b.sup());
+
+// Split
+let (lower, upper) = b.split_at(3.45); // Split [1.23, 4.56) at 3.45
+assert_eq!(lower.inf(), b.inf());
+assert_eq!(lower.sup(), &3.45);
+assert_eq!(upper.inf(), &3.45);
+assert_eq!(upper.sup(), b.sup());
 ```
 
 ## Axis-aligned box on ℝⁿ
