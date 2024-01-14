@@ -552,15 +552,47 @@ impl<T: PartialOrd, L: BoundaryOf<Left, Flip = R>, R: BoundaryOf<Right, Flip = L
     }
 }
 
-impl<T: PartialOrd> Interval<T, Inclusive, Exclusive> {
-    /// Not implemented yet
-    pub fn split_at(&self, _t: T) -> (Self, Self) {
-        todo!()
+impl<T: PartialOrd + Clone> Interval<T, Inclusive, Exclusive> {
+    /// ```
+    /// use inter_val::{Inclusive, Exclusive};
+    /// let a = Inclusive.at(0).to(Exclusive.at(3));    // [0, 3)
+    /// let (b, c) = a.try_split_at(1); // [0, 1) and [1, 3)
+    /// assert_eq!(b, Some(Inclusive.at(0).to(Exclusive.at(1))));
+    /// assert_eq!(c, Some(Inclusive.at(1).to(Exclusive.at(3))));
+    ///
+    /// let (b, c) = a.try_split_at(0);
+    /// assert_eq!(b, None);    // [0, 0) is empty.
+    /// assert_eq!(c, Some(a)); // [0, 3)
+    /// ```
+    pub fn try_split_at(&self, t: T) -> (Option<Self>, Option<Self>) {
+        if !self.left.contains(&t) {
+            return (None, Some(self.clone()));
+        }
+        if !self.right.contains(&t) {
+            return (Some(self.clone()), None);
+        }
+        let lower = Self::new_(self.left.clone(), Exclusive.at(t.clone()).into());
+        let upper = Self::new_(Inclusive.at(t).into(), self.right.clone());
+        (lower, upper)
     }
 
-    /// Not implemented yet
-    pub fn try_split_at(&self, _t: T) -> (Option<Self>, Option<Self>) {
-        todo!()
+    /// ```
+    /// use inter_val::{Inclusive, Exclusive};
+    /// let a = Inclusive.at(0).to(Exclusive.at(3));    // [0, 3)
+    /// let (b, c) = a.split_at(1); // [0, 1) and [1, 3)
+    /// assert_eq!(b, Inclusive.at(0).to(Exclusive.at(1)));
+    /// assert_eq!(c, Inclusive.at(1).to(Exclusive.at(3)));
+    /// ```
+    /// ```should_panic
+    /// use inter_val::{Inclusive, Exclusive};
+    /// let a = Inclusive.at(0).to(Exclusive.at(3));    // [0, 3)
+    /// let (b, c) = a.split_at(0);
+    /// ```
+    pub fn split_at(&self, t: T) -> (Self, Self) {
+        assert!(self.contains(&t));
+        let lower = Self::new_(self.left.clone(), Exclusive.at(t.clone()).into());
+        let upper = Self::new_(Inclusive.at(t).into(), self.right.clone());
+        (lower.unwrap(), upper.unwrap())
     }
 }
 
