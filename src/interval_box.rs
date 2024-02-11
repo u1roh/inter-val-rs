@@ -257,6 +257,16 @@ impl<const N: usize, T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> B
     pub fn center(&self) -> NDim<N, T> {
         std::array::from_fn(|i| self[i].center()).into()
     }
+
+    /// IoU - Intersection over Union.
+    pub fn iou(&self, other: &Self) -> T {
+        self.intersection(other)
+            .map(|intersection| {
+                let m = intersection.measure();
+                m / (self.measure() + other.measure() - m)
+            })
+            .unwrap_or(T::zero())
+    }
 }
 
 #[cfg(feature = "nalgebra")]
