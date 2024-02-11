@@ -86,7 +86,7 @@ use traits::BoundaryOf;
 pub use bound::Bound;
 pub use bound_type::{BoundType, Exclusive, Inclusive};
 pub use half::{HalfBounded, LeftBounded, RightBounded};
-pub use interval::Interval;
+pub use interval::{Interval, IntervalDifference, IntervalUnion};
 pub use interval_box::BoxN;
 pub use ndim::NDim;
 pub use nullable::Nullable;
