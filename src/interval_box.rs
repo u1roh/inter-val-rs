@@ -3,6 +3,33 @@ use crate::ndim::NDim;
 use crate::traits::BoundaryOf;
 use crate::{Bound, Exclusive, Inclusive, Interval};
 
+pub trait Point<const N: usize, T>:
+    From<[T; N]> + Into<[T; N]> + std::ops::Index<usize, Output = T>
+{
+    fn iter(&self) -> std::slice::Iter<T>;
+}
+
+impl<const N: usize, T> Point<N, T> for [T; N] {
+    fn iter(&self) -> std::slice::Iter<T> {
+        (self as &[T]).iter()
+    }
+}
+
+impl<const N: usize, T> Point<N, T> for NDim<N, T> {
+    fn iter(&self) -> std::slice::Iter<T> {
+        self.iter()
+    }
+}
+
+#[cfg(feature = "nalgebra")]
+impl<const N: usize, T: Clone + std::fmt::Debug + PartialEq + 'static> Point<N, T>
+    for nalgebra::Point<T, N>
+{
+    fn iter(&self) -> std::slice::Iter<T> {
+        self.coords.as_slice().iter()
+    }
+}
+
 /// n-dimensional axis-aligned box as a cartesian product set of intervals, i.g., *[a, b)^n*.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BoxN<const N: usize, T, L = Inclusive, R = L>(NDim<N, Interval<T, L, R>>);
@@ -78,7 +105,7 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
     ///
     /// assert!(Box2::<i32, Exclusive>::try_between(&[0, 0], &[0, 1]).is_none());
     /// ```
-    pub fn try_between(a: &[T; N], b: &[T; N]) -> Option<Self>
+    pub fn try_between<P: Point<N, T>>(a: &P, b: &P) -> Option<Self>
     where
         T: Into<Bound<T, L>> + Into<Bound<T, R>>,
     {
@@ -94,7 +121,7 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
     /// let a: Box2<i32> = Box2::between(&[0, 0], &[10, 20]);
     /// assert_eq!(a.inf(), [0, 0]);
     /// assert_eq!(a.sup(), [10, 20]);
-    pub fn between(a: &[T; N], b: &[T; N]) -> Self
+    pub fn between<P: Point<N, T>>(a: &P, b: &P) -> Self
     where
         T: Into<Bound<T, L>> + Into<Bound<T, R>>,
     {
@@ -109,7 +136,31 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
         std::array::from_fn(|i| self[i].sup().clone()).into()
     }
 
-    pub fn contains(&self, t: &[T; N]) -> bool {
+    pub fn inf_point<P: Point<N, T>>(&self) -> P {
+        std::array::from_fn(|i| self[i].inf().clone()).into()
+    }
+
+    pub fn sup_point<P: Point<N, T>>(&self) -> P {
+        std::array::from_fn(|i| self[i].sup().clone()).into()
+    }
+
+    #[cfg(feature = "nalgebra")]
+    pub fn inf_nalgebra(&self) -> nalgebra::Point<T, N>
+    where
+        T: Clone + std::fmt::Debug + PartialEq + 'static,
+    {
+        self.inf_point()
+    }
+
+    #[cfg(feature = "nalgebra")]
+    pub fn sup_nalgebra(&self) -> nalgebra::Point<T, N>
+    where
+        T: Clone + std::fmt::Debug + PartialEq + 'static,
+    {
+        self.sup_point()
+    }
+
+    pub fn contains<P: Point<N, T>>(&self, t: &P) -> bool {
         self.iter().zip(t.iter()).all(|(i, t)| i.contains(t))
     }
 
@@ -156,7 +207,7 @@ impl<const N: usize, T: PartialOrd + Clone, L: BoundaryOf<Left>, R: BoundaryOf<R
     /// let b = a.hull(&[20, 5]);
     /// assert_eq!(b, Box2::between(&[0, 0], &[20, 10]));
     /// ```
-    pub fn hull(self, p: &[T; N]) -> Self {
+    pub fn hull<P: Point<N, T>>(self, p: &P) -> Self {
         std::array::from_fn(|i| self[i].clone().hull(p[i].clone())).into()
     }
 
@@ -206,4 +257,18 @@ impl<const N: usize, T: num::Float, L: BoundaryOf<Left>, R: BoundaryOf<Right>> B
     pub fn center(&self) -> NDim<N, T> {
         std::array::from_fn(|i| self[i].center()).into()
     }
+}
+
+#[cfg(feature = "nalgebra")]
+#[test]
+fn test_nalgebra() {
+    use nalgebra as na;
+    let p1 = na::Point2::new(0, 0);
+    let p2 = na::Point2::new(10, 20);
+    let b = BoxN::<2, i32>::try_between(&p1, &p2).unwrap();
+    assert_eq!(b.inf_nalgebra(), p1);
+    assert_eq!(b.sup_nalgebra(), p2);
+
+    let p = na::Point2::new(5, 15);
+    assert!(b.contains(&p));
 }
